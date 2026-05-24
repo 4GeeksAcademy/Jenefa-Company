@@ -1,9 +1,14 @@
 
 # Welcome to HealthCore
 
-# Reasons for this choice
+## Reasons for this choice
 
-HealthCore is my preferred company because I believe fixing a broken, two-country healthcare system is a highly challenging engineering project. It will allow me to practice building large-scale AI data pipelines by connecting different medical record systems together. Working with strict privacy laws also ensures I learn to build the safe and reliable AI architecture.
+HealthCore is my preferred company because I believe fixing a broken healthcare system across the US and UK is a highly challenging engineering project. The company currently relies on two different EHR platforms with no shared data layer or centralized monitoring. This project will give me experience building a central API and scalable AI data pipelines by connecting different medical record systems together. Also, working with strict HIPAA and UK GDPR privacy laws will also help me learn how to build safe and reliable AI architecture.
+
+## Two Departments interested
+
+1. Technology
+2. Clinical Operations
 
 ## AI Engineering · 4Geeks Academy — Company Briefing
 
