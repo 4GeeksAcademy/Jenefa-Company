@@ -7,8 +7,21 @@ HealthCore is my preferred company because I believe fixing a broken healthcare 
 
 ## Two Departments interested
 
-1. Technology
-2. Clinical Operations
+1. Technology :
+  
+The Technology Department is highly interesting because it requires building an automated alerting system where the engineering team will find out about system failures immediately without needing to wait for a clinic to call and report it.
+
+2. Clinical Operations :
+   
+Clinical Operations offers an opportunity to create a AI-assisted automation that eliminates 35 minutes of daily paperwork for 120 clinical staff. It also allows me to design advanced data-fusion models to unify the two EHR systems into a single patient history view.
+
+## Automation or AI Challenge Identified
+
+HealthCore has two different EHR platforms with no shared data layer or centralized monitoring.
+
+## My AI Agent Idea
+
+To resolve this automation challenge, an agent should be created with a centralized API to unify the US and UK EHRs and scheduling systems and include an automated alert system. This agent requires access to live patient data and system event logs. It will interact with internal databases and automated alerting systems.
 
 ## AI Engineering · 4Geeks Academy — Company Briefing
 
