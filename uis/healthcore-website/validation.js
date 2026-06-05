@@ -121,7 +121,7 @@ form.addEventListener('submit', (event) => {
   const errors = validateForm();
 
   if (errors.length > 0) {
-    statusBox.className = 'mt-6 rounded-xl border border-rose-400 bg-rose-500/10 p-4 text-rose-200';
+    statusBox.className = 'mt-6 rounded-xl border border-rose-600 bg-rose-500/10 p-4 text-rose-700';
     statusBox.textContent = 'Please correct the highlighted fields before submitting.';
     const firstInvalid = document.getElementById(errors[0].fieldName);
     if (firstInvalid) firstInvalid.focus();
@@ -165,8 +165,8 @@ Object.keys(validators).forEach((fieldName) => {
       const hasAnyErrors = allFields.some((name) => validators[name](getValue(name)) !== true);
 
       if (!hasAnyErrors) {
-        statusBox.className = 'mt-6 rounded-xl border border-brand-600/70 bg-brand-900/20 p-4 text-brand-100';
-        statusBox.textContent = 'All fields look valid. Submit the form to finish your application.';
+        statusBox.className = 'mt-6 rounded-xl border border-emerald-400 bg-emerald-500/10 p-4 text-emerald-900';
+        statusBox.textContent = 'All fields are valid. You can submit the form now.';
       }
     }
   });
