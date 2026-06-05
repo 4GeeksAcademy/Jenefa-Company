@@ -1,11 +1,11 @@
-The Challenge
-Your company has been successfully operating in a traditional way for years, but the world has changed. Customers search for information online before making decisions. Competitors already have a digital presence. And your company, despite its experience and quality, remains invisible on the internet.
+## The Challenge
+ Your company has been successfully operating in a traditional way for years, but the world has changed. Customers search for information online before making decisions. Competitors already have a digital presence. And your company, despite its experience and quality, remains invisible on the internet.
 
-Management has decided to begin the digital transformation. Your task is to build the company's first digital touchpoint: a professional public website that presents what they do and captures information from interested people through an application or sign-up form.
+ Management has decided to begin the digital transformation. Your task is to build the company's first digital touchpoint: a professional public website that presents what they do and captures information from interested people through an application or sign-up form.
 
 This site must work on any device, meet web accessibility standards, be optimized for search engines, and deliver a polished, professional user experience. It's not just "a pretty page" — it's the first step toward modernizing a company that wants to remain relevant.
 
-📋 Manager's Brief
+## 📋 Manager's Brief
 From: Your Manager
 To: You
 Subject: Public website — first version

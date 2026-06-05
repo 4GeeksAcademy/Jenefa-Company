@@ -33,6 +33,17 @@
         }
       };
     </script>
+    <style>
+      .hero-image-panel {
+        min-height: 280px;
+      }
+
+      @media (min-width: 768px) {
+        .hero-image-panel {
+          min-height: 100%;
+        }
+      }
+    </style>
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -57,47 +68,42 @@
       }
     </script>
   </head>
-  <body class="bg-slate-950 text-slate-100 antialiased">
+  <body class="bg-slate-50 text-blue-950 antialiased font-sans">
     <a
       href="#main-content"
       class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-white text-slate-900 px-4 py-2 rounded"
       >Skip to main content</a
     >
 
-    <header class="relative overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-br from-brand-900 via-slate-950 to-slate-900"></div>
-      <div class="absolute -top-24 -right-16 h-72 w-72 rounded-full bg-brand-600/30 blur-3xl"></div>
-      <div class="absolute bottom-0 left-0 h-56 w-56 rounded-full bg-accent-500/20 blur-3xl"></div>
-
-      <div class="relative max-w-6xl mx-auto px-6 py-6">
+    <header class="border-b border-slate-200 bg-white">
+      <div class="max-w-6xl mx-auto px-6 py-6">
         <nav class="flex items-center justify-between" aria-label="Main navigation">
           <div class="flex items-center gap-3">
-            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100 text-brand-900 font-bold">HC</span>
-            <p class="font-semibold tracking-wide">HealthCore</p>
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-accent-600 text-white font-bold">HC</span>
+            <p class="font-semibold tracking-wide text-blue-900">HealthCore</p>
           </div>
-          <ul class="flex items-center gap-6 text-sm md:text-base">
-            <li><a href="#services" class="hover:text-brand-100 focus:outline-none focus:ring-2 focus:ring-brand-100 rounded">Services</a></li>
-            <li><a href="#benefits" class="hover:text-brand-100 focus:outline-none focus:ring-2 focus:ring-brand-100 rounded">Why Us</a></li>
-            <li><a href="#contact" class="hover:text-brand-100 focus:outline-none focus:ring-2 focus:ring-brand-100 rounded">Contact</a></li>
+          <ul class="flex items-center gap-6 text-sm text-blue-900 md:text-base">
+            <li><a href="#services" class="hover:text-accent-600 focus:outline-none focus:ring-2 focus:ring-brand-600 rounded">Services</a></li>
+            <li><a href="#benefits" class="hover:text-accent-600 focus:outline-none focus:ring-2 focus:ring-brand-600 rounded">Why Us</a></li>
+            <li><a href="#contact" class="hover:text-accent-600 focus:outline-none focus:ring-2 focus:ring-brand-600 rounded">Contact</a></li>
             <li>
               <a
                 href="apply.html"
-                class="inline-flex items-center rounded-full bg-brand-600 px-4 py-2 font-medium hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-100"
-                >Apply Now</a
-              >
+                class="inline-flex items-center rounded-full bg-accent-500 px-4 py-2 font-medium text-white hover:bg-accent-600 focus:outline-none focus:ring-2 focus:ring-brand-600"
+                >Apply Now</a>
             </li>
           </ul>
         </nav>
 
-        <section class="pt-16 pb-20 md:pt-24 md:pb-28" aria-labelledby="hero-title">
-          <div class="grid md:grid-cols-2 gap-10 items-center">
-            <div>
-              <p class="uppercase tracking-[0.2em] text-xs text-brand-100 mb-4">Trusted Outpatient Healthcare</p>
-              <h1 id="hero-title" class="text-4xl md:text-5xl font-bold leading-tight">
-                Same-day, patient-first care across the US and UK.
+        <section class="mt-8 mb-12 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-soft" aria-labelledby="hero-title">
+          <div class="grid md:grid-cols-2 items-stretch">
+            <div class="px-8 py-16 md:px-12 md:py-20">
+              <p class="uppercase tracking-[0.2em] text-xs text-blue-900 mb-4">Trusted Outpatient Healthcare</p>
+              <h1 id="hero-title" class="text-4xl md:text-5xl font-bold text-blue-900 leading-tight max-w-3xl">
+                Your health is our priority. Same-day care across the US and UK.
               </h1>
-              <p class="mt-6 text-slate-300 text-lg">
-                HealthCore connects primary care, specialist consultation, and chronic care management across 12 clinics with one clear mission: safer care, faster access, better outcomes.
+              <p class="mt-6 text-slate-600 text-lg max-w-3xl">
+                HealthCore integrates primary care, specialist consultation, and chronic care management across 12 clinics with one clear mission: safer care, faster access, better outcomes.
               </p>
               <div class="mt-8 flex flex-col sm:flex-row gap-4">
                 <a
@@ -107,16 +113,19 @@
                 >
                 <a
                   href="#contact"
-                  class="inline-flex justify-center rounded-full border border-slate-500 px-6 py-3 font-semibold hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                  class="inline-flex justify-center rounded-full border border-blue-300 bg-white px-6 py-3 font-semibold text-blue-900 hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   >Speak with our team</a
                 >
               </div>
             </div>
-            <div>
+            <div class="hero-image-panel">
               <img
-                src="https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=1200&q=80"
-                alt="Healthcare professional speaking with a patient"
-                class="w-full h-[360px] object-cover rounded-3xl shadow-soft"
+                src="hospitalHome.jpg"
+                alt="HealthCore clinical team supporting a patient"
+                class="h-full w-full object-cover object-right"
+                loading="eager"
+                decoding="async"
+                fetchpriority="high"
               />
             </div>
           </div>
@@ -125,49 +134,59 @@
     </header>
 
     <main id="main-content">
+      
       <section id="services" class="max-w-6xl mx-auto px-6 py-16" aria-labelledby="services-title">
-        <h2 id="services-title" class="text-3xl font-bold">Core Services</h2>
-        <p class="mt-3 text-slate-300 max-w-3xl">
+        <h2 id="services-title" class="text-3xl font-bold text-blue-900">Core Services</h2>
+        <p class="mt-3 text-slate-600 max-w-3xl">
           Designed for modern outpatient care delivery with continuity across locations.
         </p>
         <div class="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <article class="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
-            <h3 class="text-lg font-semibold">Primary Care</h3>
-            <p class="mt-2 text-slate-300">Preventive visits, diagnosis, and ongoing support for all ages.</p>
+          <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h3 class="underline text-lg font-semibold text-blue-900">
+                Primary Care
+            </h3>
+            <p class="mt-2 text-slate-600">Preventive visits, diagnosis, and ongoing support for all ages.</p>
           </article>
-          <article class="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
-            <h3 class="text-lg font-semibold">Specialist Consultations</h3>
-            <p class="mt-2 text-slate-300">Fast access to specialist reviews without long waiting times.</p>
+          <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h3 class="underline text-lg font-semibold text-blue-900">
+                Specialist Consultations
+            </h3>
+            <p class="mt-2 text-slate-600">Fast access to specialist reviews without long waiting times.</p>
           </article>
-          <article class="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
-            <h3 class="text-lg font-semibold">Chronic Disease Management</h3>
-            <p class="mt-2 text-slate-300">Coordinated treatment plans and monitoring for long-term conditions.</p>
+          <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h3 class="underline text-lg font-semibold text-blue-900">
+                Chronic Disease Management
+            </h3>
+            <p class="mt-2 text-slate-600">Coordinated treatment plans and monitoring for long-term conditions.</p>
           </article>
-          <article class="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
-            <h3 class="text-lg font-semibold">Preventive Programmes</h3>
-            <p class="mt-2 text-slate-300">Screenings and wellness pathways focused on early intervention.</p>
+          <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h3 class="underline text-lg font-semibold text-blue-900">
+                Preventive Programmes
+            </h3>
+            <p class="mt-2 text-slate-600">Screenings and wellness pathways focused on early intervention.</p>
           </article>
         </div>
       </section>
 
-      <section id="benefits" class="bg-slate-900/70 border-y border-slate-800">
+      <section id="benefits" class="bg-sky-50 border-y border-slate-200">
         <div class="max-w-6xl mx-auto px-6 py-16">
-          <h2 class="text-3xl font-bold">Why patients choose HealthCore</h2>
+          <h2 class="text-3xl font-bold text-blue-900">Why patients choose HealthCore
+          </h2>
           <div class="mt-10 grid md:grid-cols-3 gap-6">
-            <article class="rounded-2xl bg-slate-800/60 p-6">
-              <p class="text-4xl font-bold text-brand-100">12 Clinics</p>
-              <h3 class="mt-3 text-xl font-semibold">One Standard</h3>
-              <p class="mt-2 text-slate-300">Consistent care quality across every location in two countries.</p>
+            <article class="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm">
+              <p class="text-4xl font-bold text-blue-900">12 Clinics</p>
+              <h3 class="mt-3 text-xl font-semibold text-slate-600">One Standard</h3>
+              <p class="mt-2 text-slate-600">Consistent care quality across every location in two countries.</p>
             </article>
-            <article class="rounded-2xl bg-slate-800/60 p-6">
-              <p class="text-4xl font-bold text-brand-100">Same Day</p>
-              <h3 class="mt-3 text-xl font-semibold">Faster Access</h3>
-              <p class="mt-2 text-slate-300">Book and confirm appointments quickly to reduce delays in care.</p>
+            <article class="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm">
+              <p class="text-4xl font-bold text-blue-900">Same Day</p>
+              <h3 class="mt-3 text-xl font-semibold text-slate-600">Faster Access</h3>
+              <p class="mt-2 text-slate-600">Book and confirm appointments quickly to reduce delays in care.</p>
             </article>
-            <article class="rounded-2xl bg-slate-800/60 p-6">
-              <p class="text-4xl font-bold text-brand-100">Bilingual</p>
-              <h3 class="mt-3 text-xl font-semibold">Inclusive Experience</h3>
-              <p class="mt-2 text-slate-300">Patient-first communication with multilingual support teams.</p>
+            <article class="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm">
+              <p class="text-4xl font-bold text-blue-900">Bilingual</p>
+              <h3 class="mt-3 text-xl font-semibold text-slate-600">Inclusive Experience</h3>
+              <p class="mt-2 text-slate-600">Patient-first communication with multilingual support teams.</p>
             </article>
           </div>
         </div>
@@ -176,17 +195,19 @@
       <section id="contact" class="max-w-6xl mx-auto px-6 py-16" aria-labelledby="contact-title">
         <div class="grid md:grid-cols-2 gap-8 items-start">    
          <div>
-            <h2 id="contact-title" class="text-3xl font-bold">Take your first step with us</h2>
-            <p class="mt-4 text-slate-300">
-             Submit your healthcare application and our access team will follow up to schedule your first visit.
+            <h2 id="contact-title" class="text-3xl font-bold text-blue-900">Take your first step with us</h2>
+            <p class="mt-4 text-blue-900">
+             Submit your healthcare application and our access team 
+             </p>
+             <p class="mt-2 text-blue-900">will follow up to schedule your first visit.
             </p>
-            <a href="apply.html" class="mt-6 inline-flex rounded-full bg-brand-600 px-6 py-3 font-semibold hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-100"
+            <a href="apply.html" class="mt-6 inline-flex rounded-full bg-accent-500 px-6 py-3 font-semibold text-white hover:bg-accent-600 focus:outline-none focus:ring-2 focus:ring-accent-100"
               >Go to application form</a>
           </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
       
-          <address class="not-italic rounded-2xl border border-slate-800 bg-slate-900/60 p-6 text-slate-200">
+          <address class="not-italic rounded-2xl border border-slate-200 bg-white p-6 text-slate-600 shadow-sm">
             <p class="font-semibold">HealthCore Patient Access</p>
             <p class="mt-2">1201 Medical Park Drive, Austin, TX, USA 98321</p>
             <p class="mt-1">Phone: +1 (800) 442-5844</p>
@@ -194,7 +215,7 @@
             <p class="mt-1">Hours: Mon-Sat, 6:00-22:00</p>
       </address>
 
-      <address class="not-italic rounded-2xl border border-slate-800 bg-slate-900/60 p-6 text-slate-200">
+      <address class="not-italic rounded-2xl border border-slate-200 bg-white p-6 text-slate-600 shadow-sm">
         <p class="font-semibold">HealthCore Patient Access</p>
         <p class="mt-2">135-155 Yorkson St, London, UK SE1 8UG</p>
         <p class="mt-1">Phone: +44 (2079) 460958</p>
@@ -206,8 +227,8 @@
   </section>
   </main>
 
-    <footer class="border-t border-slate-800 bg-slate-950">
-      <div class="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between text-sm text-slate-400">
+    <footer class="border-t border-slate-200 bg-white">
+      <div class="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between text-sm text-blue-900">
         <p>© 2026 HealthCore. Outpatient care network.</p>
         <p>Serving the US and UK with secure, patient-centered services.</p>
       </div>
