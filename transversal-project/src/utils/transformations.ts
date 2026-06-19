@@ -14,7 +14,7 @@ function groupBy<T>(items: T[], keySelector: (item: T) => string): Record<string
     const key = keySelector(item);
     if (!accumulator[key]) {
       accumulator[key] = [];
-    }
+    } 
     accumulator[key].push(item);
     return accumulator;
   }, {});

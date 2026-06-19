@@ -184,7 +184,7 @@
     }
 
     function runFilter() {
-      clearConsole(); // Clear the console before running the filter operation
+      clearConsole(); 
       appendToConsole(
         "filterClaims({ status: 'denied' })",
         filterClaims(sampleClaims, { status: "denied" })
@@ -192,7 +192,7 @@
     }
 
     function runGroup() {
-      clearConsole(); // Clear the console before running the group operation
+      clearConsole(); 
       appendToConsole(
         "groupClaimsBy('locationId')",
         groupClaimsBy(sampleClaims, "locationId")
@@ -200,7 +200,7 @@
     }
 
     function runSearch() {
-      clearConsole(); // Clear the console before running the search operation
+      clearConsole(); 
       const sorted = [...sampleClaims].sort((a, b) => a.claimId.localeCompare(b.claimId));
       const idx = binarySearchClaimById(sorted, "CLM-000003");
       appendToConsole("binarySearchClaimById()", {
@@ -211,7 +211,7 @@
     }
 
     function runRates() {
-      clearConsole(); // Clear the console before running the rate calculation
+      clearConsole(); 
       appendToConsole("calculateDenialRate()", {
         baseDenialPercentage: `${calculateDenialRate(sampleClaims)}%`,
       });
