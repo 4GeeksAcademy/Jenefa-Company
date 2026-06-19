@@ -11,7 +11,7 @@
 
   <div class="max-w-3xl mx-auto bg-white shadow rounded-lg p-6">
     <div class="border-b pb-4 mb-6">
-      <h1 class="text-2xl font-bold justify-center">HealthCore Checking</h1>
+      <h1 class="text-2xl font-bold text-gray-600">HealthCore Checking</h1>
     </div>
 
     <div class="mb-6">
@@ -20,7 +20,7 @@
         <button onclick="runFilter()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded text-sm transition">
           Filter Denied Claims
         </button>
-        <button onclick="runGroup()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded text-sm transition">
+        <button onclick="runGroup()" class="bg-slate-600 hover:bg-slate-700 text-white font-medium py-2 px-4 rounded text-sm transition">
           Group Claims by Location
         </button>
         <button onclick="runSearch()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded text-sm transition">
@@ -35,227 +35,187 @@
     <div>
       <div class="flex justify-between items-center mb-2">
         <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500">Console Output</h2>
-        <button onclick="clearConsole()" class="text-xs text-gray-500 hover:underline">Clear console</button>
+        <button onclick="clearConsole()" class="underline text-xs text-gray-500 hover:text-indigo-700">Clear console</button>
       </div>
-      <pre id="output" class="bg-gray-900 text-green-400 p-4 rounded font-mono text-xs min-h-[250px] overflow-auto whitespace-pre-wrap">// Select an operation above to test code functionality.</pre>
+      <pre id="output" class="bg-gray-900 text-green-400 p-4 rounded font-mono text-xs min-h-[250px] overflow-auto whitespace-pre-wrap"> Select an operation above to test code functionality.</pre>
     </div>
   </div>
 
   <script>
-   // Sample Locations
-const sampleLocations: Location[] = [
-  {
-    locationId: "us-tx-001",
-    name: "HealthCore Austin Central",
-    city: "Austin",
-    stateOrCountry: "TX",
-    country: "US",
-    phone: "(512) 340-8800",
-    averageConsultationFee: {
-      primary_care: 180,
-      chronic_disease: 220,
-      preventive: 150,
-      specialist: 320,
-      womens_health: 240,
-      paediatric: 175,
-      mental_health: 200,
-    },
-  },
-  {
-    locationId: "us-fl-001",
-    name: "HealthCore Miami",
-    city: "Miami",
-    stateOrCountry: "FL",
-    country: "US",
-    phone: "(305) 510-7700",
-    averageConsultationFee: {
-      primary_care: 195,
-      chronic_disease: 235,
-      preventive: 160,
-      specialist: 340,
-      womens_health: 255,
-      paediatric: 185,
-      mental_health: 215,
-    },
-  },
-  {
-    locationId: "us-ga-001",
-    name: "HealthCore Atlanta",
-    city: "Atlanta",
-    stateOrCountry: "GA",
-    country: "US",
-    phone: "(404) 330-9900",
-    averageConsultationFee: {
-      primary_care: 170,
-      chronic_disease: 210,
-      preventive: 145,
-      specialist: 310,
-      womens_health: 230,
-      paediatric: 165,
-      mental_health: 190,
-    },
-  },
-];
+    const sampleClaims = [
+      {
+        claimId: "CLM-000001",
+        patientId: "HC-A3F291",
+        locationId: "us-tx-001",
+        serviceType: "primary_care",
+        payerName: "BlueCross",
+        payerId: "BC001",
+        submissionDate: "2025-03-10",
+        claimAmount: 180,
+        status: "approved",
+        resubmitted: false,
+      },
+      {
+        claimId: "CLM-000002",
+        patientId: "HC-B7K442",
+        locationId: "us-fl-001",
+        serviceType: "specialist",
+        payerName: "Aetna",
+        payerId: "AET002",
+        submissionDate: "2025-03-11",
+        claimAmount: 340,
+        status: "denied",
+        denialReason: "missing_authorisation",
+        resubmitted: false,
+      },
+      {
+        claimId: "CLM-000003",
+        patientId: "HC-C2M881",
+        locationId: "us-ga-001",
+        serviceType: "chronic_disease",
+        payerName: "Medicare",
+        payerId: "MED003",
+        submissionDate: "2025-03-12",
+        claimAmount: 210,
+        status: "approved",
+        resubmitted: false,
+      },
+      {
+        claimId: "CLM-000004",
+        patientId: "HC-D9P553",
+        locationId: "us-tx-001",
+        serviceType: "preventive",
+        payerName: "BlueCross",
+        payerId: "BC001",
+        submissionDate: "2025-03-13",
+        claimAmount: 150,
+        status: "denied",
+        denialReason: "coding_error",
+        resubmitted: true,
+      },
+      {
+        claimId: "CLM-000005",
+        patientId: "HC-E4Q117",
+        locationId: "us-fl-001",
+        serviceType: "mental_health",
+        payerName: "Cigna",
+        payerId: "CIG004",
+        submissionDate: "2025-03-14",
+        claimAmount: 215,
+        status: "pending",
+        resubmitted: false,
+      },
+    ];
 
-  // Sample Claims
-const sampleClaims: Claim[] = [
-  {
-    claimId: "CLM-000001",
-    patientId: "HC-A3F291",
-    locationId: "us-tx-001",
-    serviceType: "primary_care",
-    payerName: "BlueCross",
-    payerId: "BC001",
-    submissionDate: "2025-03-10",
-    claimAmount: 180,
-    status: "approved",
-    resubmitted: false,
-  },
-  {
-    claimId: "CLM-000002",
-    patientId: "HC-B7K442",
-    locationId: "us-fl-001",
-    serviceType: "specialist",
-    payerName: "Aetna",
-    payerId: "AET002",
-    submissionDate: "2025-03-11",
-    claimAmount: 340,
-    status: "denied",
-    denialReason: "missing_authorisation",
-    resubmitted: false,
-  },
-  {
-    claimId: "CLM-000003",
-    patientId: "HC-C2M881",
-    locationId: "us-ga-001",
-    serviceType: "chronic_disease",
-    payerName: "Medicare",
-    payerId: "MED003",
-    submissionDate: "2025-03-12",
-    claimAmount: 210,
-    status: "approved",
-    resubmitted: false,
-  },
-  {
-    claimId: "CLM-000004",
-    patientId: "HC-D9P553",
-    locationId: "us-tx-001",
-    serviceType: "preventive",
-    payerName: "BlueCross",
-    payerId: "BC001",
-    submissionDate: "2025-03-13",
-    claimAmount: 150,
-    status: "denied",
-    denialReason: "coding_error",
-    resubmitted: true,
-  },
-  {
-    claimId: "CLM-000005",
-    patientId: "HC-E4Q117",
-    locationId: "us-fl-001",
-    serviceType: "mental_health",
-    payerName: "Cigna",
-    payerId: "CIG004",
-    submissionDate: "2025-03-14",
-    claimAmount: 215,
-    status: "pending",
-    resubmitted: false,
-  },
-];
+    function clearConsole() {
+      const outputElement = document.getElementById("output");
+      if (outputElement) {
+        outputElement.innerHTML = "";
+      }
+    }
 
-//Sample Appointments
-const sampleAppointments: Appointment[] = [
-  {
-    appointmentId: "APT-000001",
-    patientId: "HC-A3F291",
-    locationId: "us-tx-001",
-    serviceType: "primary_care",
-    scheduledDate: "2025-03-10",
-    scheduledTime: "09:00",
-    status: "completed",
-    confirmedAt: "2025-03-09T14:00:00Z",
-  },
-  {
-    appointmentId: "APT-000002",
-    patientId: "HC-F6R228",
-    locationId: "us-fl-001",
-    serviceType: "specialist",
-    scheduledDate: "2025-03-11",
-    scheduledTime: "11:30",
-    status: "no_show",
-    noShowReason: "Patient did not call to cancel",
-  },
-  {
-    appointmentId: "APT-000003",
-    patientId: "HC-G1S774",
-    locationId: "us-tx-001",
-    serviceType: "chronic_disease",
-    scheduledDate: "2025-03-12",
-    scheduledTime: "14:00",
-    status: "no_show",
-    noShowReason: "Unreachable before appointment",
-  },
-  {
-    appointmentId: "APT-000004",
-    patientId: "HC-H8T390",
-    locationId: "us-ga-001",
-    serviceType: "preventive",
-    scheduledDate: "2025-03-13",
-    scheduledTime: "10:00",
-    status: "completed",
-    confirmedAt: "2025-03-12T09:30:00Z",
-  },
-  {
-    appointmentId: "APT-000005",
-    patientId: "HC-I5U661",
-    locationId: "us-fl-001",
-    serviceType: "mental_health",
-    scheduledDate: "2025-03-14",
-    scheduledTime: "16:00",
-    status: "no_show",
-    noShowReason: "Transportation issue reported",
-  },
-];
+    function appendToConsole(label, data) {
+      const outputElement = document.getElementById("output");
+      if (!outputElement) return;
 
-  // Sample Clinicians
-const sampleClinicians: Clinician[] = [
-  {
-    clinicianId: "CLN-000001",
-    firstName: "Marcus",
-    lastName: "Reid",
-    role: "physician",
-    locationId: "us-tx-001",
-    licenceState: "TX",
-    licenceExpiryDate: "2026-06-30",
-    cmeHoursRequired: 40,
-    cmeHoursLogged: 28,
-    cmeYearStartDate: "2025-01-01",
-  },
-  {
-    clinicianId: "CLN-000002",
-    firstName: "Sandra",
-    lastName: "Flores",
-    role: "nurse_practitioner",
-    locationId: "us-fl-001",
-    licenceState: "FL",
-    licenceExpiryDate: "2025-05-15",
-    cmeHoursRequired: 30,
-    cmeHoursLogged: 6,
-    cmeYearStartDate: "2025-01-01",
-  },
-  {
-    clinicianId: "CLN-000003",
-    firstName: "David",
-    lastName: "Okafor",
-    role: "physician",
-    locationId: "us-ga-001",
-    licenceState: "GA",
-    licenceExpiryDate: "2027-01-01",
-    cmeHoursRequired: 40,
-    cmeHoursLogged: 40,
-    cmeYearStartDate: "2025-01-01",
-  },
-];
+      const entry = document.createElement("div");
+      const hasData = typeof data !== "undefined";
+      entry.textContent = hasData
+        ? `${label}\n${JSON.stringify(data, null, 2)}`
+        : String(label);
+      entry.className = "mb-3";
+      outputElement.appendChild(entry);
+      outputElement.scrollTop = outputElement.scrollHeight;
+
+      if (hasData) {
+        console.log(label, data);
+      } else {
+        console.log(label);
+      }
+    }
+
+    function filterClaims(claims, filters) {
+      return claims.filter((claim) => {
+        return Object.entries(filters).every(([key, value]) => {
+          if (typeof value === "undefined") return true;
+          return claim[key] === value;
+        });
+      });
+    }
+
+    function groupClaimsBy(claims, key) {
+      return claims.reduce((accumulator, claim) => {
+        const groupValue = claim[key];
+        if (!accumulator[groupValue]) {
+          accumulator[groupValue] = [];
+        }
+        accumulator[groupValue].push(claim);
+        return accumulator;
+      }, {});
+    }
+
+    function binarySearchClaimById(sortedClaims, targetId) {
+      let low = 0;
+      let high = sortedClaims.length - 1;
+
+      while (low <= high) {
+        const mid = Math.floor(low + (high - low) / 2);
+        const midId = sortedClaims[mid].claimId;
+
+        if (midId === targetId) return mid;
+        if (midId < targetId) {
+          low = mid + 1;
+        } else {
+          high = mid - 1;
+        }
+      }
+
+      return -1;
+    }
+
+    function calculateDenialRate(claims) {
+      if (!claims || claims.length === 0) {
+        throw new Error("Claims array cannot be empty.");
+      }
+
+      const deniedClaims = claims.filter((claim) => claim.status === "denied");
+      const rate = (deniedClaims.length / claims.length) * 100;
+      return Math.round((rate + Number.EPSILON) * 100) / 100;
+    }
+
+    function runFilter() {
+      clearConsole(); // Clear the console before running the filter operation
+      appendToConsole(
+        "filterClaims({ status: 'denied' })",
+        filterClaims(sampleClaims, { status: "denied" })
+      );
+    }
+
+    function runGroup() {
+      clearConsole(); // Clear the console before running the group operation
+      appendToConsole(
+        "groupClaimsBy('locationId')",
+        groupClaimsBy(sampleClaims, "locationId")
+      );
+    }
+
+    function runSearch() {
+      clearConsole(); // Clear the console before running the search operation
+      const sorted = [...sampleClaims].sort((a, b) => a.claimId.localeCompare(b.claimId));
+      const idx = binarySearchClaimById(sorted, "CLM-000003");
+      appendToConsole("binarySearchClaimById()", {
+        target: "CLM-000003",
+        arrayIndexResult: idx,
+        matchesRecord: idx >= 0 ? sorted[idx] : null,
+      });
+    }
+
+    function runRates() {
+      clearConsole(); // Clear the console before running the rate calculation
+      appendToConsole("calculateDenialRate()", {
+        baseDenialPercentage: `${calculateDenialRate(sampleClaims)}%`,
+      });
+    }
   </script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 // Interface representing a healthcare claim
-interface Claim {
+export interface Claim {
   claimId: string; // Format: "CLM-XXXXXX" (e.g., "CLM-000042")
   patientId: string; // Format: "HC-XXXXXX" (e.g., "HC-A3F291")
   locationId: string; // Clinic ID (e.g., "us-tx-001")
@@ -12,9 +12,9 @@ interface Claim {
   denialReason?: DenialReason; // Only present when status === "denied"
   resubmitted: boolean; // Whether the claim was resubmitted after denial
 }
-type ClaimStatus = "submitted" | "approved" | "denied" | "pending" | "appealed";
+export type ClaimStatus = "submitted" | "approved" | "denied" | "pending" | "appealed";
 
-type DenialReason =
+export type DenialReason =
   | "missing_authorisation"
   | "coding_error"
   | "duplicate_claim"
@@ -22,7 +22,7 @@ type DenialReason =
   | "service_not_covered"
   | "incomplete_documentation";
 
-type ServiceType =
+export type ServiceType =
   | "primary_care"
   | "chronic_disease"
   | "preventive"
@@ -32,7 +32,7 @@ type ServiceType =
   | "mental_health";
 
 // Interface representing a healthcare appointment
-interface Appointment {
+export interface Appointment {
   appointmentId: string; // Format: "APT-XXXXXX"
   patientId: string; // Format: "HC-XXXXXX"
   locationId: string; // Clinic ID
@@ -44,14 +44,14 @@ interface Appointment {
   confirmedAt?: string; // ISO 8601 datetime, absent if not yet confirmed
 }
 
-type AppointmentStatus =
+export type AppointmentStatus =
   | "scheduled"
   | "confirmed"
   | "completed"
   | "no_show"
   | "cancelled";
 
-  interface Clinician {
+export interface Clinician {
   clinicianId: string; // Format: "CLN-XXXXXX"
   firstName: string;
   lastName: string;
@@ -64,14 +64,14 @@ type AppointmentStatus =
   cmeYearStartDate: string; // ISO 8601 date — start of current CME cycle
 }
 
-type ClinicianRole =
+export type ClinicianRole =
   | "physician"
   | "nurse_practitioner"
   | "nurse"
   | "medical_assistant";
 
   // Interface representing a healthcare location (clinic)
-  interface Location {
+export interface Location {
   locationId: string;
   name: string;
   city: string;
@@ -82,7 +82,7 @@ type ClinicianRole =
 }
 
 // Interface representing a CME compliance report entry for a clinician
-interface CMEReport {
+export interface CMEReport {
   clinicianId: string;
   fullName: string; // "${firstName} ${lastName}"
   role: ClinicianRole;
@@ -97,4 +97,4 @@ interface CMEReport {
   licenceDaysRemaining: number; // Calendar days from asOfDate to licence expiry
 }
 
-type CMEStatus = "on_track" | "at_risk" | "overdue" | "complete";
+export type CMEStatus = "on_track" | "at_risk" | "overdue" | "complete";
