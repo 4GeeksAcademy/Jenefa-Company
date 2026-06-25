@@ -21,7 +21,7 @@ This repository is the **starter template** for transversal projects. You will w
 
 ## Current status of the template
 
-The repository currently provides a **base folder structure and documentation skeleton**. It does not include runnable apps or global scripts yet.
+The repository currently provides a **base folder structure and documentation skeleton**. It doesn't include runnable apps or global scripts yet.
 
 - `CONTEXT.md` is a placeholder and must be replaced with your assigned company context.
 - There is no root `AGENTS.md` yet.
@@ -87,7 +87,6 @@ ai-engineering-company-project-monorepo/
 - [4Geeks Academy — AI Engineering](https://4geeksacademy.com/es/programas-de-carrera/ingenieria-ia)
 - [How to start a coding project](https://4geeks.com/lesson/how-to-start-a-project)
 
-------#esto es una corrección ortográfica
 
 ## Contributors
 
