@@ -70,7 +70,7 @@ export function CandidateListPage() {
         </h2>
         <p className="mt-1 text-sm text-slate-600">
           Review all clinical applicants across HealthCore&apos;s 12-clinic network.
-          Filter by hiring status or pipeline stage without leaving this view.
+          Filter by hiring status or pipeline stage.
         </p>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-3">

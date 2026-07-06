@@ -8,9 +8,9 @@ export function AppHeader() {
           <p className="text-xs font-semibold uppercase tracking-widest text-teal-200">
             HealthCore Digital · People & Workforce
           </p>
-          <h1 className="text-xl font-bold">Clinical Candidate Sourcing Workspace</h1>
+          <h1 className="text-xl font-bold">Candidate Sourcing Workspace</h1>
           <p className="mt-1 text-sm text-teal-100">
-            Internal tool for Diane Foster&apos;s recruitment team
+            Internal tool for recruitment team of Diane Foster
           </p>
         </div>
         <nav className="flex flex-wrap gap-2">
