@@ -1,13 +1,14 @@
 # Backend Architecture Proposal: `HealthCore`
 
 ## Architectural Pattern:
-- `Layered Domain-Driven Architecture` is strictly required because the core business logic must remain completely decoupled from the third-party tools.
-- This allows James Osei's 6-person tech team to build unified workflows without rewriting fundamental software layers when underlying regional provider systems change (Us and Uk).
+- `Layered Domain-Driven Architecture` is required because the core business logic must remain completely decoupled from the third-party tools.
+- This allows James Osei's 6-person tech team to build unified workflows without rewriting fundamental software layers when underlying regional provider systems change (US and UK).
 - By isolating the business rules into a core layer and wrapping third-party EHRs in adapter layers, a unified patient record API can be made for Dr. Marcus Reid without altering third-party platforms we do not legally control.
 
-## Proposed Folder Structure & Separation Criteria:
+## Proposed Folder Structure & Separation Criteria
 - The directory below keeps the healthcore domains vertically separated and technically layered.
 
+```text
 /backend
 ├── app/
 │   ├── core/        # Framework setups & shared configurations
@@ -34,6 +35,7 @@
 │   │       └── services.py    # Business Logic (Claims review)
 │   │
 │   └── main.py               
+```
 
 ### Allocation of Responsibility: 
 - High-level business rules inside services.py are kept isolated from technical transport protocols (router.py) and specific infrastructure details (adapters/).
@@ -46,7 +48,7 @@
 
 ## FastAPI Endpoint & Router Organization
 - Routes are explicitly grouped into sub-routers per domain rather than cluttering a single massive file.
-### Router Blueprint & Grouping Criteria:
+### Router Blueprint & Grouping Criteria
 - Clinical Operations Sub-Router (/api/v1/clinical): Groups routes managing cross-location medical timelines and AI administrative document parsing.
   - Concrete Routes:
     - GET /patient/{id}/history - Compiles an aggregated, cross-border patient timeline across regional EHR platforms.
@@ -69,7 +71,7 @@
 ### Pydantic Validation
 - This structure mirrors the official recommendation to keep data transmission independent from data storage by strictly decoupling Pydantic schemas from database ORM models.
 
-## Frontend & Backend Coexistence & Communication
+## Frontend & Backend Communication
 - The user-facing analytical dashboards used by Dr. Okonkwo and department heads exist as a detached software entities from the Python API backend.
 - API Communication: All data moving between the systems travels via secure, encrypted HTTPS connections using JSON formatting. The frontends consume data strictly by querying versioned backend endpoints (/api/v1/...).
 - Cross-Origin Resource Sharing (CORS): Because the clinical dashboards and the central API operate on completely separate network origins, the backend employs FastAPI's native CORSMiddleware. A whitelist containing only the internal frontend system domain URLs rather than allowing insecure wildcard access (allow_origins=["*"]) to mitigate security exploits is declared explictly.
