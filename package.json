@@ -1,0 +1,17 @@
+{
+  "name": "jenefa-company-workspace",
+  "private": true,
+  "workspaces": [
+    "src"
+  ],
+  "scripts": {
+    "start": "npm run start -w src --",
+    "dev": "npm run dev -w src",
+    "typecheck": "npm run typecheck -w src",
+    "test": "npm run test -w src",
+    "ops": "npm run ops -w src --",
+    "build": "npm run build -w src",
+    "preview": "npm run preview -w src",
+    "exec": "npm exec -w src"
+  }
+}

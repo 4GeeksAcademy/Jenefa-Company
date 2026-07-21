@@ -23,6 +23,14 @@ function formatDate(value: string) {
     year: "numeric",
   });
 }
+const POSITION_LABELS: Record<string, string> = {
+  "Licenciada/o en Administración de Empresas": "Business Administrator",
+  "Asistente de Dirección": "Executive Assistant",
+  "Técnica/o en Gestión y Organización": "Operations & Management Technician",
+  "Secretaria/o Ejecutiva/o": "Executive Secretary",
+  "Jefa/e de Gabinete": "Chief of Staff",
+  "Coordinadora/or Administrativa/o": "Administrative Manager",
+};
 
 export function CandidateDetailPage({ id }: { id: string }) {
   const { candidate, uiState, error, reload, setCandidate } = useCandidate(id);
@@ -63,7 +71,13 @@ export function CandidateDetailPage({ id }: { id: string }) {
           </Link>
         )}
       </div>
-
+ <div className="bg-slate-950 text-emerald-400 p-4 rounded text-xs font-mono border-2 border-red-500">
+      <p className="font-bold text-white mb-2">🔍 SYSTEM DEBUG LOGS:</p>
+      <p>• uiState: "{String(uiState)}"</p>
+      <p>• hasError: "{String(!!error)}"</p>
+      <p>• errorMessage: "{error?.message || "none"}"</p>
+      <p>• candidateExists: "{String(!!candidate)}"</p>
+    </div>
       <AsyncStateView
         uiState={uiState}
         error={error}
@@ -81,7 +95,13 @@ export function CandidateDetailPage({ id }: { id: string }) {
                   <h2 className="mt-1 text-2xl font-bold text-slate-900">
                     {candidate.full_name}
                   </h2>
-                  <p className="mt-1 text-slate-600">{candidate.position}</p>
+                <div className="bg-slate-900 text-green-400 p-4 rounded text-xs font-mono my-2 overflow-auto max-h-40">
+  <strong>Raw Candidate Data:</strong>
+  <pre>{JSON.stringify(candidate, null, 2)}</pre>
+</div> 
+                  <p className="mt-1 text-slate-600">
+                    {POSITION_LABELS[candidate.position] || candidate.position}
+                  </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <StatusBadge status={candidate.status} />
@@ -98,7 +118,7 @@ export function CandidateDetailPage({ id }: { id: string }) {
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <DetailField label="Email" value={candidate.email} />
                 <DetailField label="Phone" value={candidate.phone} />
-                <DetailField label="Clinical Role Applied" value={candidate.position} />
+                <DetailField label="Clinical Role Applied" value={POSITION_LABELS[candidate.position] || candidate.position} />
                 <DetailField
                   label="Years of Clinical Experience"
                   value={String(candidate.experience_years)}

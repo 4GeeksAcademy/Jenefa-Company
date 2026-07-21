@@ -127,7 +127,7 @@ form.addEventListener('submit', (event) => {
     if (firstInvalid) firstInvalid.focus();
     return;
   }
-
+  alert('Form submitted successfully!');
   form.reset();
   updateClinicLocations();
   statusBox.className = 'mt-6 rounded-xl border border-emerald-400 bg-emerald-500/10 p-4 text-emerald-200';
