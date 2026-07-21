@@ -73,8 +73,8 @@
 
 ## Frontend & Backend Communication
 - The user-facing analytical dashboards used by Dr. Okonkwo and department heads exist as a detached software entities from the Python API backend.
-- API Communication: All data moving between the systems travels via secure, encrypted HTTPS connections using JSON formatting. The frontends consume data strictly by querying versioned backend endpoints (/api/v1/...).
-- Cross-Origin Resource Sharing (CORS): Because the clinical dashboards and the central API operate on completely separate network origins, the backend employs FastAPI's native CORSMiddleware. A whitelist containing only the internal frontend system domain URLs rather than allowing insecure wildcard access (allow_origins=["*"]) to mitigate security exploits is declared explictly.
+- API Communication: All data moving between the systems travels via secure, encrypted HTTPS connections using JSON formatting. The frontends consume data strictly by querying versioned backend endpoints.
+- Cross-Origin Resource Sharing (CORS): Because the clinical dashboards and the central API operate on completely separate network origins, the backend employs FastAPI's native CORSMiddleware. A whitelist containing only the internal frontend system domain URLs rather than allowing insecure wildcard access to mitigate security exploits is declared explictly.
 - Environment Variable Management: Secrets such as database strings, encryption salts, and compliance API keys are completely barred from git control. The backend parses system variables securely at runtime using pydantic-settings to guarantee distinct, secure boundaries between US-HIPAA and UK-GDPR hosting regions
 
 ## Risks and Points of Attention
