@@ -25,7 +25,7 @@ Update `memory-bank/progress.md` so it accurately reflects the repository's curr
 
 ## Workflow
 
-1. Read `memory-bank/progress.md` (and skim `project-brief.md` / `techContext.md` only if needed for naming consistency).
+1. Read `memory-bank/progress.md` (and skim `projectbrief.md` / `techContext.md` only if needed for naming consistency).
 2. Confirm inputs. If `touched_paths` or `change_summary` is missing, gather them from git before editing.
 3. Edit **only** `memory-bank/progress.md`:
    - Move finished items under **Current State of Development** (or a dated "Completed" subsection).
