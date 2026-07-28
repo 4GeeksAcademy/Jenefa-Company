@@ -39,15 +39,15 @@ export function ImageLinkCard({
     />
     <div className="relative p-6">
       {eyebrow ? (
-        <p className="text-xl font-bold text-white">{eyebrow}</p>
+        <p className="text-2xl font-bold text-white">{eyebrow}</p>
       ) : null}
      <h3
-      className={`
-      inline-block rounded-lg px-2 py-1 text-2xl font-semibold text-white transition-all duration-300
-      group-hover:bg-slate-100 group-hover:text-slate-950 group-hover:scale-105 group-hover:shadow-md
-      ${eyebrow ? "mt-3 text-xl text-slate-100" : ""}
-  `   }
-      >
+  className={`
+   w-[calc(100%+3rem)] -mx-6 px-6 py-3 text-xl font-semibold text-white transition-all duration-300
+    group-hover:bg-slate-100 group-hover:text-slate-950 group-hover:shadow-md  
+    ${eyebrow ? "mt-3 text-2xl text-slate-100" : ""}
+  `}
+>
         {title}
       </h3>
       {description ? (
