@@ -11,6 +11,11 @@
 ### Executive Reporting
 - Reporting is static and lagging. The CEO receives unstandardized weekly reports from department heads that are based on data multiple days old. Critical real-time network metrics (like weekly no-show or denial rates) are completely inaccessible without manual phone polling.
 
+### Milestone 4 completed (monorepo AI setup)
+- Added `memory-bank/` (`project-brief.md`, `techContext.md`, `progress.md`), root `AGENTS.md`, `.agents/rules/phi-data-residency.md`, and `.agents/skills/sync-memory-bank/`.
+- Created `uis/backoffice` with its own shell layout; `/` imports `healthcore-testing` and renders denial, no-show, and CME outputs on screen.
+- Migrated Milestone 1 corporate site into `uis/website` as typed reusable React components (`/`, `/apply`) with the original teal/sky visual identity.
+
 ## Planned Next Steps
 - Dr. Sandra Okonkwo has newly commissioned HealthCore Digital as an internal unit specifically to build out modern, intelligent systems from scratch. The target deployment roadmap spans across six primary operational fronts:
 

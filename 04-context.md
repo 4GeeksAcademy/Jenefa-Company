@@ -35,12 +35,12 @@ The expected structure for agent configuration in the monorepo is the following:
 
 ./.agents
 └─ /rules
-   └─ <rule-name>.md
+   └─ .md
 └─ /skills
-   └─ /<skill>
+   └─ /
       └─ SKILL.md
 ./memory-bank
-└─ <context>.md
+└─ .md
 ⚠️ Attention: Do not confuse .agents/ with the /agents and /skills folders you will see in the monorepo. .agents/ is the configuration directory for coding agents (Cursor, Windsurf, Claude Code…) — this is where the rules and skills that teach the agent how to work in this repository go. The /agents and /skills folders are for the agents and integrations you will build for the company starting in later milestones. They are different things: one configures how your development tool works, the other is product code.
 
 Before creating any new folder, review the README.md inside each folder of the monorepo — the template repository includes instructions on what should go in each space. Following them will prevent duplication and keep a structure the agent can navigate without ambiguity.
@@ -48,3 +48,53 @@ Before creating any new folder, review the README.md inside each folder of the m
 Development rules (AGENTS.md and .agents/rules/) are the protocol the agent follows automatically: what to read at the start, what steps are mandatory before each commit, which conventions to respect, and when to stop and ask. They act as the team agreement that ensures the agent doesn't make decisions on its own where it shouldn't.
 
 An agent skill is a structured, reusable instruction: more concrete than a generic rule, with defined inputs, expected output, and verifiable acceptance criteria. A good skill has a single objective and can be tested independently.
+
+## **What You Need to Do**
+
+### **Agent Infrastructure**
+
+- Create the `memory-bank/` folder at the root of the monorepo with at least the following files:
+  - `projectbrief.md` — business description, project objectives, and the problem it solves
+  - `techContext.md` — tech stack, architectural decisions made, and technical constraints
+  - `progress.md` — current state of development and planned next steps
+- Create the `AGENTS.md` file at the root of the monorepo defining:
+  - Which memory bank files the agent must read at the start of each session
+  - The mandatory workflow before each commit (minimum 4 ordered, explicit steps)
+  - The folders and files the agent **must not modify** without explicit developer confirmation
+- Create the `.agents/` folder with at least one development rule documented with its scope (always active, file-pattern based, or agent-requested)
+- Implement at least one **agent skill** for a recurring workflow task, with:
+  - A single, clearly defined objective
+  - Documented inputs
+  - Explicit and verifiable acceptance criteria
+
+⚠️ **IMPORTANT:** The memory bank, rules, and skill must be aligned with the data, processes, and constraints documented in your monorepo's `CONTEXT.md`. A generic infrastructure that ignores the company scenario will not be accepted.
+
+### **Next.js + TypeScript Application**
+
+- Initialise the frontend structure under `/uis` inside the monorepo following the template repository structure
+- Create the public web project in `./uis/website` (Next.js + TypeScript)
+- Migrate and improve the corporate website from Milestone 1 in `./uis/website` as the home route (`/`):
+  - All sections from Milestone 1 present and complete
+  - Implemented with reusable React components and correct TypeScript typing
+  - Styles consistent with the visual identity established in Milestone 1
+- Create the internal app in `./uis/backoffice`:
+  - Route `/` in `./uis/backoffice` accessible with a basic entry view (welcome screen or empty dashboard structure)
+  - Its own layout, separate from the public corporate website layout in `./uis/website`
+- Integrate the TypeScript script from the business logic module (Milestone 2) inside `./uis/backoffice`:
+  - Code is imported from its original location in the monorepo — not copied
+  - The output of the business logic is visible in the interface (not just in the console)
+
+---
+
+## **✅ What We Will Evaluate**
+
+- The memory bank contains both business context **and** technical context — not just one of the two
+- `AGENTS.md` specifies a workflow with at least 4 ordered steps before the commit
+- The `.agents/` folder contains at least one rule with an explicit scope of application
+- The implemented skill has a single objective, documented inputs, and verifiable acceptance criteria
+- The public web in `./uis/website` starts without errors with `npm run dev`
+- The `/` route in `./uis/website` renders the complete corporate website with TypeScript components
+- `./uis/backoffice` exists, has its own layout, and renders without errors
+- The TypeScript script (Milestone 2) is integrated in `./uis/backoffice` and produces visible output on screen
+- No business logic code is duplicated — it is imported from its original location in the monorepo
+
