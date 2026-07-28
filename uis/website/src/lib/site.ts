@@ -9,32 +9,36 @@ export const siteConfig = {
 } as const;
 
 export type ServiceCard = {
+  
   title: string;
-  description: string;
   image: string;
   href: string;
 };
 
 export const services: ServiceCard[] = [
   {
+    
     title: "Primary Care",
     description: "Preventive visits, diagnosis, and ongoing support for all ages.",
+    image: "/images/hospitalHome.jpg",
+    href: "/apply",
+  },
+  {
+    
+    title: "Specialist Consultations",
+    description: "Fast access to specialist reviews without long waiting times.",
     image: "/images/kidsTeddy.jpg",
     href: "/apply",
   },
   {
-    title: "Specialist Consultations",
-    description: "Fast access to specialist reviews without long waiting times.",
+    
+    title: "Chronic Disease Management",
+    description: "Long-term plans for diabetes, heart health, and ongoing conditions.",
     image: "/images/hospitalEmployee.jpg",
     href: "/apply",
   },
   {
-    title: "Chronic Disease Management",
-    description: "Long-term plans for diabetes, heart health, and ongoing conditions.",
-    image: "/images/hospitalHands.jpg",
-    href: "/apply",
-  },
-  {
+    
     title: "Preventive Programmes",
     description: "Screenings and wellness pathways focused on early intervention.",
     image: "/images/yogaWellness.jpg",
@@ -45,7 +49,7 @@ export const services: ServiceCard[] = [
 export type BenefitCard = {
   eyebrow: string;
   title: string;
-  description: string;
+  
   image: string;
   href: string;
   tall?: boolean;
@@ -53,25 +57,24 @@ export type BenefitCard = {
 
 export const benefits: BenefitCard[] = [
   {
-    eyebrow: "12 Clinics",
-    title: "One Standard",
+    eyebrow: "Our Locations",
+    title: "12 Clinics - One Standard",
     description: "Consistent care quality across every location in two countries.",
-    image: "/images/hospitalEmployee.jpg",
+    image: "/images/doctorHeart.jpg",
     href: "/#contact",
   },
   {
     eyebrow: "Same Day",
     title: "Faster Access",
     description: "Same-day bookings and extended hours when you need care quickly.",
-    image: "/images/phonePatient.jpg",
+    image: "/images/fastAccess.jpg",
     href: "/apply",
-    tall: true,
   },
   {
     eyebrow: "Bilingual",
     title: "Inclusive Experience",
-    description: "Bilingual staff in US markets supporting clear, accessible care.",
-    image: "/images/hospitalHands.jpg",
+    description: "Bilingual staff in US and UK supporting clear, accessible care.",
+    image: "/images/customerSupport.jpg",
     href: "/#contact",
   },
 ];

@@ -19,9 +19,7 @@ export function HeroSection() {
             Your health is our priority.
           </h1>
           <p className="mt-6 max-w-3xl text-lg text-muted">
-            HealthCore integrates primary care, specialist consultation, and chronic care
-            management across 12 clinics with one clear mission: safer care, faster access,
-            better outcomes.
+          Get safer care and faster access. HealthCore connects primary, specialist, and chronic care across 12 modern clinics to prioritize your health.
           </p>
           <div className="mt-8 flex flex-col gap-4 sm:flex-row">
             <Link
@@ -44,7 +42,7 @@ export function HeroSection() {
             alt="HealthCore clinical team supporting a patient"
             fill
             priority
-            className="object-cover object-right"
+            className="object-cover object-center"
             sizes="(max-width: 768px) 100vw, 50vw"
           />
         </div>
