@@ -60,8 +60,8 @@ export const benefits: BenefitCard[] = [
     eyebrow: "Our Locations",
     title: "12 Clinics - One Standard",
     description: "Consistent care quality across every location in two countries.",
-    image: "/images/ourLocation.jpg",
-    href: "/#contact",
+    image: "/images/ourLocations.jpg",
+    href: "/locations",
   },
   {
     eyebrow: "Same Day",
