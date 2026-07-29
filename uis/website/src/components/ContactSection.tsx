@@ -3,16 +3,16 @@ import { contactOffices } from "@/lib/site";
 
 export function ContactSection() {
   return (
-    <section id="contact" className="mx-auto max-w-6xl px-6 py-16" aria-labelledby="contact-title">
+    <section id="contact" className="mx-auto max-w-7xl px-6 py-16" aria-labelledby="contact-title">
       <div className="grid items-start gap-8 md:grid-cols-2">
         <div>
-          <h2 id="contact-title" className="font-display text-3xl font-bold text-foreground">
+          <h2 id="contact-title" className="font-display text-4xl font-bold text-foreground">
             Take your first step with us
           </h2>
           <p className="mt-4 text-foreground">
-            Submit your healthcare application and our access team
+            Submit your healthcare application and our access team will follow up
           </p>
-          <p className="mt-2 text-foreground">will follow up to schedule your first visit.</p>
+          <p className="mt-2 text-foreground">to schedule your first visit with your care provider.</p>
           <Link
             href="/apply"
             className="mt-6 inline-flex rounded-full bg-accent-500 px-6 py-3 font-semibold text-white hover:bg-accent-600 focus:outline-none focus:ring-2 focus:ring-accent-100"

@@ -20,7 +20,7 @@ export const services: ServiceCard[] = [
     
     title: "Primary Care",
     description: "Preventive visits, diagnosis, and ongoing support for all ages.",
-    image: "/images/hospitalHome.jpg",
+    image: "/images/doctorHeart.jpg",
     href: "/apply",
   },
   {
@@ -60,7 +60,7 @@ export const benefits: BenefitCard[] = [
     eyebrow: "Our Locations",
     title: "12 Clinics - One Standard",
     description: "Consistent care quality across every location in two countries.",
-    image: "/images/doctorHeart.jpg",
+    image: "/images/ourLocation.jpg",
     href: "/#contact",
   },
   {

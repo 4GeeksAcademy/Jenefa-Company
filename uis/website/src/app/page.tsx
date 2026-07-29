@@ -11,7 +11,7 @@ export default function HomePage() {
     <>
       <SkipLink />
       <SiteHeader variant="home" />
-      <div className="mx-auto max-w-6xl px-6">
+      <div className="mx-auto max-w-8xl px-6">
         <HeroSection />
       </div>
       <main id="main-content">

@@ -34,9 +34,10 @@ export function ImageLinkCard({
       sizes="(max-width: 768px) 100vw, 33vw"
     />
     <div
-      className="absolute inset-0 bg-gradient-to-b from-slate-950/20 to-slate-950/75 transition group-hover:from-slate-950/30 group-hover:to-slate-950/80"
+      className="absolute inset-0 bg-slate-950/0 transition-opacity duration-300 group-hover:bg-slate-950/10"
       aria-hidden="true"
     />
+
     <div className="relative p-6">
       {eyebrow ? (
         <p className="text-2xl font-bold text-white">{eyebrow}</p>

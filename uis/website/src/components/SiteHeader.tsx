@@ -7,7 +7,7 @@ type SiteHeaderProps = {
 export function SiteHeader({ variant = "home" }: SiteHeaderProps) {
   return (
     <header className="border-b border-border bg-surface">
-      <div className={`mx-auto px-6 ${variant === "home" ? "max-w-6xl py-6" : "max-w-4xl py-4"}`}>
+      <div className={`mx-auto px-6 ${variant === "home" ? "max-w-7xl py-6" : "max-w-4xl py-4"}`}>
         <nav className="flex items-center justify-between" aria-label="Main navigation">
           <div className="flex items-center gap-3">
             <span
@@ -19,7 +19,7 @@ export function SiteHeader({ variant = "home" }: SiteHeaderProps) {
             </span>
             <Link
               href="/"
-              className="font-semibold tracking-wide text-foreground hover:text-accent-600 focus:outline-none focus:ring-2 focus:ring-brand-600 rounded"
+              className="font-semibold text-2xl tracking-wide text-foreground hover:text-accent-600 focus:outline-none focus:ring-2 focus:ring-brand-600 rounded"
             >
               HealthCore
             </Link>
