@@ -46,7 +46,7 @@ export function OpsDashboard() {
           Operations dashboard
         </p>
         <h2 className="mt-2 font-display text-3xl tracking-tight text-foreground">
-          Milestone 2 business logic
+          Incident File Analyzer business logic
         </h2>
         <p className="mt-3 max-w-2xl text-base leading-7 text-muted">
           Results from the shared <code className="text-foreground">healthcore-testing</code>{" "}

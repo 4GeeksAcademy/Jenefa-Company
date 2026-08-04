@@ -21,7 +21,7 @@ export function BackofficeShell({ children }: { children: React.ReactNode }) {
         <div className="border-b border-white/10 px-5 py-6">
           <p className="font-display text-lg tracking-tight">HealthCore</p>
           <p className="mt-1 text-xs uppercase tracking-[0.16em] text-sidebar-muted">
-            Digital · Internal
+            INTERNAL USE ONLY
           </p>
         </div>
         <nav className="flex flex-1 flex-col gap-1 px-3 py-4" aria-label="Backoffice">
