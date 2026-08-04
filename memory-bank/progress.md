@@ -13,14 +13,14 @@
 
 ### Milestone 4 completed (monorepo AI setup)
 - Added `memory-bank/` (`projectbrief.md`, `techContext.md`, `progress.md`), root `AGENTS.md`, `.agents/rules/phi-data-residency.md`, and `.agents/skills/sync-memory-bank/`.
-- Created `uis/backoffice` with its own shell layout; `/` imports `healthcore-testing` and renders denial, no-show, and CME outputs on screen.
+- Created `uis/web` with its own shell layout; `/` imports `healthcore-testing` and renders denial, no-show, and CME outputs on screen.
 - Migrated Milestone 1 corporate site into `uis/website` as typed reusable React components (`/`, `/apply`) with the original teal/sky visual identity.
 
 ### Incident report processor completed (Phase 1 + Phase 2)
 - Built shared validator in `scripts/incident_core/` and CLI `scripts/analyze.py` against HealthCore incident CSV rules (no `patient_id` in any output).
 - Added sample dataset `scripts/incidents-healthcore.csv` (100 rows; 94 valid / 6 invalid) matching `scripts/context-fileIncident.md` targets.
 - Added FastAPI service `services/api` with `POST /api/incidents/analyze` and `GET /api/incidents/results/export`.
-- Mounted Incident Analysis upload/dashboard/export UI at `uis/backoffice` `/incidents` (sidebar nav link).
+- Mounted Incident Analysis upload/dashboard/export UI at `uis/web` `/incidents` (sidebar nav link).
 
 ## Planned Next Steps
 - Dr. Sandra Okonkwo has newly commissioned HealthCore Digital as an internal unit specifically to build out modern, intelligent systems from scratch. The target deployment roadmap spans across six primary operational fronts:

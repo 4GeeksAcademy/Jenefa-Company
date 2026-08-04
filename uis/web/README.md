@@ -1,4 +1,4 @@
-# HealthCore Backoffice
+# HealthCore Web
 
 Internal Next.js app for HealthCore Digital staff tools (clinical ops, appointments, billing, compliance).
 
@@ -7,7 +7,7 @@ This app uses its **own shell layout** (sidebar + operations header) and is sepa
 ## Getting started
 
 ```bash
-cd uis/backoffice
+cd uis/web
 npm install
 npm run dev
 ```
@@ -17,5 +17,5 @@ Open [http://localhost:3001](http://localhost:3001) — route `/` runs the share
 From the monorepo root you can also link workspaces with `npm install`, then:
 
 ```bash
-npm run dev:backoffice
+npm run dev:web
 ```

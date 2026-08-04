@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Manrope } from "next/font/google";
-import { BackofficeShell } from "@/components/BackofficeShell";
+import { WebShell } from "@/components/WebShell";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -14,7 +14,7 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "HealthCore Backoffice",
+  title: "HealthCore Web",
   description:
     "Internal operations workspace for HealthCore Digital — clinical, billing, and compliance tools.",
 };
@@ -30,7 +30,7 @@ export default function RootLayout({
       className={`${manrope.variable} ${fraunces.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
-        <BackofficeShell>{children}</BackofficeShell>
+        <WebShell>{children}</WebShell>
       </body>
     </html>
   );

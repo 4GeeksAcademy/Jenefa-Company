@@ -12,7 +12,7 @@ const navItems = [
   { href: "#", label: "Compliance" },
 ] as const;
 
-export function BackofficeShell({ children }: { children: React.ReactNode }) {
+export function WebShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
@@ -24,7 +24,7 @@ export function BackofficeShell({ children }: { children: React.ReactNode }) {
             Digital · Internal
           </p>
         </div>
-        <nav className="flex flex-1 flex-col gap-1 px-3 py-4" aria-label="Backoffice">
+        <nav className="flex flex-1 flex-col gap-1 px-3 py-4" aria-label="Web app">
           {navItems.map((item) => {
             const active =
               item.href !== "#" &&
@@ -58,7 +58,7 @@ export function BackofficeShell({ children }: { children: React.ReactNode }) {
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
               Operations workspace
             </p>
-            <h1 className="font-display text-xl text-foreground">Backoffice</h1>
+            <h1 className="font-display text-xl text-foreground">Web</h1>
           </div>
           <p className="text-sm text-muted">Austin tech unit · James Osei</p>
         </header>
