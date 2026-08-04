@@ -6,10 +6,7 @@ import { usePathname } from "next/navigation";
 const navItems = [
   { href: "/", label: "Overview" },
   { href: "/incidents", label: "Incident analysis" },
-  { href: "#", label: "Clinical ops" },
-  { href: "#", label: "Appointments" },
-  { href: "#", label: "Billing" },
-  { href: "#", label: "Compliance" },
+  
 ] as const;
 
 export function BackofficeShell({ children }: { children: React.ReactNode }) {
@@ -60,7 +57,7 @@ export function BackofficeShell({ children }: { children: React.ReactNode }) {
             </p>
             <h1 className="font-display text-xl text-foreground">Backoffice</h1>
           </div>
-          <p className="text-sm text-muted">Austin tech unit · James Osei</p>
+          <p className="text-sm text-muted">Austin tech unit --- James Osei</p>
         </header>
         <main className="flex-1 px-6 py-8">{children}</main>
       </div>
