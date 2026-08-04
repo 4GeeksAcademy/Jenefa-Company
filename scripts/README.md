@@ -4,8 +4,10 @@ This folder contains **helper scripts** for the monorepo: development automation
 
 - **Main purpose**: group support tools that do not belong to a specific app, agent, or pipeline but make the team’s work easier.
 - **Recommendation**: document each script (what it does, parameters, requirements, usage examples) and keep them reproducible (and safe) across environments.
+## Screenshots 
+- Screenshots of console and webpage output are in `/scripts/screenshots`
 
-## Incident analysis (Phase 1)
+## Incident analysis
 
 | Script | Purpose |
 | ------ | ------- |
@@ -16,5 +18,7 @@ This folder contains **helper scripts** for the monorepo: development automation
 | `context-fileIncident.md` / `specs.md` | Product context and build specs |
 
 Outputs never include `patient_id` (HIPAA / UK GDPR).
+
+
 
 > _Spanish version: [README.es.md](./README.es.md)._
