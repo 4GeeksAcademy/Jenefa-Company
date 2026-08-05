@@ -6,10 +6,6 @@ import { usePathname } from "next/navigation";
 const navItems = [
   { href: "/", label: "Overview" },
   { href: "/incidents", label: "Incident analysis" },
-  { href: "#", label: "Clinical ops" },
-  { href: "#", label: "Appointments" },
-  { href: "#", label: "Billing" },
-  { href: "#", label: "Compliance" },
 ] as const;
 
 export function WebShell({ children }: { children: React.ReactNode }) {
@@ -21,7 +17,7 @@ export function WebShell({ children }: { children: React.ReactNode }) {
         <div className="border-b border-white/10 px-5 py-6">
           <p className="font-display text-lg tracking-tight">HealthCore</p>
           <p className="mt-1 text-xs uppercase tracking-[0.16em] text-sidebar-muted">
-            Digital · Internal
+            Internal use only
           </p>
         </div>
         <nav className="flex flex-1 flex-col gap-1 px-3 py-4" aria-label="Web app">
@@ -58,9 +54,9 @@ export function WebShell({ children }: { children: React.ReactNode }) {
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
               Operations workspace
             </p>
-            <h1 className="font-display text-xl text-foreground">Web</h1>
+            <h1 className="font-display text-xl text-foreground"> Backoffice</h1>
           </div>
-          <p className="text-sm text-muted">Austin tech unit · James Osei</p>
+          <p className="text-sm text-muted">Austin tech unit --- James Osei</p>
         </header>
         <main className="flex-1 px-6 py-8">{children}</main>
       </div>
