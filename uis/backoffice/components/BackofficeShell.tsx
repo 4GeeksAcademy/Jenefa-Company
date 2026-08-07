@@ -24,10 +24,9 @@ export function BackofficeShell({ children }: { children: React.ReactNode }) {
         <nav className="flex flex-1 flex-col gap-1 px-3 py-4" aria-label="Backoffice">
           {navItems.map((item) => {
             const active =
-              item.href !== "#" &&
-              (item.href === "/"
+              item.href === "/"
                 ? pathname === "/"
-                : pathname.startsWith(item.href));
+                : pathname.startsWith(item.href);
             return (
               <Link
                 key={item.label}

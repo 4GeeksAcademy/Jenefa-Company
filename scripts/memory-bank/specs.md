@@ -45,7 +45,7 @@
 
                   ┌──────────────────────────────┐
                   │   React Component Client     │
-                  │        (/uis/web)            │
+                  │     (/uis/backoffice)        │
                   └──────────────┬───────────────┘
                                  │
               POST /api/incidents/analyze (multipart/form-data)
@@ -54,7 +54,7 @@
                                  v
                   ┌──────────────────────────────┐
                   │    FastAPI Application       │
-                  │       (/services/api)        │
+                  │  (/services/api/app.py)      │
                   └──────────────┬───────────────┘
                                  │
                Evaluates context against data streams
@@ -64,6 +64,8 @@
                   └──────────────────────────────┘
 
 ### Backend Engine (/services/api)
+#### Entry point:
+- `services/api/app.py` — run with `uvicorn app:app --reload --port 8000`
 #### Endpoint POST /api/incidents/analyze:
 - Ingests the data array stream via standard multipart/form-data.
 - Runs the same strict validation script logic to isolate bad records from analytics data.
@@ -73,7 +75,9 @@
 #### Error Response Matrix:
 - HTTP 400 (Bad Request): Triggered by unreadable data headers, zero-byte uploads, or mismatched layouts, returning a clear error description.
 
-### UI View Workspace (/uis/web)
+### UI View Workspace (/uis/backoffice)
+#### Incident page path:
+- `uis/backoffice/app/incidents` (Next.js App Router) → browser route `/incidents`
 #### Navigation Tree: 
 - Mounts a direct link to the Incident Analysis page inside the sidebar or main menu.
 #### File Target Box: 

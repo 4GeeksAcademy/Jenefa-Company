@@ -1,15 +1,25 @@
-"""HealthCore incident analysis API (Phase 2)."""
+"""HealthCore incident analysis API (Phase 2).
+
+Run from this directory:
+    uvicorn app:app --reload --port 8000
+"""
 
 from __future__ import annotations
+
+import sys
+from pathlib import Path
 
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 
-from . import core_path as _core_path  # noqa: F401 — side effect: path bootstrap
-from . import state
+import state
 
-# Import shared core after path bootstrap.
+# Shared validator lives in /scripts — keep PHI out of API responses.
+_SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
+if str(_SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS_DIR))
+
 from incident_core import analyze_csv_bytes, results_to_csv_text  # noqa: E402
 from incident_core.constants import RULE_LABELS  # noqa: E402
 
@@ -34,7 +44,7 @@ app.add_middleware(
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
+def health() -> dict:
     return {"status": "ok"}
 
 
@@ -63,7 +73,6 @@ async def analyze_incidents(file: UploadFile = File(...)) -> JSONResponse:
         )
 
     payload = result.to_dict()
-    # Human-readable labels for the diagnostic banner (no PHI).
     payload["invalid_breakdown_labels"] = {
         rule: RULE_LABELS[rule] for rule in result.invalid_breakdown
     }
@@ -80,7 +89,10 @@ def export_results() -> Response:
             status_code=400,
             content={
                 "error": "Bad Request",
-                "detail": "No analysis results available. Upload a CSV via POST /api/incidents/analyze first.",
+                "detail": (
+                    "No analysis results available. "
+                    "Upload a CSV via POST /api/incidents/analyze first."
+                ),
             },
         )
 

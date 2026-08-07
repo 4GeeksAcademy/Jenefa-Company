@@ -19,8 +19,8 @@
 ### Incident report processor completed (Phase 1 + Phase 2)
 - Built shared validator in `scripts/incident_core/` and CLI `scripts/analyze.py` against HealthCore incident CSV rules (no `patient_id` in any output).
 - Added sample dataset `scripts/incidents-healthcore.csv` (100 rows; 94 valid / 6 invalid) matching `scripts/context-fileIncident.md` targets.
-- Added FastAPI service `services/api` with `POST /api/incidents/analyze` and `GET /api/incidents/results/export`.
-- Mounted Incident Analysis upload/dashboard/export UI at `uis/backoffice` `/incidents` (sidebar nav link).
+- Added FastAPI entry `services/api/app.py` with `POST /api/incidents/analyze` and `GET /api/incidents/results/export`.
+- Mounted Incident Analysis UI at `uis/backoffice/app/incidents` (route `/incidents`, sidebar nav link).
 
 ## Planned Next Steps
 - Dr. Sandra Okonkwo has newly commissioned HealthCore Digital as an internal unit specifically to build out modern, intelligent systems from scratch. The target deployment roadmap spans across six primary operational fronts:
