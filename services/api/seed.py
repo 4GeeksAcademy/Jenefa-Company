@@ -34,7 +34,7 @@ def main() -> None:
     try:
         # ---- VISUAL CONSOLE TERMINAL OUTPUT ----
         print("\n" + "="*60)
-        print(f"📋 LOADING SUPPLIERS DIRECTORY DATA ({len(SUPPLIERS_SEED)} Records)")
+        print(f" LOADING SUPPLIERS DIRECTORY DATA ({len(SUPPLIERS_SEED)} Records)")
         print("="*60)
         
         for index, supplier in enumerate(SUPPLIERS_SEED, start=1):
@@ -52,9 +52,9 @@ def main() -> None:
         inserted = seed()
         
         if inserted == 0:
-            print("⚠️  Database already contains rows. Skipped duplicating data.")
+            print(" Database already contains rows. Skipped duplicating data.")
         else:
-            print(f"✅ Success! Newly inserted {inserted} records into the database.")
+            print(f"Success! Newly inserted {inserted} records into the database.")
         print("="*60 + "\n")
         
     finally:
