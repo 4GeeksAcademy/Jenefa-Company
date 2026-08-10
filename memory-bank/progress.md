@@ -25,7 +25,7 @@
 ### Supplier directory completed (Milestone 09 — lightweight storage)
 - Organized per `services/directory.md`: supplier backend lives in `services/api` (`main.py`, `models.py`, `database.py`, `routes/suppliers.py`, `seed.py`) with TinyDB + Pydantic validation and idempotent seed (15 vendors from `services/context-Supplier.md`).
 - Incident routes remain on the same API via `routes/incidents.py`; preferred entrypoint `uvicorn main:app --port 8000`.
-- Supplier UI mounted at `uis/application/app/suppliers` with filters, create form, rate edits, and active/suspended toggles.
+- Supplier UI mounted at `uis/backoffice/app/suppliers` (shell branded Home) with filters, create form, rate edits, and active/suspended toggles.
 
 ## Planned Next Steps
 - Dr. Sandra Okonkwo has newly commissioned HealthCore Digital as an internal unit specifically to build out modern, intelligent systems from scratch. The target deployment roadmap spans across six primary operational fronts:

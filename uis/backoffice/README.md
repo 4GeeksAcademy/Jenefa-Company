@@ -1,13 +1,13 @@
-# HealthCore Application
+# HealthCore Backoffice (Home)
 
-Internal Next.js app for People & Compliance workflows.
+Internal Next.js backoffice for People & Compliance workflows. The shell labels this surface **Home**.
 
 ## Supplier directory
 
 Route: [`/suppliers`](./app/suppliers) — create, filter, update rates, and activate/suspend vendors against `services/api`.
 
 ```bash
-cd uis/application
+cd uis/backoffice
 npm install
 NEXT_PUBLIC_SUPPLIER_API_URL=http://127.0.0.1:8000 npm run dev
 ```

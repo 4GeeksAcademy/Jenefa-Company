@@ -53,7 +53,7 @@ export function WebShell({ children }: { children: React.ReactNode }) {
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
               Operations workspace
             </p>
-            <h1 className="font-display text-xl text-foreground"> Backoffice</h1>
+            <h1 className="font-display text-xl text-foreground">Home</h1>
           </div>
           <p className="text-sm text-muted">Austin tech unit --- James Osei</p>
         </header>

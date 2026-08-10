@@ -11,7 +11,7 @@ Each subfolder inside `uis/` must correspond to **one specific user interface** 
 
 | App | Path | Stack | Purpose |
 | --- | ---- | ----- | ------- |
-| Application | [`application/`](./application/) | Next.js | Supplier directory at `/suppliers` (see [`../services/directory.md`](../services/directory.md)) |
+| Backoffice (Home) | [`backoffice/`](./backoffice/) | Next.js | Supplier directory at `/suppliers` (shell branded Home) |
 | Web | [`web/`](./web/) | Next.js | Ops workspace + incident analysis |
 | Website | [`website/`](./website/) | Next.js | Public corporate site |
 

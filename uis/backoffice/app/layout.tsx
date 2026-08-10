@@ -14,9 +14,9 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "HealthCore Application",
+  title: "HealthCore Home",
   description:
-    "Internal HealthCore Digital application — supplier directory and operations tools.",
+    "HealthCore Digital backoffice home — supplier directory and operations tools.",
 };
 
 export default function RootLayout({

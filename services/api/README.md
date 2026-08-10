@@ -23,15 +23,19 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-# Idempotent supplier seed
-python seed.py
+# Idempotent supplier seed (skips if db.json already has rows)
+uv run seed
+# or: python seed.py
 
 uvicorn main:app --reload --port 8000
 ```
 
+`uv run seed` / `python seed.py` read `db.json` first. If any suppliers exist, they print `Inserted 0 records.` and do not write duplicates.
+
+
 - API docs: http://127.0.0.1:8000/docs
-- Supplier Jinja UI: http://127.0.0.1:8000/backoffice
-- React page: `uis/application` → `/suppliers`
+- Supplier Jinja UI: http://127.0.0.1:8000/home
+- React page: `uis/backoffice` → `/suppliers` (Home shell)
 
 Legacy incident-only entrypoint remains: `uvicorn app.main:app --port 8000`.
 

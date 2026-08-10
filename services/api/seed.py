@@ -8,24 +8,19 @@ Run with:
 from __future__ import annotations
 
 from constants import SUPPLIERS_SEED
-from database import close_db, count_suppliers, find_by_name, insert_seed_record
+from database import close_db, count_suppliers, insert_seed_record
 
 
 def seed() -> int:
-    """Insert seed suppliers that are not already present (matched by name).
+    """Load seed suppliers only when the database is empty.
+
+    Reads `db.json` first. If any supplier rows already exist, skips insertion
+    entirely so re-running `uv run seed` never duplicates data.
 
     Returns the number of newly inserted records.
     """
-    existing = count_suppliers()
-    if existing > 0:
-        # Idempotency: skip names already in the store; allow partial re-runs.
-        inserted = 0
-        for row in SUPPLIERS_SEED:
-            if find_by_name(row["name"]) is not None:
-                continue
-            insert_seed_record(row)
-            inserted += 1
-        return inserted
+    if count_suppliers() > 0:
+        return 0
 
     inserted = 0
     for row in SUPPLIERS_SEED:

@@ -13,4 +13,19 @@ Each subfolder inside `services/` must correspond to **one specific service** (f
 | ------- | ---- | ----- | ------- |
 | HealthCore API | [`api/`](./api/) | FastAPI + TinyDB | Supplier directory (`/suppliers`) and incident analysis (`/api/incidents/*`) per [`directory.md`](./directory.md) |
 
+# To Run
+## Termina 1:
+
+`cd services/api && source .venv/bin/activate
+
+python seed.py
+
+uvicorn main:app --reload --port 8000`
+
+## Terminal 2 : 
+
+`cd uis/backoffice
+
+npm run dev `
+
 > _Spanish version: [README.es.md](./README.es.md)._

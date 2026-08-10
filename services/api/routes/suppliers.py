@@ -41,12 +41,12 @@ def meta_countries() -> list[str]:
     return VALID_COUNTRIES
 
 
-@router.get("/backoffice", response_class=HTMLResponse)
-def backoffice(request: Request) -> HTMLResponse:
-    """Lightweight Jinja backoffice served by the API."""
+@router.get("/home", response_class=HTMLResponse)
+def home(request: Request) -> HTMLResponse:
+    """Lightweight Jinja home UI served by the API."""
     return templates.TemplateResponse(
         request,
-        "backoffice.html",
+        "home.html",
         {
             "categories": VALID_CATEGORIES,
             "countries": VALID_COUNTRIES,

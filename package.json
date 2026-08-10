@@ -5,7 +5,7 @@
     "src",
     "uis/website",
     "uis/web",
-    "uis/application"
+    "uis/backoffice"
   ],
   "scripts": {
     "start": "npm run start -w src --",
@@ -20,7 +20,7 @@
     "build:website": "npm run build -w website",
     "dev:web": "npm run dev -w web",
     "build:web": "npm run build -w web",
-    "dev:application": "npm run dev -w application",
-    "build:application": "npm run build -w application"
+    "dev:backoffice": "npm run dev -w backoffice",
+    "build:backoffice": "npm run build -w backoffice"
   }
 }
