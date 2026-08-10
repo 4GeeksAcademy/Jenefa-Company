@@ -16,7 +16,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="border-b border-white/10 px-5 py-6">
           <p className="font-display text-lg tracking-tight">HealthCore</p>
           <p className="mt-1 text-xs uppercase tracking-[0.16em] text-sidebar-muted">
-            Home
+            Backoffice
           </p>
         </div>
         <nav className="flex flex-1 flex-col gap-1 px-3 py-4" aria-label="Home">
@@ -49,9 +49,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
               People &amp; compliance
             </p>
-            <h1 className="font-display text-xl text-foreground">Home</h1>
+            <h1 className="font-display text-xl text-foreground">Internal Digital -Supplier Directory</h1>
           </div>
-          <p className="text-sm text-muted">Diane Foster · Claire Whitfield</p>
+          <p className="text-sm text-muted">Diane Foster and Claire Whitfield</p>
         </header>
         <main className="flex-1 px-6 py-8">{children}</main>
       </div>

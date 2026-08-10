@@ -14,7 +14,7 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "HealthCore Home",
+  title: "HealthCore Backoffice",
   description:
     "HealthCore Digital backoffice home — supplier directory and operations tools.",
 };
