@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HealthCore · Supplier Directory</title>
+    <style>
+      :root {
+        --bg: #f4f7f8;
+        --fg: #1a2b32;
+        --surface: #fff;
+        --accent: #1f7a7a;
+        --border: #d5e0e2;
+        --muted: #5c7278;
+        --ok: #157a4b;
+        --warn: #a15c12;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Manrope, system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+      }
+      header {
+        background: #0f3d3e;
+        color: #fff;
+        padding: 1.25rem 1.5rem;
+      }
+      header p { margin: 0.25rem 0 0; opacity: 0.75; font-size: 0.85rem; }
+      main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 1rem 1.25rem;
+        margin-bottom: 1rem;
+      }
+      label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.25rem; }
+      input, select, textarea, button {
+        font: inherit;
+        padding: 0.45rem 0.6rem;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+      }
+      button {
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        cursor: pointer;
+      }
+      button.secondary { background: #fff; color: var(--fg); border: 1px solid var(--border); }
+      button.danger { background: #9b2c2c; }
+      .filters { display: flex; gap: 1rem; flex-wrap: wrap; align-items: end; }
+      table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+      th, td { text-align: left; padding: 0.6rem 0.4rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+      th { color: var(--muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+      .badge {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+      .badge.active { background: #d9f5e7; color: var(--ok); }
+      .badge.suspended { background: #fdecc8; color: var(--warn); }
+      .row-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.75rem;
+      }
+      .error { background: #fde8e8; color: #9b2c2c; padding: 0.75rem; margin-bottom: 1rem; border: 1px solid #f5c2c2; }
+      .muted { color: var(--muted); font-size: 0.85rem; }
+      tr.suspended-row { opacity: 0.72; }
+      .rate-input { width: 7rem; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1 style="margin:0;font-size:1.35rem;">Supplier Directory</h1>
+      <p>Diane Foster · Claire Whitfield · HealthCore Digital</p>
+    </header>
+    <main>
+      <div id="error" class="error" hidden></div>
+
+      <section class="panel">
+        <div class="filters">
+          <div>
+            <label for="filter-country">Country</label>
+            <select id="filter-country">
+              <option value="">All</option>
+              {% for c in countries %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+            </select>
+          </div>
+          <div>
+            <label for="filter-category">Category</label>
+            <select id="filter-category">
+              <option value="">All</option>
+              {% for c in categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+            </select>
+          </div>
+          <button type="button" class="secondary" id="refresh-btn">Refresh</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 style="margin-top:0;font-size:1.1rem;">Register supplier</h2>
+        <form id="create-form" class="form-grid">
+          <div>
+            <label for="name">Name</label>
+            <input id="name" name="name" required minlength="1" />
+          </div>
+          <div>
+            <label for="country">Country</label>
+            <select id="country" name="country" required>
+              {% for c in countries %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+            </select>
+          </div>
+          <div>
+            <label for="categories">Category</label>
+            <select id="categories" name="categories" required>
+              {% for c in categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+            </select>
+          </div>
+          <div>
+            <label for="monthly_rate">Monthly rate</label>
+            <input id="monthly_rate" name="monthly_rate" type="number" min="0.01" step="0.01" required />
+          </div>
+          <div>
+            <label for="status">Status</label>
+            <select id="status" name="status">
+              <option value="active">active</option>
+              <option value="suspended">suspended</option>
+            </select>
+          </div>
+          <div>
+            <label for="compliance_agreement">Compliance</label>
+            <select id="compliance_agreement" name="compliance_agreement">
+              <option value="">None</option>
+              <option value="BAA">BAA</option>
+              <option value="DPA">DPA</option>
+              <option value="both">both</option>
+            </select>
+          </div>
+          <div style="grid-column: 1 / -1;">
+            <button type="submit">Create supplier</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Country</th>
+              <th>Categories</th>
+              <th>Rate</th>
+              <th>Compliance</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <p id="empty" class="muted" hidden>No suppliers match the current filters.</p>
+      </section>
+    </main>
+    <script>
+      const errorEl = document.getElementById("error");
+      const rowsEl = document.getElementById("rows");
+      const emptyEl = document.getElementById("empty");
+
+      function currencyFor(country) {
+        return country === "UK" ? "GBP" : "USD";
+      }
+
+      function showError(msg) {
+        if (!msg) {
+          errorEl.hidden = true;
+          errorEl.textContent = "";
+          return;
+        }
+        errorEl.hidden = false;
+        errorEl.textContent = msg;
+      }
+
+      async function parseError(res) {
+        try {
+          const data = await res.json();
+          if (typeof data.detail === "string") return data.detail;
+          if (Array.isArray(data.detail)) {
+            return data.detail.map((d) => d.msg || JSON.stringify(d)).join("; ");
+          }
+          return JSON.stringify(data);
+        } catch {
+          return res.statusText || "Request failed";
+        }
+      }
+
+      async function loadSuppliers() {
+        showError("");
+        const country = document.getElementById("filter-country").value;
+        const category = document.getElementById("filter-category").value;
+        const params = new URLSearchParams();
+        if (country) params.set("country", country);
+        if (category) params.set("category", category);
+        const res = await fetch("/suppliers?" + params.toString());
+        if (!res.ok) {
+          showError(await parseError(res));
+          return;
+        }
+        const data = await res.json();
+        rowsEl.innerHTML = "";
+        emptyEl.hidden = data.length > 0;
+        for (const s of data) {
+          const tr = document.createElement("tr");
+          if (s.status === "suspended") tr.classList.add("suspended-row");
+          const nextStatus = s.status === "active" ? "suspended" : "active";
+          tr.innerHTML = `
+            <td><strong>${escapeHtml(s.name)}</strong><div class="muted">updated ${escapeHtml(s.updated_at)}</div></td>
+            <td>${escapeHtml(s.country)}</td>
+            <td>${escapeHtml((s.categories || []).join(", "))}</td>
+            <td>
+              <input class="rate-input" type="number" min="0.01" step="0.01" value="${s.monthly_rate}" data-id="${s.id}" />
+              <span class="muted">${escapeHtml(s.currency)}</span>
+              <button type="button" data-action="rate" data-id="${s.id}">Save</button>
+            </td>
+            <td>${escapeHtml(s.compliance_agreement || "—")}</td>
+            <td><span class="badge ${s.status}">${s.status}</span></td>
+            <td class="row-actions">
+              <button type="button" class="secondary" data-action="toggle" data-id="${s.id}" data-status="${nextStatus}">
+                ${nextStatus === "suspended" ? "Suspend" : "Activate"}
+              </button>
+            </td>
+          `;
+          rowsEl.appendChild(tr);
+        }
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;");
+      }
+
+      document.getElementById("filter-country").addEventListener("change", loadSuppliers);
+      document.getElementById("filter-category").addEventListener("change", loadSuppliers);
+      document.getElementById("refresh-btn").addEventListener("click", loadSuppliers);
+
+      rowsEl.addEventListener("click", async (event) => {
+        const btn = event.target.closest("button[data-action]");
+        if (!btn) return;
+        const id = btn.dataset.id;
+        const action = btn.dataset.action;
+        showError("");
+        if (action === "rate") {
+          const input = rowsEl.querySelector(`input.rate-input[data-id="${id}"]`);
+          const monthly_rate = Number(input.value);
+          const res = await fetch(`/suppliers/${id}/rate`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ monthly_rate }),
+          });
+          if (!res.ok) {
+            showError(await parseError(res));
+            return;
+          }
+          await loadSuppliers();
+        }
+        if (action === "toggle") {
+          const res = await fetch(`/suppliers/${id}/status`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: btn.dataset.status }),
+          });
+          if (!res.ok) {
+            showError(await parseError(res));
+            return;
+          }
+          await loadSuppliers();
+        }
+      });
+
+      document.getElementById("create-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        showError("");
+        const country = document.getElementById("country").value;
+        const payload = {
+          name: document.getElementById("name").value.trim(),
+          country,
+          categories: [document.getElementById("categories").value],
+          monthly_rate: Number(document.getElementById("monthly_rate").value),
+          currency: currencyFor(country),
+          status: document.getElementById("status").value,
+          compliance_agreement: document.getElementById("compliance_agreement").value || null,
+        };
+        const res = await fetch("/suppliers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          showError(await parseError(res));
+          return;
+        }
+        event.target.reset();
+        await loadSuppliers();
+      });
+
+      loadSuppliers();
+    </script>
+  </body>
+</html>

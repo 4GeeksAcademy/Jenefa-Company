@@ -7,4 +7,12 @@ Each subfolder inside `uis/` must correspond to **one specific user interface** 
 - **Main purpose**: to centralize in a single place all the frontend applications that support the company's use cases.
 - **Recommendation**: document in this file (or in sub-READMEs) the applications you add, their objective, the technology used, and how to run them.
 
+## Applications
+
+| App | Path | Stack | Purpose |
+| --- | ---- | ----- | ------- |
+| Application | [`application/`](./application/) | Next.js | Supplier directory at `/suppliers` (see [`../services/directory.md`](../services/directory.md)) |
+| Web | [`web/`](./web/) | Next.js | Ops workspace + incident analysis |
+| Website | [`website/`](./website/) | Next.js | Public corporate site |
+
 > _Spanish version: [README.es.md](./README.es.md)._

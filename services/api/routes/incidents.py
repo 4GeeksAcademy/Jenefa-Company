@@ -1,49 +1,19 @@
-"""HealthCore incident analysis API (Phase 2).
-
-Legacy entrypoint: `uvicorn app.main:app --port 8000`
-Preferred unified entrypoint: `uvicorn main:app --port 8000`
-"""
+"""Incident analysis endpoints (existing Phase 2 service)."""
 
 from __future__ import annotations
 
-from fastapi import FastAPI, File, UploadFile
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 
-from . import core_path as _core_path  # noqa: F401 — side effect: path bootstrap
-from . import state
+from app import core_path as _core_path  # noqa: F401 — path bootstrap
+from app import state
+from incident_core import analyze_csv_bytes, results_to_csv_text
+from incident_core.constants import RULE_LABELS
 
-from incident_core import analyze_csv_bytes, results_to_csv_text  # noqa: E402
-from incident_core.constants import RULE_LABELS  # noqa: E402
-
-app = FastAPI(
-    title="HealthCore Incident Analysis API",
-    description="Validate patient incident CSVs without exposing PHI in responses.",
-    version="1.0.0",
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://localhost:3002",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-        "http://127.0.0.1:3002",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+router = APIRouter(tags=["incidents"])
 
 
-@app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
-
-
-@app.post("/api/incidents/analyze")
+@router.post("/api/incidents/analyze")
 async def analyze_incidents(file: UploadFile = File(...)) -> JSONResponse:
     filename = file.filename or "upload.csv"
     data = await file.read()
@@ -76,7 +46,7 @@ async def analyze_incidents(file: UploadFile = File(...)) -> JSONResponse:
     return JSONResponse(content=payload)
 
 
-@app.get("/api/incidents/results/export")
+@router.get("/api/incidents/results/export")
 def export_results() -> Response:
     csv_text = state.get_latest_csv()
     if csv_text is None:

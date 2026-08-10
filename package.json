@@ -4,7 +4,8 @@
   "workspaces": [
     "src",
     "uis/website",
-    "uis/web"
+    "uis/web",
+    "uis/application"
   ],
   "scripts": {
     "start": "npm run start -w src --",
@@ -18,6 +19,8 @@
     "dev:website": "npm run dev -w website",
     "build:website": "npm run build -w website",
     "dev:web": "npm run dev -w web",
-    "build:web": "npm run build -w web"
+    "build:web": "npm run build -w web",
+    "dev:application": "npm run dev -w application",
+    "build:application": "npm run build -w application"
   }
 }

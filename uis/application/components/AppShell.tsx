@@ -4,11 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
-  { href: "/", label: "Overview" },
-  { href: "/incidents", label: "Incident analysis" },
+  { href: "/suppliers", label: "Supplier directory" },
 ] as const;
 
-export function WebShell({ children }: { children: React.ReactNode }) {
+export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
@@ -17,15 +16,12 @@ export function WebShell({ children }: { children: React.ReactNode }) {
         <div className="border-b border-white/10 px-5 py-6">
           <p className="font-display text-lg tracking-tight">HealthCore</p>
           <p className="mt-1 text-xs uppercase tracking-[0.16em] text-sidebar-muted">
-            Internal use only
+            Application
           </p>
         </div>
-        <nav className="flex flex-1 flex-col gap-1 px-3 py-4" aria-label="Web app">
+        <nav className="flex flex-1 flex-col gap-1 px-3 py-4" aria-label="Application">
           {navItems.map((item) => {
-            const active =
-              item.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(item.href);
+            const active = pathname.startsWith(item.href);
             return (
               <Link
                 key={item.label}
@@ -51,11 +47,11 @@ export function WebShell({ children }: { children: React.ReactNode }) {
         <header className="flex items-center justify-between border-b border-border bg-surface px-6 py-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-              Operations workspace
+              People &amp; compliance
             </p>
-            <h1 className="font-display text-xl text-foreground"> Backoffice</h1>
+            <h1 className="font-display text-xl text-foreground">Application</h1>
           </div>
-          <p className="text-sm text-muted">Austin tech unit --- James Osei</p>
+          <p className="text-sm text-muted">Diane Foster · Claire Whitfield</p>
         </header>
         <main className="flex-1 px-6 py-8">{children}</main>
       </div>
