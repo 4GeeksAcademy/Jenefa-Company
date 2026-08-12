@@ -21,9 +21,10 @@ Open interactive docs at `http://127.0.0.1:8000/docs`.
 ## Auth quick start
 
 1. `POST /users` — register (`email`, `password`, optional `name` / `phone` / `address`)
-2. `POST /auth/login` — receive `{ "access_token": "...", "token_type": "bearer" }`
-3. Click **Authorize** in `/docs` and paste the token (Bearer)
-4. Call protected routes such as `GET /auth/me`
+2. Log in either way:
+   - `POST /auth/login` JSON: `{ "email": "...", "password": "..." }`
+   - Or click **Authorize** in `/docs` and enter **username = your email**, plus password (leave client id/secret empty)
+3. Response / Authorize yields a Bearer token — then call protected routes such as `GET /auth/me`
 
 Missing / invalid tokens return **401**. Ownership / role violations return **403**.
 

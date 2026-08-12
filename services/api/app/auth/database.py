@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+import json
+import os
+import tempfile
+from pathlib import Path
 from typing import Any
 
 from tinydb import Query, TinyDB
+from tinydb.storages import Storage, touch
 from tinydb.table import Table
 
 from .config import get_settings
@@ -15,12 +20,62 @@ USERS_TABLE = "users"
 PROFILES_TABLE = "profiles"
 
 
+class AtomicJSONStorage(Storage):
+    """JSON storage that writes via temp file + replace to avoid partial corruption."""
+
+    def __init__(self, path: str | Path, parse_float=float) -> None:
+        super().__init__()
+        self.path = Path(path)
+        self._parse_float = parse_float
+        touch(self.path, create_dirs=True)
+
+    def read(self) -> dict[str, Any] | None:
+        if not self.path.exists() or self.path.stat().st_size == 0:
+            return None
+        raw = self.path.read_text(encoding="utf-8")
+        try:
+            return json.loads(raw, parse_float=self._parse_float)
+        except json.JSONDecodeError:
+            repaired = _scrub_invalid_control_chars(raw)
+            data = json.loads(repaired, parse_float=self._parse_float)
+            self.write(data)
+            return data
+
+    def write(self, data: dict[str, Any] | None) -> None:
+        serialized = json.dumps(data if data is not None else {}, ensure_ascii=True)
+        fd, tmp_name = tempfile.mkstemp(
+            prefix=f".{self.path.name}.",
+            suffix=".tmp",
+            dir=str(self.path.parent),
+        )
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                handle.write(serialized)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(tmp_name, self.path)
+        except Exception:
+            try:
+                os.unlink(tmp_name)
+            except OSError:
+                pass
+            raise
+
+    def close(self) -> None:
+        return None
+
+
+def _scrub_invalid_control_chars(raw: str) -> str:
+    """Replace raw ASCII controls (except tab) that break JSON string literals."""
+    return "".join(" " if (ord(ch) < 32 and ch not in "\t") else ch for ch in raw)
+
+
 def get_db() -> TinyDB:
     global _db
     if _db is None:
         path = get_settings().auth_db_path
         path.parent.mkdir(parents=True, exist_ok=True)
-        _db = TinyDB(path)
+        _db = TinyDB(path, storage=AtomicJSONStorage)
     return _db
 
 

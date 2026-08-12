@@ -4,15 +4,27 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 Role = Literal["admin", "manager", "user"]
+
+
+def _collapse_whitespace(value: str) -> str:
+    """Normalize profile text so newlines/control chars cannot corrupt TinyDB JSON."""
+    return " ".join(value.split())
 
 
 class ProfileBase(BaseModel):
     name: str = ""
     phone: str = ""
     address: str = ""
+
+    @field_validator("name", "phone", "address", mode="before")
+    @classmethod
+    def normalize_text(cls, value: object) -> object:
+        if isinstance(value, str):
+            return _collapse_whitespace(value)
+        return value
 
 
 class ProfileOut(ProfileBase):
@@ -25,6 +37,13 @@ class ProfileUpdate(BaseModel):
     phone: str | None = None
     address: str | None = None
 
+    @field_validator("name", "phone", "address", mode="before")
+    @classmethod
+    def normalize_text(cls, value: object) -> object:
+        if isinstance(value, str):
+            return _collapse_whitespace(value)
+        return value
+
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -32,6 +51,13 @@ class UserCreate(BaseModel):
     name: str = ""
     phone: str = ""
     address: str = ""
+
+    @field_validator("name", "phone", "address", mode="before")
+    @classmethod
+    def normalize_text(cls, value: object) -> object:
+        if isinstance(value, str):
+            return _collapse_whitespace(value)
+        return value
 
 
 class UserUpdate(BaseModel):
