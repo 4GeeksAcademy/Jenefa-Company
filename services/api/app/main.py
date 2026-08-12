@@ -1,6 +1,8 @@
-"""HealthCore incident analysis API (Phase 2)."""
+"""HealthCore API — incident analysis plus JWT authentication layer (AUTH-01)."""
 
 from __future__ import annotations
+
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,15 +10,35 @@ from fastapi.responses import JSONResponse, Response, StreamingResponse
 
 from . import core_path as _core_path  # noqa: F401 — side effect: path bootstrap
 from . import state
+from .auth.database import close_db
+from .auth.routers import auth as auth_router
+from .auth.routers import profiles as profiles_router
+from .auth.routers import protected as protected_router
+from .auth.routers import users as users_router
 
 # Import shared core after path bootstrap.
 from incident_core import analyze_csv_bytes, results_to_csv_text  # noqa: E402
 from incident_core.constants import RULE_LABELS  # noqa: E402
 
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Fail fast if SECRET_KEY / token config is missing.
+    from .auth.config import get_settings
+
+    get_settings()
+    yield
+    close_db()
+
+
 app = FastAPI(
-    title="HealthCore Incident Analysis API",
-    description="Validate patient incident CSVs without exposing PHI in responses.",
-    version="1.0.0",
+    title="HealthCore Unified API",
+    description=(
+        "Incident analysis plus zero-trust JWT authentication for user, profile, "
+        "and protected operational routes."
+    ),
+    version="1.1.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -31,6 +53,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth_router.router)
+app.include_router(users_router.router)
+app.include_router(profiles_router.router)
+app.include_router(protected_router.router)
 
 
 @app.get("/health")
