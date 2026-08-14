@@ -8,6 +8,10 @@ from fastapi.responses import JSONResponse, Response, StreamingResponse
 
 from . import core_path as _core_path  # noqa: F401 — side effect: path bootstrap
 from . import state
+from .auth.routers.auth import router as auth_router
+from .auth.routers.profiles import router as profiles_router
+from .auth.routers.protected import router as protected_router
+from .auth.routers.users import router as users_router
 
 # Import shared core after path bootstrap.
 from incident_core import analyze_csv_bytes, results_to_csv_text  # noqa: E402
@@ -18,6 +22,11 @@ app = FastAPI(
     description="Validate patient incident CSVs without exposing PHI in responses.",
     version="1.0.0",
 )
+
+app.include_router(auth_router)
+app.include_router(users_router)
+app.include_router(profiles_router)
+app.include_router(protected_router)
 
 app.add_middleware(
     CORSMiddleware,

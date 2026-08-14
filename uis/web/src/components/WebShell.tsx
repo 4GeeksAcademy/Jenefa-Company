@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { logoutAndRedirect } from "@/lib/authStorage";
 
 const navItems = [
   { href: "/", label: "Overview" },
   { href: "/incidents", label: "Incident analysis" },
+  { href: "/account/profile", label: "Profile" },
 ] as const;
 
 export function WebShell({ children }: { children: React.ReactNode }) {
@@ -23,10 +25,9 @@ export function WebShell({ children }: { children: React.ReactNode }) {
         <nav className="flex flex-1 flex-col gap-1 px-3 py-4" aria-label="Web app">
           {navItems.map((item) => {
             const active =
-              item.href !== "#" &&
-              (item.href === "/"
+              item.href === "/"
                 ? pathname === "/"
-                : pathname.startsWith(item.href));
+                : pathname.startsWith(item.href);
             return (
               <Link
                 key={item.label}
@@ -56,7 +57,13 @@ export function WebShell({ children }: { children: React.ReactNode }) {
             </p>
             <h1 className="font-display text-xl text-foreground"> Backoffice</h1>
           </div>
-          <p className="text-sm text-muted">Austin tech unit --- James Osei</p>
+          <button
+            type="button"
+            onClick={() => logoutAndRedirect()}
+            className="text-sm text-muted hover:text-foreground"
+          >
+            Log out
+          </button>
         </header>
         <main className="flex-1 px-6 py-8">{children}</main>
       </div>

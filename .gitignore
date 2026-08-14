@@ -18,7 +18,9 @@ out/
 __pycache__/
 *.pyc
 results.csv
+services/api/data/auth.json
 
 # OS / editor
 .DS_Store
 *.log
+node_modules
