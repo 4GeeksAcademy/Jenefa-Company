@@ -93,3 +93,25 @@ class MeResponse(BaseModel):
     email: EmailStr
     role: Role
     profile: ProfileOut | None = None
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ForgotPasswordResponse(BaseModel):
+    message: str = "If that address is registered, you'll receive a link shortly"
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+class MessageResponse(BaseModel):
+    message: str

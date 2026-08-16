@@ -76,3 +76,40 @@ export async function updateMyProfile(payload: {
   });
   return readJson<Profile>(response);
 }
+
+export type MessageResponse = {
+  message: string;
+};
+
+export async function requestPasswordReset(email: string): Promise<MessageResponse> {
+  const response = await apiFetch("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+  return readJson<MessageResponse>(response);
+}
+
+export async function resetPassword(
+  token: string,
+  newPassword: string
+): Promise<MessageResponse> {
+  const response = await apiFetch("/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ token, new_password: newPassword }),
+  });
+  return readJson<MessageResponse>(response);
+}
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string
+): Promise<MessageResponse> {
+  const response = await apiFetch("/auth/change-password", {
+    method: "POST",
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword,
+    }),
+  });
+  return readJson<MessageResponse>(response);
+}

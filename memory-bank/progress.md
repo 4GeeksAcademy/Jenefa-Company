@@ -36,6 +36,12 @@
 - `uis/website` is unchanged — no token checks on the public marketing site.
 - Restored AUTH-01 FastAPI modules under `services/api/app/auth/` (sources had been missing; bytecode/TinyDB store remained) so the frontend can hit live auth routes.
 
+### AUTH-03 completed (password recovery & change)
+- Backend: public `POST /auth/forgot-password` (always `200`, no account enumeration), `POST /auth/reset-password` (single-use + expiry → `400` when invalid), protected `POST /auth/change-password` (wrong current password → `400`).
+- Reset tokens stored in TinyDB `password_reset_tokens`; email dispatch via Resend or SendGrid env keys (`RESEND_API_KEY` / `SENDGRID_API_KEY`), with console-link fallback when no key is set.
+- Frontend: `/forgot-password`, `/reset-password?token=…`, `/account/change-password`; login shows “Forgot your password?”; form disables after forgot submit and shows the required confirmation copy.
+- Env docs in `services/api/.env.example`, `services/api/README.md`, and root `README.md`.
+
 ## Planned Next Steps
 - Dr. Sandra Okonkwo has newly commissioned HealthCore Digital as an internal unit specifically to build out modern, intelligent systems from scratch. The target deployment roadmap spans across six primary operational fronts:
 

@@ -142,6 +142,12 @@ export default function ProfilePage() {
             >
               {saving ? "Saving…" : "Save profile"}
             </button>
+            <a
+              href="/account/change-password"
+              className="border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-background"
+            >
+              Change password
+            </a>
             <button
               type="button"
               onClick={() => logoutAndRedirect()}

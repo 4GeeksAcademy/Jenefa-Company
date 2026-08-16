@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AuthShell } from "@/components/AuthShell";
 import { ApiRequestError } from "@/lib/api";
@@ -66,6 +67,14 @@ export default function LoginPage() {
             className="border border-border px-3 py-2"
           />
         </label>
+        <p className="text-sm">
+          <Link
+            href="/forgot-password"
+            className="text-accent underline-offset-2 hover:underline"
+          >
+            Forgot your password?
+          </Link>
+        </p>
         <button
           type="submit"
           disabled={submitting}

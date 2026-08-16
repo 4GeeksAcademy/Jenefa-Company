@@ -82,6 +82,16 @@ ai-engineering-company-project-monorepo/
 
 ---
 
+## HealthCore local auth email configuration (AUTH-03)
+
+Password recovery uses transactional email. Configure secrets only via environment variables (see `services/api/.env.example` and `services/api/README.md`):
+
+- `RESEND_API_KEY` or `SENDGRID_API_KEY` (never commit real keys)
+- `EMAIL_PROVIDER` (`resend` / `sendgrid`)
+- `EMAIL_FROM`, `FRONTEND_BASE_URL`, `PASSWORD_RESET_EXPIRE_MINUTES`
+
+---
+
 ## Links
 
 - [4Geeks Academy — AI Engineering](https://4geeksacademy.com/es/programas-de-carrera/ingenieria-ia)

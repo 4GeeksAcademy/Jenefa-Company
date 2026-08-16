@@ -62,7 +62,10 @@ export async function apiFetch(path: string, init: RequestInit = {}): Promise<Re
 
   const method = (init.method ?? "GET").toUpperCase();
   const isPublicAuthCall =
-    path === "/auth/login" || (path === "/users" && method === "POST");
+    path === "/auth/login" ||
+    path === "/auth/forgot-password" ||
+    path === "/auth/reset-password" ||
+    (path === "/users" && method === "POST");
   if (response.status === 401 && token && !isPublicAuthCall) {
     logoutAndRedirect();
   }

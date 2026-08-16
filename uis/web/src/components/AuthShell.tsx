@@ -32,6 +32,13 @@ export function AuthShell({
           <Link href="/register" className="text-accent underline-offset-2 hover:underline">
             Register
           </Link>
+          {" · "}
+          <Link
+            href="/forgot-password"
+            className="text-accent underline-offset-2 hover:underline"
+          >
+            Forgot password
+          </Link>
         </p>
       </div>
     </div>

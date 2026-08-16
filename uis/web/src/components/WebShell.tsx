@@ -8,6 +8,7 @@ const navItems = [
   { href: "/", label: "Overview" },
   { href: "/incidents", label: "Incident analysis" },
   { href: "/account/profile", label: "Profile" },
+  { href: "/account/change-password", label: "Change password" },
 ] as const;
 
 export function WebShell({ children }: { children: React.ReactNode }) {
