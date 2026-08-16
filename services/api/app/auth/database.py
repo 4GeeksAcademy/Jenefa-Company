@@ -17,6 +17,7 @@ from .config import get_settings
 _db: TinyDB | None = None
 USERS_TABLE = "users"
 PROFILES_TABLE = "profiles"
+PASSWORD_RESET_TOKENS_TABLE = "password_reset_tokens"
 
 
 class AtomicJSONStorage(Storage):
@@ -83,6 +84,10 @@ def profiles_table() -> Table:
     return get_db().table(PROFILES_TABLE)
 
 
+def password_reset_tokens_table() -> Table:
+    return get_db().table(PASSWORD_RESET_TOKENS_TABLE)
+
+
 def close_db() -> None:
     global _db
     if _db is not None:
@@ -139,3 +144,27 @@ def delete_profile_by_user_id(user_id: str) -> bool:
     Profile = Query()
     removed = profiles_table().remove(Profile.user_id == user_id)
     return bool(removed)
+
+
+def insert_password_reset_token(document: dict[str, Any]) -> int:
+    return password_reset_tokens_table().insert(document)
+
+
+def get_password_reset_token(token: str) -> dict[str, Any] | None:
+    Token = Query()
+    return password_reset_tokens_table().get(Token.token == token)
+
+
+def update_password_reset_token(token: str, updates: dict[str, Any]) -> dict[str, Any] | None:
+    Token = Query()
+    password_reset_tokens_table().update(updates, Token.token == token)
+    return get_password_reset_token(token)
+
+
+def invalidate_unused_reset_tokens_for_user(user_id: str) -> None:
+    """Mark outstanding unused tokens for a user as used (anti-replay hygiene)."""
+    Token = Query()
+    password_reset_tokens_table().update(
+        {"used": True},
+        (Token.user_id == user_id) & (Token.used == False),  # noqa: E712
+    )
