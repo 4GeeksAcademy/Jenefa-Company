@@ -27,7 +27,7 @@ def format_console_report(result: AnalysisResult) -> str:
     lines.append("")
 
     if result.error:
-        lines.append(f"ERROR: {result.error}")
+        lines.append(f"ERROR 1: {result.error}")
         lines.append("")
         lines.append("=" * 60)
         return "\n".join(lines)

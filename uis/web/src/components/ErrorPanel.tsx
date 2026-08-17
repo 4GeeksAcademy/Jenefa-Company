@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { SUPPORT_EMAIL, SUPPORT_PHONE } from "@/lib/userFacingError";
 
+function errorNumberFromMessage(message: string): string | null {
+  const match = message.match(/\(Error (\d+)\)\s*$/i);
+  return match ? match[1] : null;
+}
+
 export function ErrorPanel({
   title = "Something went wrong",
   message,
@@ -14,12 +19,17 @@ export function ErrorPanel({
   onRetry?: () => void;
   retryLabel?: string;
 }) {
+  const errorNumber = errorNumberFromMessage(message);
+
   return (
     <div
       role="alert"
       className="border border-red-300 bg-red-50 px-4 py-4 text-sm text-red-900"
     >
-      <p className="font-semibold">{title}</p>
+      <p className="font-semibold">
+        {title}
+        {errorNumber ? ` — Error ${errorNumber}` : null}
+      </p>
       <p className="mt-1">{message}</p>
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
         {onRetry ? (

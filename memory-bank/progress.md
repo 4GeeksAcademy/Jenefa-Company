@@ -45,7 +45,7 @@
 ### Platform-wide error handling completed
 - Specs in `errorhandling/specs-errorhandling.md` and `errorhandling/productcontext-errorhandling.md`.
 - Backend: canonical `{error, detail}` JSON via `services/api/app/errors.py` (400/401/403/404/422/500); traces, paths, URIs, and validation `input` values never leave the API. Incident analyze/export isolate file read, CSV parse, and result store. Email dispatch uses `EmailDispatchError` around Resend/SendGrid timeouts.
-- Frontend (`uis/web`): network/JSON failures mapped to human-readable copy; three-state loading/fulfilled/rejected on incident analysis and profile load; `ErrorPanel` always offers retry (when applicable), home, and support (`access@healthcore.com`). Next.js `error.tsx` / `global-error.tsx` prevent white-screen crashes.
+- Frontend (`uis/web`): network/JSON failures mapped to human-readable copy that always prints `(Error N)`; three-state loading/fulfilled/rejected on incident analysis and profile load; `ErrorPanel` always offers retry (when applicable), home, and support (`access@healthcore.com`). Next.js `error.tsx` / `global-error.tsx` prevent white-screen crashes.
 - Talent tracker and public website: same CTA pattern, user-facing messages, and crash boundaries; removed candidate debug dumps that leaked raw profile JSON.
 - Scripts: `scripts/analyze.py` validates input, logs failures to stderr, and exits `1`/`2`; CSV path errors no longer include absolute filesystem paths.
 

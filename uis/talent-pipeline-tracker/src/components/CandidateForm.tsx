@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createRecord, replaceRecord } from "@/services/records";
-import { SUPPORT_EMAIL, toUserFacingMessage } from "@/lib/userFacingError";
+import { SUPPORT_EMAIL, toUserFacingMessage, withErrorNumber } from "@/lib/userFacingError";
 import type { Candidate, RecordCreatePayload } from "@/types";
 
 interface CandidateFormProps {
@@ -111,7 +111,9 @@ export function CandidateForm({ mode, candidate }: CandidateFormProps) {
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       setSubmitState("error");
-      setSubmitMessage("Please correct the highlighted fields before submitting.");
+      setSubmitMessage(
+        withErrorNumber("Please correct the highlighted fields before submitting.", 400),
+      );
       return;
     }
 

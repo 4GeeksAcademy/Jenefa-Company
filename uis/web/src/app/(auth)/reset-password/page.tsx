@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AuthShell } from "@/components/AuthShell";
 import { ErrorPanel } from "@/components/ErrorPanel";
 import { resetPassword } from "@/lib/authApi";
-import { toUserFacingMessage } from "@/lib/userFacingError";
+import { toUserFacingMessage, withErrorNumber } from "@/lib/userFacingError";
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -26,11 +26,11 @@ function ResetPasswordForm() {
 
     if (!token) {
       setTokenFailed(true);
-      setError("This reset link is missing a token. Request a new one.");
+      setError(withErrorNumber("This reset link is missing a token. Request a new one.", 400));
       return;
     }
     if (password !== confirm) {
-      setError("New password and confirmation do not match.");
+      setError(withErrorNumber("New password and confirmation do not match.", 400));
       return;
     }
 

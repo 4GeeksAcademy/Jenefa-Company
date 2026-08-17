@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { ErrorPanel } from "@/components/ErrorPanel";
 import { changePassword } from "@/lib/authApi";
-import { toUserFacingMessage } from "@/lib/userFacingError";
+import { toUserFacingMessage, withErrorNumber } from "@/lib/userFacingError";
 
 export default function ChangePasswordPage() {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -19,7 +19,7 @@ export default function ChangePasswordPage() {
     setSuccess(null);
 
     if (newPassword !== confirmPassword) {
-      setError("New password and confirmation do not match.");
+      setError(withErrorNumber("New password and confirmation do not match.", 400));
       return;
     }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { ErrorPanel } from "@/components/ErrorPanel";
-import { USER_MESSAGES } from "@/lib/userFacingError";
+import { messageForStatus } from "@/lib/userFacingError";
 
 export default function GlobalError({
   reset,
@@ -15,7 +15,7 @@ export default function GlobalError({
         <div className="mx-auto w-full max-w-2xl">
           <ErrorPanel
             title="HealthCore could not load this workspace"
-            message={USER_MESSAGES.generic}
+            message={messageForStatus(500)}
             onRetry={reset}
           />
         </div>

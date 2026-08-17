@@ -1,6 +1,6 @@
 "use client";
 
-import { USER_MESSAGES } from "@/lib/userFacingError";
+import { messageForStatus } from "@/lib/userFacingError";
 import { AsyncStateView } from "@/components/AsyncStateView";
 
 export default function AppError({
@@ -12,7 +12,7 @@ export default function AppError({
   return (
     <AsyncStateView
       uiState="error"
-      error={USER_MESSAGES.generic}
+      error={messageForStatus(500)}
       onRetry={reset}
     >
       {null}

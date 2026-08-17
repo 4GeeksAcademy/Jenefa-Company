@@ -17,7 +17,7 @@ export default function AppError({
       >
         <p className="font-semibold">This page could not be displayed</p>
         <p className="mt-2 text-sm">
-          We couldn&apos;t complete that request. Please try again.
+          We couldn&apos;t complete that request. Please try again. (Error 500)
         </p>
         <div className="mt-4 flex flex-wrap gap-4 text-sm font-medium">
           <button

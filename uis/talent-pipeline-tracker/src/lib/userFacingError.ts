@@ -11,8 +11,15 @@ export const USER_MESSAGES = {
   generic: "We couldn't complete that request. Please try again.",
 } as const;
 
+const ERROR_NUMBER_SUFFIX = /\s*\(Error \d+\)\s*$/i;
+
+export function withErrorNumber(message: string, code: number): string {
+  const base = message.replace(ERROR_NUMBER_SUFFIX, "").trim();
+  return `${base} (Error ${code})`;
+}
+
 function isTechnical(message: string): boolean {
-  const lowered = message.toLowerCase();
+  const lowered = message.replace(ERROR_NUMBER_SUFFIX, "").trim().toLowerCase();
   return (
     /error \d{3}/.test(lowered) ||
     /status \d{3}/.test(lowered) ||
@@ -29,11 +36,12 @@ function isTechnical(message: string): boolean {
 }
 
 export function messageForStatus(status: number): string {
-  if (status === 0) return USER_MESSAGES.connection;
-  if (status === 403) return USER_MESSAGES.forbidden;
-  if (status === 404) return USER_MESSAGES.notFound;
-  if (status >= 500) return USER_MESSAGES.server;
-  return USER_MESSAGES.generic;
+  let base: string = USER_MESSAGES.generic;
+  if (status === 0) base = USER_MESSAGES.connection;
+  else if (status === 403) base = USER_MESSAGES.forbidden;
+  else if (status === 404) base = USER_MESSAGES.notFound;
+  else if (status >= 500) base = USER_MESSAGES.server;
+  return withErrorNumber(base, status);
 }
 
 function isApiRequestError(err: unknown): err is Error & { status: number } {
@@ -50,14 +58,14 @@ export function toUserFacingMessage(err: unknown): string {
     if (err.status === 0 || isTechnical(err.message)) {
       return messageForStatus(err.status);
     }
-    if (err.status >= 500) return USER_MESSAGES.server;
-    return err.message || messageForStatus(err.status);
+    if (err.status >= 500) return messageForStatus(err.status);
+    return withErrorNumber(err.message || USER_MESSAGES.generic, err.status);
   }
-  if (err instanceof TypeError) return USER_MESSAGES.connection;
-  if (err instanceof SyntaxError) return USER_MESSAGES.parse;
+  if (err instanceof TypeError) return withErrorNumber(USER_MESSAGES.connection, 0);
+  if (err instanceof SyntaxError) return withErrorNumber(USER_MESSAGES.parse, 422);
   if (err instanceof Error) {
-    if (isTechnical(err.message)) return USER_MESSAGES.generic;
-    return err.message || USER_MESSAGES.generic;
+    if (isTechnical(err.message)) return withErrorNumber(USER_MESSAGES.generic, 500);
+    return withErrorNumber(err.message || USER_MESSAGES.generic, 500);
   }
-  return USER_MESSAGES.generic;
+  return withErrorNumber(USER_MESSAGES.generic, 500);
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AsyncStateView } from "@/components/AsyncStateView";
 import { useNotes } from "@/hooks/useNotes";
+import { withErrorNumber } from "@/lib/userFacingError";
 
 export function NotesSection({ recordId }: { recordId: string }) {
   const { notes, uiState, error, reload, addNote, removeNote } = useNotes(recordId);
@@ -18,7 +19,7 @@ export function NotesSection({ recordId }: { recordId: string }) {
     const trimmed = text.trim();
     if (!trimmed) {
       setSubmitState("error");
-      setSubmitMessage("Evaluation note cannot be empty.");
+      setSubmitMessage(withErrorNumber("Evaluation note cannot be empty.", 400));
       return;
     }
 

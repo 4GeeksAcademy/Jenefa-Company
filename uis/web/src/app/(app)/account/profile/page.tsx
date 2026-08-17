@@ -81,7 +81,7 @@ export default function ProfilePage() {
       <div className="mx-auto w-full max-w-2xl">
         <ErrorPanel
           title="Profile could not be loaded"
-          message={error ?? "We couldn't complete that request. Please try again."}
+          message={error ?? "We couldn't complete that request. Please try again. (Error 500)"}
           onRetry={() => void load()}
         />
       </div>

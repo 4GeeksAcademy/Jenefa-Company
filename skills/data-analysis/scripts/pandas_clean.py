@@ -10,22 +10,22 @@ from pathlib import Path
 try:
     import pandas as pd
 except ImportError:
-    print("pandas is not installed.", file=sys.stderr)
+    print("Error 1: pandas is not installed.", file=sys.stderr)
     raise SystemExit(1)
 
 INPUT_PATH = Path("data.csv")
 
 if not INPUT_PATH.is_file():
-    print("Input file is missing or is not a regular file.", file=sys.stderr)
+    print("Error 1: Input file is missing or is not a regular file.", file=sys.stderr)
     raise SystemExit(1)
 
 try:
     df = pd.read_csv(INPUT_PATH)
 except OSError:
-    print("Unable to read the input file.", file=sys.stderr)
+    print("Error 1: Unable to read the input file.", file=sys.stderr)
     raise SystemExit(1)
 except (UnicodeDecodeError, ValueError):
-    print("The file could not be parsed as CSV.", file=sys.stderr)
+    print("Error 1: The file could not be parsed as CSV.", file=sys.stderr)
     raise SystemExit(1)
 
 print("df_shape", df.shape)

@@ -210,7 +210,7 @@ def main() -> int:
             writer.writeheader()
             writer.writerows(rows)
     except OSError:
-        print("Unable to write incidents-healthcore.csv.", file=sys.stderr)
+        print("Error 1: Unable to write incidents-healthcore.csv.", file=sys.stderr)
         return 1
     print(f"Wrote {len(rows)} rows to {out.name}")
     return 0

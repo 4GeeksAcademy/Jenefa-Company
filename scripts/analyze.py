@@ -22,12 +22,12 @@ from incident_core import (
 def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     if len(args) != 1:
-        print("Usage: python analyze.py <path_to_csv>", file=sys.stderr)
+        print("Error 2: Usage: python analyze.py <path_to_csv>", file=sys.stderr)
         return 2
 
     csv_path = Path(args[0])
     if not csv_path.exists() or not csv_path.is_file():
-        print("Input file is missing or is not a regular file.", file=sys.stderr)
+        print("Error 1: Input file is missing or is not a regular file.", file=sys.stderr)
         return 1
 
     result = analyze_csv_path(csv_path)
@@ -48,7 +48,7 @@ def main(argv: list[str] | None = None) -> int:
         try:
             out_path.write_text(results_to_csv_text(result), encoding="utf-8")
         except OSError:
-            print("Unable to write results.csv.", file=sys.stderr)
+            print("Error 1: Unable to write results.csv.", file=sys.stderr)
             return 1
         print(f"Saved: {out_path.name}")
     else:

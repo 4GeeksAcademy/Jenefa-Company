@@ -1,6 +1,6 @@
 "use client";
 
-import { SUPPORT_EMAIL, SUPPORT_PHONE, USER_MESSAGES } from "@/lib/userFacingError";
+import { SUPPORT_EMAIL, SUPPORT_PHONE, messageForStatus } from "@/lib/userFacingError";
 
 export default function GlobalError({
   reset,
@@ -16,7 +16,7 @@ export default function GlobalError({
           className="mx-auto max-w-xl rounded-lg border border-red-200 bg-red-50 px-6 py-8 text-center text-red-800"
         >
           <p className="font-medium">HealthCore could not load this workspace</p>
-          <p className="mt-2 text-sm">{USER_MESSAGES.generic}</p>
+          <p className="mt-2 text-sm">{messageForStatus(500)}</p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
             <button
               type="button"

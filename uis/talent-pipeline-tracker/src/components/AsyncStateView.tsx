@@ -34,7 +34,8 @@ export function AsyncStateView({
       >
         <p className="font-medium">Unable to load data</p>
         <p className="mt-2 text-sm">
-          {error ?? "We're experiencing temporary connection issues. Your data hasn't been lost."}
+          {error ??
+            "We're experiencing temporary connection issues. Your data hasn't been lost. (Error 0)"}
         </p>
         <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
           {onRetry && (

@@ -50,9 +50,12 @@ _LEAK_MARKERS = (
 
 
 def error_payload(status_code: int, detail: Any) -> dict[str, Any]:
-    """Build the canonical `{error, detail}` JSON body."""
+    """Build the canonical `{error, detail, code}` JSON body."""
     title = ERROR_TITLES.get(status_code, "Error")
-    return {"error": title, "detail": sanitize_detail(detail, status_code)}
+    sanitized = sanitize_detail(detail, status_code)
+    if isinstance(sanitized, str):
+        sanitized = _with_error_number(sanitized, status_code)
+    return {"error": title, "detail": sanitized, "code": status_code}
 
 
 def json_error(
@@ -90,6 +93,11 @@ def _sanitize_validation_item(item: Any) -> dict[str, Any]:
     msg = item.get("msg")
     safe_msg = _scrub_text(str(msg), fallback="Invalid value") if msg else "Invalid value"
     return {"loc": safe_loc or ["body"], "msg": safe_msg}
+
+
+def _with_error_number(text: str, status_code: int) -> str:
+    cleaned = re.sub(r"\s*\(Error \d+\)\s*$", "", text).strip()
+    return f"{cleaned} (Error {status_code})"
 
 
 def _scrub_text(text: str, *, fallback: str) -> str:

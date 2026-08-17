@@ -7,7 +7,7 @@ import {
   exportResultsUrl,
   type IncidentAnalysis,
 } from "@/lib/incidentApi";
-import { toUserFacingMessage, USER_MESSAGES, messageForStatus } from "@/lib/userFacingError";
+import { toUserFacingMessage, messageForStatus } from "@/lib/userFacingError";
 
 function pct(part: number, whole: number): string {
   if (whole <= 0) return "0.0%";
@@ -90,7 +90,7 @@ export function IncidentAnalysisPanel() {
       try {
         response = await fetch(exportResultsUrl());
       } catch {
-        setExportError(USER_MESSAGES.connection);
+        setExportError(messageForStatus(0));
         return;
       }
       if (!response.ok) {
@@ -106,7 +106,7 @@ export function IncidentAnalysisPanel() {
         anchor.click();
         URL.revokeObjectURL(url);
       } catch {
-        setExportError(USER_MESSAGES.parse);
+        setExportError(messageForStatus(response.status || 422));
       }
     } finally {
       setExporting(false);
