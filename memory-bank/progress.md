@@ -22,6 +22,13 @@
 - Added FastAPI service `services/api` with `POST /api/incidents/analyze` and `GET /api/incidents/results/export`.
 - Mounted Incident Analysis upload/dashboard/export UI at `uis/web` `/incidents` (sidebar nav link).
 
+### AUTH-088 completed (authentication unit test coverage)
+- Document-first plan and results in root `TESTING.md` (matrix, run commands, AI/regression notes, coverage).
+- FastAPI suite under `services/api/tests/` (`test_register.py`, `test_login.py`, `test_token.py`, plus `test_service_rules.py`); run via `cd services/api && uv run pytest` / `--cov=app.auth` — **84%** auth module coverage (gate ≥ 70%).
+- Registration now enforces minimum 8-character passwords (aligned with reset/change-password); covered by `test_register_rejects_password_shorter_than_eight_chars`.
+- Jest suite for clinic web auth utilities (`uis/web` `authStorage`, `userFacingError`, `api.readJson`) via `npx jest --coverage`.
+- Auth API sources (`services/api/app/auth`, error handlers, web `lib` auth helpers) restored onto `auth-unittesting` so the suite exercises the implemented structure.
+
 ## Planned Next Steps
 - Dr. Sandra Okonkwo has newly commissioned HealthCore Digital as an internal unit specifically to build out modern, intelligent systems from scratch. The target deployment roadmap spans across six primary operational fronts:
 

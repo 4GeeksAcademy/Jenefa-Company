@@ -18,6 +18,9 @@ out/
 __pycache__/
 *.pyc
 results.csv
+.coverage
+htmlcov/
+.pytest_cache/
 
 # OS / editor
 .DS_Store
