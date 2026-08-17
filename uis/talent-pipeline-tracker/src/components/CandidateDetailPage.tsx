@@ -7,6 +7,7 @@ import { StageBadge, StatusBadge } from "@/components/Badges";
 import { NotesSection } from "@/components/NotesSection";
 import { useCandidate } from "@/hooks/useCandidate";
 import { patchRecord } from "@/services/records";
+import { toUserFacingMessage } from "@/lib/userFacingError";
 import {
   ALL_STAGES,
   ALL_STATUSES,
@@ -48,9 +49,7 @@ export function CandidateDetailPage({ id }: { id: string }) {
       const updated = await patchRecord(id, { [field]: value });
       setCandidate(updated);
     } catch (err) {
-      setPatchError(
-        err instanceof Error ? err.message : "Failed to update applicant record",
-      );
+      setPatchError(toUserFacingMessage(err));
     } finally {
       setPatchLoading(false);
     }
@@ -71,13 +70,6 @@ export function CandidateDetailPage({ id }: { id: string }) {
           </Link>
         )}
       </div>
- <div className="bg-slate-950 text-emerald-400 p-4 rounded text-xs font-mono border-2 border-red-500">
-      <p className="font-bold text-white mb-2">🔍 SYSTEM DEBUG LOGS:</p>
-      <p>• uiState: "{String(uiState)}"</p>
-      <p>• hasError: "{String(!!error)}"</p>
-      <p>• errorMessage: "{error?.message || "none"}"</p>
-      <p>• candidateExists: "{String(!!candidate)}"</p>
-    </div>
       <AsyncStateView
         uiState={uiState}
         error={error}
@@ -93,14 +85,10 @@ export function CandidateDetailPage({ id }: { id: string }) {
                     Applicant Profile
                   </p>
                   <h2 className="mt-1 text-2xl font-bold text-slate-900">
-                    {candidate.full_name}
+                    {candidate.full_name ?? ""}
                   </h2>
-                <div className="bg-slate-900 text-green-400 p-4 rounded text-xs font-mono my-2 overflow-auto max-h-40">
-  <strong>Raw Candidate Data:</strong>
-  <pre>{JSON.stringify(candidate, null, 2)}</pre>
-</div> 
                   <p className="mt-1 text-slate-600">
-                    {POSITION_LABELS[candidate.position] || candidate.position}
+                    {POSITION_LABELS[candidate.position] || candidate.position || ""}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -111,7 +99,10 @@ export function CandidateDetailPage({ id }: { id: string }) {
 
               {patchError && (
                 <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-800">
-                  {patchError}
+                  {patchError}{" "}
+                  <Link href="/" className="font-medium underline">
+                    Return home
+                  </Link>
                 </p>
               )}
 

@@ -1,4 +1,5 @@
 import type { ApiError } from "@/types";
+import { USER_MESSAGES, messageForStatus } from "@/lib/userFacingError";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
@@ -26,20 +27,25 @@ async function parseErrorResponse(response: Response): Promise<string> {
   } catch {
     // fall through to generic message
   }
-  return `Request failed with status ${response.status}`;
+  return messageForStatus(response.status);
 }
 
 export async function apiRequest<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  } catch {
+    throw new ApiRequestError(USER_MESSAGES.connection, 0);
+  }
 
   if (!response.ok) {
     const message = await parseErrorResponse(response);
@@ -50,5 +56,9 @@ export async function apiRequest<T>(
     return undefined as T;
   }
 
-  return (await response.json()) as T;
+  try {
+    return (await response.json()) as T;
+  } catch {
+    throw new ApiRequestError(USER_MESSAGES.parse, response.status);
+  }
 }

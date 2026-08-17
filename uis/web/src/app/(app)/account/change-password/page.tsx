@@ -1,8 +1,9 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { ApiRequestError } from "@/lib/api";
+import { ErrorPanel } from "@/components/ErrorPanel";
 import { changePassword } from "@/lib/authApi";
+import { toUserFacingMessage } from "@/lib/userFacingError";
 
 export default function ChangePasswordPage() {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -30,13 +31,7 @@ export default function ChangePasswordPage() {
       setNewPassword("");
       setConfirmPassword("");
     } catch (err) {
-      setError(
-        err instanceof ApiRequestError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : "Unable to change password."
-      );
+      setError(toUserFacingMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -58,12 +53,7 @@ export default function ChangePasswordPage() {
 
         <form className="mt-6 flex flex-col gap-4" onSubmit={onSubmit}>
           {error ? (
-            <div
-              role="alert"
-              className="border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900"
-            >
-              {error}
-            </div>
+            <ErrorPanel title="Password could not be updated" message={error} />
           ) : null}
           {success ? (
             <div

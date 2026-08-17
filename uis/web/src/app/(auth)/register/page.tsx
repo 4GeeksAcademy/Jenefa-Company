@@ -3,8 +3,10 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AuthShell } from "@/components/AuthShell";
+import { ErrorPanel } from "@/components/ErrorPanel";
 import { ApiRequestError } from "@/lib/api";
 import { registerAndLogin } from "@/lib/authApi";
+import { toUserFacingMessage } from "@/lib/userFacingError";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -27,12 +29,12 @@ export default function RegisterPage() {
       router.replace("/");
     } catch (err) {
       if (err instanceof ApiRequestError) {
-        setError(err.message);
+        setError(toUserFacingMessage(err));
         setFieldErrors(
           Object.fromEntries(err.fieldErrors.map((item) => [item.field, item.message]))
         );
       } else {
-        setError(err instanceof Error ? err.message : "Unable to register.");
+        setError(toUserFacingMessage(err));
       }
     } finally {
       setSubmitting(false);
@@ -46,9 +48,7 @@ export default function RegisterPage() {
     >
       <form className="flex flex-col gap-4" onSubmit={onSubmit}>
         {error ? (
-          <div role="alert" className="border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-900">
-            {error}
-          </div>
+          <ErrorPanel title="Account could not be created" message={error} />
         ) : null}
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium text-foreground">Email</span>

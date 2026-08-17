@@ -24,25 +24,32 @@ export function NotesSection({ recordId }: { recordId: string }) {
 
     setSubmitState("loading");
     setSubmitMessage(null);
-    const result = await addNote(trimmed);
-    if (result.success) {
-      setText("");
-      setSubmitState("success");
-      setSubmitMessage("Evaluation note added to applicant timeline.");
-    } else {
-      setSubmitState("error");
-      setSubmitMessage(result.error);
+    try {
+      const result = await addNote(trimmed);
+      if (result.success) {
+        setText("");
+        setSubmitState("success");
+        setSubmitMessage("Evaluation note added to applicant timeline.");
+      } else {
+        setSubmitState("error");
+        setSubmitMessage(result.error);
+      }
+    } finally {
+      setSubmitState((current) => (current === "loading" ? "error" : current));
     }
   };
 
   const handleDelete = async (noteId: string) => {
     setDeletingId(noteId);
-    const result = await removeNote(noteId);
-    if (!result.success) {
-      setSubmitState("error");
-      setSubmitMessage(result.error);
+    try {
+      const result = await removeNote(noteId);
+      if (!result.success) {
+        setSubmitState("error");
+        setSubmitMessage(result.error);
+      }
+    } finally {
+      setDeletingId(null);
     }
-    setDeletingId(null);
   };
 
   return (

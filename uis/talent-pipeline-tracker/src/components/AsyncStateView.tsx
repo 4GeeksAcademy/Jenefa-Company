@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import type { UIState } from "@/types";
+import { SUPPORT_EMAIL, SUPPORT_PHONE } from "@/lib/userFacingError";
 
 interface AsyncStateViewProps {
   uiState: UIState;
@@ -26,18 +28,40 @@ export function AsyncStateView({
 
   if (uiState === "error") {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 px-6 py-8 text-center text-red-800">
+      <div
+        role="alert"
+        className="rounded-lg border border-red-200 bg-red-50 px-6 py-8 text-center text-red-800"
+      >
         <p className="font-medium">Unable to load data</p>
-        <p className="mt-2 text-sm">{error ?? "An unexpected error occurred."}</p>
-        {onRetry && (
-          <button
-            type="button"
-            onClick={onRetry}
-            className="mt-4 rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800"
+        <p className="mt-2 text-sm">
+          {error ?? "We're experiencing temporary connection issues. Your data hasn't been lost."}
+        </p>
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800"
+            >
+              Try again
+            </button>
+          )}
+          <Link
+            href="/"
+            className="text-sm font-medium text-teal-800 underline-offset-2 hover:underline"
           >
-            Try again
-          </button>
-        )}
+            Return home
+          </Link>
+          <a
+            href={`mailto:${SUPPORT_EMAIL}`}
+            className="text-sm font-medium text-teal-800 underline-offset-2 hover:underline"
+          >
+            Contact support
+          </a>
+        </div>
+        <p className="mt-3 text-xs text-red-700">
+          HealthCore Digital support: {SUPPORT_PHONE} · {SUPPORT_EMAIL}
+        </p>
       </div>
     );
   }

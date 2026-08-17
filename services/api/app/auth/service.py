@@ -12,7 +12,7 @@ from fastapi import HTTPException, status
 
 from . import database as db
 from .config import get_settings
-from .email import send_password_reset_email
+from .email import EmailDispatchError, send_password_reset_email
 from .schemas import (
     ChangePasswordRequest,
     ForgotPasswordRequest,
@@ -236,7 +236,7 @@ def request_password_reset(payload: ForgotPasswordRequest) -> ForgotPasswordResp
     )
     try:
         send_password_reset_email(email, token)
-    except Exception:
+    except EmailDispatchError:
         # Do not leak account existence via email-provider failures.
         logger.exception("Failed to dispatch password reset email for registered user")
     return response

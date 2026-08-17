@@ -2,8 +2,9 @@
 
 import { FormEvent, useState } from "react";
 import { AuthShell } from "@/components/AuthShell";
-import { ApiRequestError } from "@/lib/api";
+import { ErrorPanel } from "@/components/ErrorPanel";
 import { requestPasswordReset } from "@/lib/authApi";
+import { toUserFacingMessage } from "@/lib/userFacingError";
 
 const CONFIRMATION =
   "If that address is registered, you'll receive a link shortly";
@@ -22,13 +23,8 @@ export default function ForgotPasswordPage() {
       await requestPasswordReset(email);
       setSubmitted(true);
     } catch (err) {
-      setError(
-        err instanceof ApiRequestError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : "Unable to submit the request."
-      );
+      setError(toUserFacingMessage(err));
+    } finally {
       setSubmitting(false);
     }
   }
@@ -45,12 +41,7 @@ export default function ForgotPasswordPage() {
       ) : (
         <form className="flex flex-col gap-4" onSubmit={onSubmit}>
           {error ? (
-            <div
-              role="alert"
-              className="border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-900"
-            >
-              {error}
-            </div>
+            <ErrorPanel title="Reset request could not be sent" message={error} />
           ) : null}
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-foreground">Email</span>

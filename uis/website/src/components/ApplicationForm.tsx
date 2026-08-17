@@ -26,9 +26,9 @@ export function ApplicationForm() {
   const clinicOptions = useMemo(() => {
     const country = values.country as CountryCode | "";
     if (country === "UK" || country === "US") {
-      return clinicLocationsByCountry[country];
+      return clinicLocationsByCountry[country] ?? [];
     }
-    return clinicLocationsByCountry.US;
+    return clinicLocationsByCountry.US ?? [];
   }, [values.country]);
 
   function updateField<K extends ApplicationField>(field: K, value: ApplicationFormValues[K]) {
@@ -88,8 +88,12 @@ export function ApplicationForm() {
     const input = dateInputRef.current;
     if (!input) return;
     input.focus();
-    if (typeof input.showPicker === "function") {
-      input.showPicker();
+    try {
+      if (typeof input.showPicker === "function") {
+        input.showPicker();
+      }
+    } catch {
+      input.focus();
     }
   }
 

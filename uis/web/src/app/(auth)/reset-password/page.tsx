@@ -4,8 +4,9 @@ import Link from "next/link";
 import { FormEvent, Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AuthShell } from "@/components/AuthShell";
-import { ApiRequestError } from "@/lib/api";
+import { ErrorPanel } from "@/components/ErrorPanel";
 import { resetPassword } from "@/lib/authApi";
+import { toUserFacingMessage } from "@/lib/userFacingError";
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -38,13 +39,7 @@ function ResetPasswordForm() {
       await resetPassword(token, password);
       router.replace("/login");
     } catch (err) {
-      const message =
-        err instanceof ApiRequestError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : "Unable to reset password.";
-      setError(message);
+      setError(toUserFacingMessage(err));
       setTokenFailed(true);
     } finally {
       setSubmitting(false);
@@ -54,22 +49,17 @@ function ResetPasswordForm() {
   return (
     <form className="flex flex-col gap-4" onSubmit={onSubmit}>
       {error ? (
-        <div
-          role="alert"
-          className="border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-900"
-        >
-          <p>{error}</p>
-          {tokenFailed ? (
-            <p className="mt-2">
-              <Link
-                href="/forgot-password"
-                className="font-medium text-accent underline-offset-2 hover:underline"
-              >
-                Request a new reset link
-              </Link>
-            </p>
-          ) : null}
-        </div>
+        <ErrorPanel title="Password could not be reset" message={error} />
+      ) : null}
+      {tokenFailed ? (
+        <p className="text-sm">
+          <Link
+            href="/forgot-password"
+            className="font-medium text-accent underline-offset-2 hover:underline"
+          >
+            Request a new reset link
+          </Link>
+        </p>
       ) : null}
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium text-foreground">New password</span>

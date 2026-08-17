@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import { createNote, deleteNote, fetchNotes } from "@/services/notes";
 import { useAsyncState, useMountEffect } from "@/hooks/useAsyncState";
+import { toUserFacingMessage } from "@/lib/userFacingError";
 import type { Note } from "@/types";
 
 export function useNotes(recordId: string) {
@@ -24,9 +25,7 @@ export function useNotes(recordId: string) {
         setData(refreshed);
         return { success: true as const };
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Failed to add evaluation note";
-        return { success: false as const, error: message };
+        return { success: false as const, error: toUserFacingMessage(err) };
       }
     },
     [recordId, setData],
@@ -39,9 +38,7 @@ export function useNotes(recordId: string) {
         setData((prev) => (prev ?? []).filter((note) => note.id !== noteId));
         return { success: true as const };
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Failed to delete evaluation note";
-        return { success: false as const, error: message };
+        return { success: false as const, error: toUserFacingMessage(err) };
       }
     },
     [recordId, setData],

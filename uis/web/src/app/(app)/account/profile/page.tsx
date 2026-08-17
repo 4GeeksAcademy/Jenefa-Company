@@ -8,8 +8,9 @@ import {
   type MeResponse,
   type Profile,
 } from "@/lib/authApi";
-import { ApiRequestError } from "@/lib/api";
+import { ErrorPanel } from "@/components/ErrorPanel";
 import { logoutAndRedirect } from "@/lib/authStorage";
+import { toUserFacingMessage } from "@/lib/userFacingError";
 
 export default function ProfilePage() {
   const [me, setMe] = useState<MeResponse | null>(null);
@@ -22,28 +23,33 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const load = async (ignoreIfCancelled?: () => boolean) => {
+    setError(null);
+    setLoading(true);
+    try {
+      const [mePayload, profilePayload] = await Promise.all([fetchMe(), fetchMyProfile()]);
+      if (ignoreIfCancelled?.()) return;
+      setMe(mePayload);
+      setProfile(profilePayload);
+      setName(profilePayload?.name ?? "");
+      setPhone(profilePayload?.phone ?? "");
+      setAddress(profilePayload?.address ?? "");
+    } catch (err) {
+      if (ignoreIfCancelled?.()) return;
+      setError(toUserFacingMessage(err));
+    } finally {
+      if (!ignoreIfCancelled?.()) setLoading(false);
+    }
+  };
+
   useEffect(() => {
     let cancelled = false;
-    async function load() {
-      try {
-        const [mePayload, profilePayload] = await Promise.all([fetchMe(), fetchMyProfile()]);
-        if (cancelled) return;
-        setMe(mePayload);
-        setProfile(profilePayload);
-        setName(profilePayload.name);
-        setPhone(profilePayload.phone);
-        setAddress(profilePayload.address);
-      } catch (err) {
-        if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Unable to load profile.");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    void load();
+    void load(() => cancelled);
     return () => {
       cancelled = true;
     };
+    // Initial session load only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -56,13 +62,7 @@ export default function ProfilePage() {
       setProfile(updated);
       setSaved(true);
     } catch (err) {
-      const message =
-        err instanceof ApiRequestError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : "Unable to update profile.";
-      setError(message);
+      setError(toUserFacingMessage(err));
     } finally {
       setSaving(false);
     }
@@ -72,6 +72,18 @@ export default function ProfilePage() {
     return (
       <div className="loading-state text-sm text-muted">
         Verifying session token safety layer...
+      </div>
+    );
+  }
+
+  if (!me) {
+    return (
+      <div className="mx-auto w-full max-w-2xl">
+        <ErrorPanel
+          title="Profile could not be loaded"
+          message={error ?? "We couldn't complete that request. Please try again."}
+          onRetry={() => void load()}
+        />
       </div>
     );
   }
@@ -91,8 +103,8 @@ export default function ProfilePage() {
         </p>
 
         {error ? (
-          <div role="alert" className="mt-4 border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900">
-            {error}
+          <div className="mt-4">
+            <ErrorPanel title="Profile could not be saved" message={error} />
           </div>
         ) : null}
         {saved ? (
@@ -158,7 +170,7 @@ export default function ProfilePage() {
           </div>
         </form>
         {profile ? (
-          <p className="mt-4 text-xs text-muted">Profile id {profile.id}</p>
+          <p className="mt-4 text-xs text-muted">Profile id {profile?.id ?? ""}</p>
         ) : null}
       </section>
     </div>

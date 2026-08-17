@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import csv
 import random
+import sys
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -189,7 +190,7 @@ def build_rows() -> list[dict[str, str]]:
     return rows
 
 
-def main() -> None:
+def main() -> int:
     out = Path(__file__).resolve().parent / "incidents-healthcore.csv"
     rows = build_rows()
     fieldnames = [
@@ -203,12 +204,17 @@ def main() -> None:
         "patient_id",
         "satisfaction_score",
     ]
-    with out.open("w", encoding="utf-8", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(rows)
-    print(f"Wrote {len(rows)} rows to {out}")
+    try:
+        with out.open("w", encoding="utf-8", newline="") as fh:
+            writer = csv.DictWriter(fh, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(rows)
+    except OSError:
+        print("Unable to write incidents-healthcore.csv.", file=sys.stderr)
+        return 1
+    print(f"Wrote {len(rows)} rows to {out.name}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

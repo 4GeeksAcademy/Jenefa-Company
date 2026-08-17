@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useRef, useState, useTransition } from "react";
+import { useCallback, useRef, useState } from "react";
+import { ErrorPanel } from "@/components/ErrorPanel";
 import {
   analyzeIncidentFile,
   exportResultsUrl,
   type IncidentAnalysis,
 } from "@/lib/incidentApi";
+import { toUserFacingMessage, USER_MESSAGES, messageForStatus } from "@/lib/userFacingError";
 
 function pct(part: number, whole: number): string {
   if (whole <= 0) return "0.0%";
@@ -37,26 +39,38 @@ function MetricList({
   );
 }
 
+type AnalysisUi = "idle" | "loading" | "fulfilled" | "rejected";
+
 export function IncidentAnalysisPanel() {
   const inputRef = useRef<HTMLInputElement>(null);
+  const lastFileRef = useRef<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<IncidentAnalysis | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [uiState, setUiState] = useState<AnalysisUi>("idle");
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const runAnalysis = useCallback((file: File) => {
+    lastFileRef.current = file;
     setError(null);
+    setExportError(null);
     setFileName(file.name);
-    startTransition(async () => {
+    setUiState("loading");
+    void (async () => {
       try {
         const analysis = await analyzeIncidentFile(file);
         setResult(analysis);
+        setUiState("fulfilled");
       } catch (err) {
         setResult(null);
-        setError(err instanceof Error ? err.message : "Analysis failed.");
+        setError(toUserFacingMessage(err));
+        setUiState("rejected");
+      } finally {
+        setUiState((current) => (current === "loading" ? "rejected" : current));
       }
-    });
+    })();
   }, []);
 
   const onFiles = useCallback(
@@ -68,15 +82,53 @@ export function IncidentAnalysisPanel() {
     [runAnalysis]
   );
 
+  async function downloadExport() {
+    setExportError(null);
+    setExporting(true);
+    try {
+      let response: Response;
+      try {
+        response = await fetch(exportResultsUrl());
+      } catch {
+        setExportError(USER_MESSAGES.connection);
+        return;
+      }
+      if (!response.ok) {
+        setExportError(messageForStatus(response.status));
+        return;
+      }
+      try {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = "results.csv";
+        anchor.click();
+        URL.revokeObjectURL(url);
+      } catch {
+        setExportError(USER_MESSAGES.parse);
+      }
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  const isPending = uiState === "loading";
+  const invalidBreakdown = result?.invalid_breakdown ?? {};
   const invalidRows =
     result == null
       ? []
-      : Object.entries(result.invalid_breakdown)
+      : Object.entries(invalidBreakdown)
           .filter(([, count]) => count > 0)
           .map(([rule, count]) => ({
             label: result.invalid_breakdown_labels?.[rule] ?? rule,
             value: String(count),
           }));
+
+  const satisfaction = result?.satisfaction;
+  const scoredCases = satisfaction?.scored_cases ?? 0;
+  const closedCases = satisfaction?.closed_cases ?? 0;
+  const satisfactionCounts = satisfaction?.counts ?? {};
 
   return (
     <div className="flex flex-col gap-8">
@@ -145,17 +197,24 @@ export function IncidentAnalysisPanel() {
         </div>
       </section>
 
-      {error ? (
-        <div
-          role="alert"
-          className="border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900"
-        >
-          <p className="font-semibold">Upload could not be analyzed</p>
-          <p className="mt-1">{error}</p>
+      {isPending ? (
+        <div className="loading-state border border-border bg-surface px-4 py-8 text-center text-sm text-muted">
+          Analyzing incident file…
         </div>
       ) : null}
 
-      {result && result.invalid_records > 0 ? (
+      {uiState === "rejected" && error ? (
+        <ErrorPanel
+          title="Upload could not be analyzed"
+          message={error}
+          onRetry={() => {
+            const file = lastFileRef.current;
+            if (file) runAnalysis(file);
+          }}
+        />
+      ) : null}
+
+      {result && (result.invalid_records ?? 0) > 0 ? (
         <div
           role="status"
           className="border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950"
@@ -174,7 +233,7 @@ export function IncidentAnalysisPanel() {
         </div>
       ) : null}
 
-      {result ? (
+      {uiState === "fulfilled" && result ? (
         <>
           <section className="grid gap-4 md:grid-cols-3">
             <div className="border border-border bg-surface px-4 py-5">
@@ -182,7 +241,7 @@ export function IncidentAnalysisPanel() {
                 Total records
               </p>
               <p className="mt-2 font-display text-3xl text-foreground">
-                {result.total_records}
+                {result.total_records ?? 0}
               </p>
             </div>
             <div className="border border-border bg-surface px-4 py-5">
@@ -190,7 +249,7 @@ export function IncidentAnalysisPanel() {
                 Valid
               </p>
               <p className="mt-2 font-display text-3xl text-foreground">
-                {result.valid_records}
+                {result.valid_records ?? 0}
               </p>
             </div>
             <div className="border border-border bg-surface px-4 py-5">
@@ -198,7 +257,7 @@ export function IncidentAnalysisPanel() {
                 Invalid
               </p>
               <p className="mt-2 font-display text-3xl text-foreground">
-                {result.invalid_records}
+                {result.invalid_records ?? 0}
               </p>
             </div>
           </section>
@@ -206,23 +265,23 @@ export function IncidentAnalysisPanel() {
           <section className="grid gap-4 lg:grid-cols-2">
             <MetricList
               title="Category breakdown"
-              rows={Object.entries(result.by_category).map(([label, count]) => ({
+              rows={Object.entries(result.by_category ?? {}).map(([label, count]) => ({
                 label,
-                value: `${count} (${pct(count, result.valid_records)})`,
+                value: `${count} (${pct(count, result.valid_records ?? 0)})`,
               }))}
             />
             <MetricList
               title="Status lifecycle"
-              rows={Object.entries(result.by_status).map(([label, count]) => ({
+              rows={Object.entries(result.by_status ?? {}).map(([label, count]) => ({
                 label,
-                value: `${count} (${pct(count, result.valid_records)})`,
+                value: `${count} (${pct(count, result.valid_records ?? 0)})`,
               }))}
             />
             <MetricList
               title="Country breakdown"
-              rows={Object.entries(result.by_country).map(([label, count]) => ({
+              rows={Object.entries(result.by_country ?? {}).map(([label, count]) => ({
                 label,
-                value: `${count} (${pct(count, result.valid_records)})`,
+                value: `${count} (${pct(count, result.valid_records ?? 0)})`,
               }))}
             />
             <MetricList
@@ -230,30 +289,40 @@ export function IncidentAnalysisPanel() {
               rows={[
                 {
                   label: "Scored cases",
-                  value: `${result.satisfaction.scored_cases} of ${result.satisfaction.closed_cases}`,
+                  value: `${scoredCases} of ${closedCases}`,
                 },
                 {
                   label: "Average score",
                   value:
-                    result.satisfaction.average == null
+                    satisfaction?.average == null
                       ? "n/a"
-                      : `${result.satisfaction.average.toFixed(2)} / 5.00`,
+                      : `${satisfaction.average.toFixed(2)} / 5.00`,
                 },
                 ...[1, 2, 3, 4, 5].map((score) => ({
                   label: `Score ${score}`,
-                  value: String(result.satisfaction.counts[String(score)] ?? 0),
+                  value: String(satisfactionCounts[String(score)] ?? 0),
                 })),
               ]}
             />
           </section>
 
+          {exportError ? (
+            <ErrorPanel
+              title="Results could not be downloaded"
+              message={exportError}
+              onRetry={() => void downloadExport()}
+            />
+          ) : null}
+
           <div>
-            <a
-              href={exportResultsUrl()}
-              className="inline-flex bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sidebar-hover"
+            <button
+              type="button"
+              onClick={() => void downloadExport()}
+              disabled={exporting}
+              className="inline-flex bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sidebar-hover disabled:opacity-60"
             >
-              Download results.csv
-            </a>
+              {exporting ? "Preparing download…" : "Download results.csv"}
+            </button>
           </div>
         </>
       ) : null}

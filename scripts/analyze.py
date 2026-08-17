@@ -26,11 +26,16 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     csv_path = Path(args[0])
-    result = analyze_csv_path(csv_path)
-    print(format_console_report(result))
-
-    if result.error:
+    if not csv_path.exists() or not csv_path.is_file():
+        print("Input file is missing or is not a regular file.", file=sys.stderr)
         return 1
+
+    result = analyze_csv_path(csv_path)
+    if result.error:
+        print(format_console_report(result), file=sys.stderr)
+        return 1
+
+    print(format_console_report(result))
 
     try:
         answer = input("Export results to CSV? [y / n]: ").strip().lower()
@@ -40,8 +45,12 @@ def main(argv: list[str] | None = None) -> int:
 
     if answer in {"y", "yes"}:
         out_path = Path.cwd() / "results.csv"
-        out_path.write_text(results_to_csv_text(result), encoding="utf-8")
-        print(f"Saved: {out_path}")
+        try:
+            out_path.write_text(results_to_csv_text(result), encoding="utf-8")
+        except OSError:
+            print("Unable to write results.csv.", file=sys.stderr)
+            return 1
+        print(f"Saved: {out_path.name}")
     else:
         print("Export skipped.")
 

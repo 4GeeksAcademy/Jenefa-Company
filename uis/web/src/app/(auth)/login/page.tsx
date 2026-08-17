@@ -4,8 +4,9 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AuthShell } from "@/components/AuthShell";
-import { ApiRequestError } from "@/lib/api";
+import { ErrorPanel } from "@/components/ErrorPanel";
 import { loginAndStore } from "@/lib/authApi";
+import { toUserFacingMessage } from "@/lib/userFacingError";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,13 +23,7 @@ export default function LoginPage() {
       await loginAndStore(email, password);
       router.replace("/");
     } catch (err) {
-      setError(
-        err instanceof ApiRequestError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : "Unable to sign in."
-      );
+      setError(toUserFacingMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -41,9 +36,7 @@ export default function LoginPage() {
     >
       <form className="flex flex-col gap-4" onSubmit={onSubmit}>
         {error ? (
-          <div role="alert" className="border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-900">
-            {error}
-          </div>
+          <ErrorPanel title="Sign-in could not be completed" message={error} />
         ) : null}
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium text-foreground">Email</span>

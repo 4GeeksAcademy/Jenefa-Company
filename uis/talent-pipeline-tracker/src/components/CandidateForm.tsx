@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createRecord, replaceRecord } from "@/services/records";
+import { SUPPORT_EMAIL, toUserFacingMessage } from "@/lib/userFacingError";
 import type { Candidate, RecordCreatePayload } from "@/types";
 
 interface CandidateFormProps {
@@ -132,9 +133,9 @@ export function CandidateForm({ mode, candidate }: CandidateFormProps) {
       }
     } catch (err) {
       setSubmitState("error");
-      setSubmitMessage(
-        err instanceof Error ? err.message : "Submission failed. Please try again.",
-      );
+      setSubmitMessage(toUserFacingMessage(err));
+    } finally {
+      setSubmitState((current) => (current === "loading" ? "error" : current));
     }
   };
 
@@ -228,7 +229,18 @@ export function CandidateForm({ mode, candidate }: CandidateFormProps) {
               <p className="text-sm text-emerald-700">{submitMessage}</p>
             )}
             {submitState === "error" && submitMessage && (
-              <p className="text-sm text-red-700">{submitMessage}</p>
+              <div className="text-sm text-red-700">
+                <p>{submitMessage}</p>
+                <p className="mt-1">
+                  <Link href="/" className="font-medium underline">
+                    Return home
+                  </Link>
+                  {" · "}
+                  <a href={`mailto:${SUPPORT_EMAIL}`} className="font-medium underline">
+                    Contact support
+                  </a>
+                </p>
+              </div>
             )}
           </div>
         </form>

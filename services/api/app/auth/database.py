@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import tempfile
 from pathlib import Path
@@ -13,6 +14,8 @@ from tinydb.storages import Storage
 from tinydb.table import Table
 
 from .config import get_settings
+
+logger = logging.getLogger(__name__)
 
 _db: TinyDB | None = None
 USERS_TABLE = "users"
@@ -33,12 +36,20 @@ class AtomicJSONStorage(Storage):
     def read(self) -> dict[str, Any] | None:
         if not self.path.exists() or self.path.stat().st_size == 0:
             return None
-        raw = self.path.read_text(encoding="utf-8")
+        try:
+            raw = self.path.read_text(encoding="utf-8")
+        except OSError:
+            logger.exception("Failed to read authentication store")
+            raise
         try:
             data = json.loads(raw, parse_float=self._parse_float)
         except json.JSONDecodeError:
             repaired = _scrub_invalid_control_chars(raw)
-            data = json.loads(repaired, parse_float=self._parse_float)
+            try:
+                data = json.loads(repaired, parse_float=self._parse_float)
+            except json.JSONDecodeError:
+                logger.exception("Authentication store JSON is unreadable")
+                raise
             self.write(data)
         return data
 
@@ -51,7 +62,7 @@ class AtomicJSONStorage(Storage):
                 handle.flush()
                 os.fsync(handle.fileno())
             os.replace(tmp_name, self.path)
-        except Exception:
+        except OSError:
             try:
                 os.unlink(tmp_name)
             except OSError:

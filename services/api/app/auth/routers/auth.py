@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -26,20 +27,32 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 async def parse_login_credentials(request: Request) -> LoginRequest:
     """Accept JSON `{email,password}` or OAuth2 form `{username,password}` (Swagger Authorize)."""
     content_type = request.headers.get("content-type", "").lower()
-    try:
-        if "application/json" in content_type:
+    if "application/json" in content_type:
+        try:
             data = await request.json()
-            if not isinstance(data, dict):
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail="JSON body must be an object",
-                )
-            email = data.get("email") or data.get("username")
-            password = data.get("password")
-        else:
+        except json.JSONDecodeError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="JSON body must be an object",
+            ) from exc
+        if not isinstance(data, dict):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="JSON body must be an object",
+            )
+        email = data.get("email") or data.get("username")
+        password = data.get("password")
+    else:
+        try:
             form = await request.form()
-            email = form.get("email") or form.get("username")
-            password = form.get("password")
+        except (ValueError, RuntimeError) as exc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Form body could not be read",
+            ) from exc
+        email = form.get("email") or form.get("username")
+        password = form.get("password")
+    try:
         return LoginRequest(email=str(email or ""), password=str(password or ""))
     except ValidationError as exc:
         raise HTTPException(

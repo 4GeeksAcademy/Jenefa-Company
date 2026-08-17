@@ -1,4 +1,5 @@
 import { getAuthToken, logoutAndRedirect } from "@/lib/authStorage";
+import { USER_MESSAGES, messageForStatus } from "@/lib/userFacingError";
 
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
@@ -58,7 +59,12 @@ export async function apiFetch(path: string, init: RequestInit = {}): Promise<Re
     headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(`${API_BASE}${path}`, { ...init, headers });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, { ...init, headers });
+  } catch {
+    throw new ApiRequestError(USER_MESSAGES.connection, 0);
+  }
 
   const method = (init.method ?? "GET").toUpperCase();
   const isPublicAuthCall =
@@ -74,11 +80,29 @@ export async function apiFetch(path: string, init: RequestInit = {}): Promise<Re
 }
 
 export async function readJson<T>(response: Response): Promise<T> {
-  const payload = (await response.json()) as T & { detail?: unknown; error?: string };
+  let text: string;
+  try {
+    text = await response.text();
+  } catch {
+    throw new ApiRequestError(USER_MESSAGES.connection, response.status || 0);
+  }
+
+  let payload: { detail?: unknown; error?: string } = {};
+  if (text) {
+    try {
+      payload = JSON.parse(text) as { detail?: unknown; error?: string };
+    } catch {
+      throw new ApiRequestError(
+        response.ok ? USER_MESSAGES.parse : messageForStatus(response.status),
+        response.status
+      );
+    }
+  }
+
   if (!response.ok) {
     const parsed = parseDetail(payload.detail);
     const fallback =
-      typeof payload.error === "string" ? payload.error : "Unable to complete the request.";
+      typeof payload.error === "string" ? payload.error : messageForStatus(response.status);
     throw new ApiRequestError(parsed.message || fallback, response.status, parsed.fieldErrors);
   }
   return payload as T;

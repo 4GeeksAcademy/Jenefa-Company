@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { toUserFacingMessage } from "@/lib/userFacingError";
 import type { UIState } from "@/types";
 
 interface AsyncState<T> {
@@ -8,7 +9,7 @@ interface AsyncState<T> {
   uiState: UIState;
   error: string | null;
   setData: Dispatch<SetStateAction<T | null>>;
-  setUiState: (state: UIState) => void;
+  setUiState: Dispatch<SetStateAction<UIState>>;
   setError: (error: string | null) => void;
   run: (operation: () => Promise<T>) => Promise<T | null>;
 }
@@ -29,11 +30,11 @@ export function useAsyncState<T>(initialData: T | null = null): AsyncState<T> {
       setUiState("success");
       return result;
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "An unexpected error occurred";
-      setError(message);
+      setError(toUserFacingMessage(err));
       setUiState("error");
       return null;
+    } finally {
+      setUiState((current) => (current === "loading" ? "error" : current));
     }
   }, []);
 

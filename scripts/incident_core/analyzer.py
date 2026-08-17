@@ -240,7 +240,24 @@ def _read_dict_rows(text: str) -> tuple[list[dict[str, str]], str | None]:
 
 
 def analyze_csv_text(text: str, *, source_file: str) -> AnalysisResult:
-    rows, error = _read_dict_rows(text)
+    try:
+        rows, error = _read_dict_rows(text)
+    except csv.Error:
+        return AnalysisResult(
+            source_file=source_file,
+            total_records=0,
+            valid_records=0,
+            invalid_records=0,
+            invalid_breakdown=_empty_breakdown(),
+            by_category={c: 0 for c in CATEGORIES},
+            by_status={s: 0 for s in STATUSES},
+            by_country={"US": 0, "UK": 0},
+            satisfaction_counts={score: 0 for score in range(1, 6)},
+            satisfaction_scored=0,
+            satisfaction_closed=0,
+            satisfaction_average=None,
+            error="The file could not be parsed as CSV.",
+        )
     if error:
         return AnalysisResult(
             source_file=source_file,
@@ -301,10 +318,27 @@ def analyze_csv_path(path: str | Path) -> AnalysisResult:
             satisfaction_scored=0,
             satisfaction_closed=0,
             satisfaction_average=None,
-            error=f"File not found: {file_path}",
+            error="File not found or is not a readable file.",
         )
 
-    data = file_path.read_bytes()
+    try:
+        data = file_path.read_bytes()
+    except OSError:
+        return AnalysisResult(
+            source_file=source_name,
+            total_records=0,
+            valid_records=0,
+            invalid_records=0,
+            invalid_breakdown=_empty_breakdown(),
+            by_category={c: 0 for c in CATEGORIES},
+            by_status={s: 0 for s in STATUSES},
+            by_country={"US": 0, "UK": 0},
+            satisfaction_counts={score: 0 for score in range(1, 6)},
+            satisfaction_scored=0,
+            satisfaction_closed=0,
+            satisfaction_average=None,
+            error="Unable to read the input file.",
+        )
     return analyze_csv_bytes(data, source_file=source_name)
 
 
