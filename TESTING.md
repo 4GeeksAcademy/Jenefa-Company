@@ -10,11 +10,19 @@ A recent Austin refactor bypassed token-expiration checks and locked clinical op
 
 ### FastAPI (`pytest`)
 
-From the FastAPI project root (`services/api`):
+From the **repository root** (acceptance command):
+
+```bash
+uv sync
+uv run pytest
+uv run pytest --cov --cov-report=term-missing
+```
+
+Or from the FastAPI project (`services/api`):
 
 ```bash
 cd services/api
-uv sync --extra test   # first time / after dependency changes
+uv sync --extra test
 uv run pytest
 uv run pytest --cov=app.auth --cov-report=term-missing
 ```
@@ -96,7 +104,8 @@ Verified on 2026-08-16 after suite execution.
 
 | Suite | Command | Result |
 | ----- | ------- | ------ |
-| FastAPI auth module | `cd services/api && uv run pytest --cov=app.auth --cov-report=term-missing` | **24 passed**, **84%** total coverage on `app.auth` (gate ≥ 70%) |
+| FastAPI auth module (repo root) | `uv run pytest` | **24 passed** |
+| FastAPI auth coverage | `uv run pytest --cov --cov-report=term-missing` | **84%** on `app.auth` (gate ≥ 70%) |
 | TypeScript utilities | `cd uis/web && npx jest --coverage` | **8 passed** across `authStorage`, `userFacingError`, `api.readJson` |
 
 ### FastAPI coverage detail (auth business modules)

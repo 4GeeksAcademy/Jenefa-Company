@@ -51,8 +51,16 @@ Incident responses never include `patient_id` or other PHI — only aggregate co
 
 Full plan, matrix, and coverage notes live in the repo-root [`TESTING.md`](../../TESTING.md).
 
+From the repository root:
+
 ```bash
-cd services/api
+uv sync
+uv run pytest
+```
+
+From this directory:
+
+```bash
 uv sync --extra test
 uv run pytest
 uv run pytest --cov=app.auth --cov-report=term-missing
