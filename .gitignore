@@ -17,6 +17,7 @@ out/
 .venv/
 __pycache__/
 *.pyc
+*.db
 results.csv
 .coverage
 htmlcov/

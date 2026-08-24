@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 const navItems = [
   { href: "/", label: "Overview" },
   { href: "/incidents", label: "Incident analysis" },
+  { href: "/inventory", label: "Clinic supplies" },
+  { href: "/login", label: "Sign in" },
 ] as const;
 
 export function WebShell({ children }: { children: React.ReactNode }) {
@@ -23,10 +25,9 @@ export function WebShell({ children }: { children: React.ReactNode }) {
         <nav className="flex flex-1 flex-col gap-1 px-3 py-4" aria-label="Web app">
           {navItems.map((item) => {
             const active =
-              item.href !== "#" &&
-              (item.href === "/"
+              item.href === "/"
                 ? pathname === "/"
-                : pathname.startsWith(item.href));
+                : pathname.startsWith(item.href);
             return (
               <Link
                 key={item.label}

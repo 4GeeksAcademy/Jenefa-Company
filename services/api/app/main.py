@@ -1,13 +1,16 @@
-"""HealthCore incident analysis API (Phase 2)."""
+"""HealthCore incident analysis API (Phase 2) and clinic supply inventory."""
 
 from __future__ import annotations
 
 import csv
 import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response, StreamingResponse
+from sqlmodel import Session
 
 from . import core_path as _core_path  # noqa: F401 — side effect: path bootstrap
 from . import state
@@ -16,6 +19,9 @@ from .auth.routers.profiles import router as profiles_router
 from .auth.routers.protected import router as protected_router
 from .auth.routers.users import router as users_router
 from .errors import GENERIC_INTERNAL, json_error, register_exception_handlers
+from .inventory.database import create_inventory_engine, init_inventory_schema
+from .inventory.router import router as inventory_router
+from .inventory.seed import seed_identity_cache, seed_relational_catalog
 
 # Import shared core after path bootstrap.
 from incident_core import analyze_csv_bytes, results_to_csv_text  # noqa: E402
@@ -23,10 +29,31 @@ from incident_core.constants import RULE_LABELS  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    engine = create_inventory_engine()
+    init_inventory_schema(engine)
+    with Session(engine) as session:
+        seed_relational_catalog(session)
+    seed_identity_cache()
+    app.state.inventory_engine = engine
+    try:
+        yield
+    finally:
+        engine.dispose()
+        if hasattr(app.state, "inventory_engine"):
+            delattr(app.state, "inventory_engine")
+
+
 app = FastAPI(
-    title="HealthCore Incident Analysis API",
-    description="Validate patient incident CSVs without exposing PHI in responses.",
-    version="1.0.0",
+    title="HealthCore Unified API",
+    description=(
+        "Incident CSV analysis, staff JWT authentication (TinyDB), "
+        "and clinic supply inventory (SQLModel / PostgreSQL)."
+    ),
+    version="1.2.0",
+    lifespan=lifespan,
 )
 
 register_exception_handlers(app)
@@ -35,6 +62,7 @@ app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(profiles_router)
 app.include_router(protected_router)
+app.include_router(inventory_router)
 
 app.add_middleware(
     CORSMiddleware,
