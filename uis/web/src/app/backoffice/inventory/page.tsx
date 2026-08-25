@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function InventoryPage() {
+export default function InventoryRootPage() {
   redirect("/backoffice/inventory/products");
 }

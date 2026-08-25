@@ -17,7 +17,7 @@ export default function LoginPage() {
     setError(null);
     try {
       await loginAndStore(String(data.get("email") || ""), String(data.get("password") || ""));
-      router.push("/inventory");
+      router.push("/backoffice/inventory");
     } catch (err: unknown) {
       setError(toUserFacingMessage(err));
     } finally {
