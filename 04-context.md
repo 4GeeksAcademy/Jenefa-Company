@@ -1,6 +1,6 @@
 Milestone 4 — AI-driven Engineering
-🎯 The Challenge
-📌 You are building on your own fork of the company's monorepo selected at the beginning of the course — not on a new repository.
+The Challenge
+You are building on your own fork of the company's monorepo selected at the beginning of the course — not on a new repository.
 
 You have three milestones behind you: the public website, the business logic in TypeScript, and the first AI-generated components. You have pieces. What you don't have yet is the system that connects them and will grow alongside them.
 
@@ -22,7 +22,7 @@ For more specific rules we'll use the .agents/ folder. Think about what conventi
 
 Finally, I want us to formalise at least one skill that captures a recurring task in our workflow — something the agent can execute consistently and that we can reuse in upcoming milestones. It needs explicit acceptance criteria: if it can't be verified, it doesn't count.
 
-As for the app, the public website needs to live in ./uis/website as a Next.js app — not as a copy, but as an improved version with reusable components. In parallel, create ./uis/web to host all internal company logic with its own layout and entry view, and integrate the TypeScript script from the business logic module (Milestone 2) there so we have something visible from day one. Any APIs must be created under /services.
+As for the app, the public website needs to live in ./uis/website as a Next.js app — not as a copy, but as an improved version with reusable components. In parallel, create ./uis/backoffice to host all internal company logic with its own layout and entry view, and integrate the TypeScript script from the business logic module (Milestone 2) there so we have something visible from day one. Any APIs must be created under /services.
 
 When you're done, open a PR and let me know.
 
@@ -77,10 +77,10 @@ An agent skill is a structured, reusable instruction: more concrete than a gener
   - All sections from Milestone 1 present and complete
   - Implemented with reusable React components and correct TypeScript typing
   - Styles consistent with the visual identity established in Milestone 1
-- Create the internal app in `./uis/web`:
-  - Route `/` in `./uis/web` accessible with a basic entry view (welcome screen or empty dashboard structure)
+- Create the internal app in `./uis/backoffice`:
+  - Route `/` in `./uis/backoffice` accessible with a basic entry view (welcome screen or empty dashboard structure)
   - Its own layout, separate from the public corporate website layout in `./uis/website`
-- Integrate the TypeScript script from the business logic module (Milestone 2) inside `./uis/web`:
+- Integrate the TypeScript script from the business logic module (Milestone 2) inside `./uis/backoffice`:
   - Code is imported from its original location in the monorepo — not copied
   - The output of the business logic is visible in the interface (not just in the console)
 
@@ -94,7 +94,7 @@ An agent skill is a structured, reusable instruction: more concrete than a gener
 - The implemented skill has a single objective, documented inputs, and verifiable acceptance criteria
 - The public web in `./uis/website` starts without errors with `npm run dev`
 - The `/` route in `./uis/website` renders the complete corporate website with TypeScript components
-- `./uis/web` exists, has its own layout, and renders without errors
-- The TypeScript script (Milestone 2) is integrated in `./uis/web` and produces visible output on screen
+- `./uis/backoffice` exists, has its own layout, and renders without errors
+- The TypeScript script (Milestone 2) is integrated in `./uis/backoffice` and produces visible output on screen
 - No business logic code is duplicated — it is imported from its original location in the monorepo
 

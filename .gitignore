@@ -1,4 +1,4 @@
-# Dependencies
+
 node_modules/
 
 # Nested app lockfiles break npm workspaces / Next turbopack root detection
@@ -13,14 +13,14 @@ out/
 .env*.local
 .env.production
 
-# Python
-.venv/
-__pycache__/
-*.pyc
-results.csv
-services/api/data/auth.json
-
 # OS / editor
 .DS_Store
 *.log
+
+# Python
+__pycache__/
+*.pyc
+
+# Local service data
+services/api/*.db
 node_modules

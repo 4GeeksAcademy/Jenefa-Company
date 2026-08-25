@@ -2,9 +2,7 @@
   "name": "jenefa-company-workspace",
   "private": true,
   "workspaces": [
-    "src",
-    "uis/website",
-    "uis/web"
+    "src"
   ],
   "scripts": {
     "start": "npm run start -w src --",
@@ -14,10 +12,6 @@
     "ops": "npm run ops -w src --",
     "build": "npm run build -w src",
     "preview": "npm run preview -w src",
-    "exec": "npm exec -w src",
-    "dev:website": "npm run dev -w website",
-    "build:website": "npm run build -w website",
-    "dev:web": "npm run dev -w web",
-    "build:web": "npm run build -w web"
+    "exec": "npm exec -w src"
   }
 }

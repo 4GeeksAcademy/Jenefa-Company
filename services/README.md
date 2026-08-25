@@ -11,6 +11,6 @@ Each subfolder inside `services/` must correspond to **one specific service** (f
 
 | Service | Path | Stack | Purpose |
 | ------- | ---- | ----- | ------- |
-| Incident Analysis API | [`api/`](./api/) | FastAPI | `POST /api/incidents/analyze`, `GET /api/incidents/results/export` using shared `scripts/incident_core` |
+| Incident Management API | [`api/app.py`](./api/app.py) | FastAPI | CRUD + lifecycle + summary: `POST /api/incidents`, `GET /api/incidents`, `GET /api/incidents/{id}`, `PATCH /api/incidents/{id}/status`, `GET /api/incidents/summary` |
 
 > _Spanish version: [README.es.md](./README.es.md)._

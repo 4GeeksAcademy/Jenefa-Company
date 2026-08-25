@@ -13,28 +13,20 @@
 
 ### Milestone 4 completed (monorepo AI setup)
 - Added `memory-bank/` (`projectbrief.md`, `techContext.md`, `progress.md`), root `AGENTS.md`, `.agents/rules/phi-data-residency.md`, and `.agents/skills/sync-memory-bank/`.
-- Created `uis/web` with its own shell layout; `/` imports `healthcore-testing` and renders denial, no-show, and CME outputs on screen.
+- Created `uis/backoffice` with its own shell layout; `/` imports `healthcore-testing` and renders denial, no-show, and CME outputs on screen.
 - Migrated Milestone 1 corporate site into `uis/website` as typed reusable React components (`/`, `/apply`) with the original teal/sky visual identity.
 
 ### Incident report processor completed (Phase 1 + Phase 2)
 - Built shared validator in `scripts/incident_core/` and CLI `scripts/analyze.py` against HealthCore incident CSV rules (no `patient_id` in any output).
 - Added sample dataset `scripts/incidents-healthcore.csv` (100 rows; 94 valid / 6 invalid) matching `scripts/context-fileIncident.md` targets.
-- Added FastAPI service `services/api` with `POST /api/incidents/analyze` and `GET /api/incidents/results/export`.
-- Mounted Incident Analysis upload/dashboard/export UI at `uis/web` `/incidents` (sidebar nav link).
+- Added FastAPI entry `services/api/app.py` with `POST /api/incidents/analyze` and `GET /api/incidents/results/export`.
+- Mounted Incident Analysis UI at `uis/backoffice/app/incidents` (route `/incidents`, sidebar nav link).
 
-### AUTH-01 completed (JWT + TinyDB route protection)
-- Specs captured in `authentication-context.md` / `authentication-specs.md`.
-- Added zero-trust JWT layer under `services/api/app/auth/` (bcrypt via passlib/`libpass`, `python-jose`, env-driven `SECRET_KEY` + `ACCESS_TOKEN_EXPIRE_MINUTES`).
-- User/Profile collections stored only in TinyDB (`services/api/data/auth.json`); dual-DB rule enforced (no user tables in SQL).
-- Public `POST /users`, `POST /auth/login`; protected `GET /auth/me`, `/users`, `/profiles/me`, plus five hardened business stubs: `/clinics/telemetry`, `/appointments/booking`, `/billing/claims/{id}`, `/compliance/audit-logs`, `/ai/clinical-documentation`.
-- Distinct `401` (missing/invalid token) vs `403` (ownership/role) responses verified with TestClient scenarios.
-
-### AUTH-02 completed (frontend JWT session + protected views)
-- Client token lifecycle in `uis/web`: `localStorage` key `hc_auth_token`, `Authorization: Bearer` on outbound API calls, and immediate token clear + `/login` redirect on protected `401`s.
-- Public staff views `/login` and `/register` (register chains `POST /users` then `POST /auth/login`); protected `/`, `/incidents`, and `/account/profile` sit behind a zero-flash client route guard + `WebShell`.
-- Profile UI maps email from `User` (`GET /auth/me`) and name/phone/address from `Profile` (`GET`/`PUT /profiles/me`), with explicit logout.
-- `uis/website` is unchanged — no token checks on the public marketing site.
-- Restored AUTH-01 FastAPI modules under `services/api/app/auth/` (sources had been missing; bytecode/TinyDB store remained) so the frontend can hit live auth routes.
+### Central incident management system completed (Phase 3)
+- Added shared incident domain package in `packages/shared/incidents/` with canonical enums, payload validation, lifecycle transition rules, and zero-filled summary dimensions.
+- Replaced analysis-only API flow with centralized incident CRUD in `services/api/app.py` and SQLite persistence in `services/api/state.py` (`POST /api/incidents`, `GET /api/incidents`, `GET /api/incidents/{id}`, `PATCH /api/incidents/{id}/status`, `GET /api/incidents/summary`).
+- Implemented `scripts/seed_incidents.py` to map historical CSV logs into the new model (`origin=customer`), enforce idempotency, and validate summary parity.
+- Built backoffice incident modules at `uis/backoffice/app/incidents/register`, `uis/backoffice/app/incidents/list`, and `uis/backoffice/app/incidents/summary` including pre-validation, loading/empty/error states, and optimistic status update rollback.
 
 ## Planned Next Steps
 - Dr. Sandra Okonkwo has newly commissioned HealthCore Digital as an internal unit specifically to build out modern, intelligent systems from scratch. The target deployment roadmap spans across six primary operational fronts:

@@ -35,7 +35,10 @@
 │   │       └── services.py    # Business Logic (Claims review)
 │   │
 │   └── main.py               
+<<<<<<< HEAD
 ```
+=======
+>>>>>>> 665d4b39 (document added)
 
 ### Allocation of Responsibility: 
 - High-level business rules inside services.py are kept isolated from technical transport protocols (router.py) and specific infrastructure details (adapters/).
@@ -48,7 +51,11 @@
 
 ## FastAPI Endpoint & Router Organization
 - Routes are explicitly grouped into sub-routers per domain rather than cluttering a single massive file.
+<<<<<<< HEAD
 ### Router Blueprint & Grouping Criteria
+=======
+### Router Blueprint & Grouping Criteria:
+>>>>>>> 665d4b39 (document added)
 - Clinical Operations Sub-Router (/api/v1/clinical): Groups routes managing cross-location medical timelines and AI administrative document parsing.
   - Concrete Routes:
     - GET /patient/{id}/history - Compiles an aggregated, cross-border patient timeline across regional EHR platforms.
@@ -71,10 +78,17 @@
 ### Pydantic Validation
 - This structure mirrors the official recommendation to keep data transmission independent from data storage by strictly decoupling Pydantic schemas from database ORM models.
 
+<<<<<<< HEAD
 ## Frontend & Backend Communication
 - The user-facing analytical dashboards used by Dr. Okonkwo and department heads exist as a detached software entities from the Python API backend.
 - API Communication: All data moving between the systems travels via secure, encrypted HTTPS connections using JSON formatting. The frontends consume data strictly by querying versioned backend endpoints.
 - Cross-Origin Resource Sharing (CORS): Because the clinical dashboards and the central API operate on completely separate network origins, the backend employs FastAPI's native CORSMiddleware. A whitelist containing only the internal frontend system domain URLs rather than allowing insecure wildcard access to mitigate security exploits is declared explicitly.
+=======
+## Frontend & Backend Coexistence & Communication
+- The user-facing analytical dashboards used by Dr. Okonkwo and department heads exist as a detached software entities from the Python API backend.
+- API Communication: All data moving between the systems travels via secure, encrypted HTTPS connections using JSON formatting. The frontends consume data strictly by querying versioned backend endpoints (/api/v1/...).
+- Cross-Origin Resource Sharing (CORS): Because the clinical dashboards and the central API operate on completely separate network origins, the backend employs FastAPI's native CORSMiddleware. A whitelist containing only the internal frontend system domain URLs rather than allowing insecure wildcard access (allow_origins=["*"]) to mitigate security exploits is declared explictly.
+>>>>>>> 665d4b39 (document added)
 - Environment Variable Management: Secrets such as database strings, encryption salts, and compliance API keys are completely barred from git control. The backend parses system variables securely at runtime using pydantic-settings to guarantee distinct, secure boundaries between US-HIPAA and UK-GDPR hosting regions
 
 ## Risks and Points of Attention
