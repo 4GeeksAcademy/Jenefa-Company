@@ -4,7 +4,7 @@ import { USER_MESSAGES, messageForStatus } from "@/lib/userFacingError";
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
   process.env.NEXT_PUBLIC_INCIDENT_API_URL?.replace(/\/$/, "") ||
-  "http://127.0.0.1:8000";
+  "/backend";
 
 export type FieldError = {
   field: string;

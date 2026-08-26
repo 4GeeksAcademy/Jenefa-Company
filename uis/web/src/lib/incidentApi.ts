@@ -1,6 +1,6 @@
 const API_BASE =
   process.env.NEXT_PUBLIC_INCIDENT_API_URL?.replace(/\/$/, "") ||
-  "http://127.0.0.1:8000";
+  "/backend";
 
 export type IncidentAnalysis = {
   source_file: string;
