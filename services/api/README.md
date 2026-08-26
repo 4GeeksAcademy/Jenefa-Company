@@ -24,7 +24,8 @@ uvicorn app.main:app --reload --port 8000
 | `PASSWORD_RESET_EXPIRE_MINUTES` | No (default `60`) | Reset token lifetime |
 | `FRONTEND_BASE_URL` | No (default `http://localhost:3001`) | Base URL used in reset email links (`/reset-password?token=…`) |
 | `AUTH_DB_PATH` | No | Override TinyDB path (default `data/auth.json`) |
-| `INVENTORY_DATABASE_URL` | No | SQLModel engine URL. Accepts `SUPABASE_DB_URL` / `DATABASE_URL`. Default: SQLite `data/inventory.db` |
+| `DB_URL` | No | Preferred SQLModel engine URL for relational inventory persistence. Accepts `postgres://`, `postgresql://`, or full SQLAlchemy URLs. |
+| `INVENTORY_DATABASE_URL` | No | Legacy alias for inventory SQLModel URL. Also accepts `SUPABASE_DB_URL` / `DATABASE_URL`. Default: SQLite `data/inventory.db` when no DB URL variable is set. |
 | `INVENTORY_SEED_PASSWORD` | No | Password for seeded clinic operators (`usr-hc-9901`, `usr-hc-2544`) |
 | `EMAIL_PROVIDER` | No | `resend`, `sendgrid`, or omit (auto / console fallback) |
 | `RESEND_API_KEY` | For Resend | Resend API key — never hardcode |

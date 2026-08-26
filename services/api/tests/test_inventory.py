@@ -18,7 +18,7 @@ def inventory_client(
     auth_db: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> Iterator[TestClient]:
     db_file = tmp_path / "inventory.db"
-    monkeypatch.setenv("INVENTORY_DATABASE_URL", f"sqlite:///{db_file}")
+    monkeypatch.setenv("DB_URL", f"sqlite:///{db_file}")
     from app.main import app
 
     with TestClient(app) as client:
