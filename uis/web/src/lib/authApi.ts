@@ -1,5 +1,5 @@
 import { apiFetch, readJson } from "@/lib/api";
-import { setAuthToken } from "@/lib/authStorage";
+import { setAuthDisplayName, setAuthToken } from "@/lib/authStorage";
 
 export type Profile = {
   id: string;
@@ -28,6 +28,25 @@ export type RegisterPayload = {
   address?: string;
 };
 
+function toTitleCase(words: string): string {
+  return words
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function deriveDisplayName(email: string, profileName?: string | null): string {
+  const cleanProfile = (profileName || "").trim();
+  if (cleanProfile) {
+    return cleanProfile;
+  }
+
+  const localPart = email.split("@")[0] || "staff";
+  const normalized = localPart.replace(/[._-]+/g, " ").trim();
+  return normalized ? toTitleCase(normalized) : "Staff";
+}
+
 export async function login(email: string, password: string): Promise<TokenResponse> {
   const response = await apiFetch("/auth/login", {
     method: "POST",
@@ -48,11 +67,19 @@ export async function registerAndLogin(payload: RegisterPayload): Promise<void> 
   await registerUser(payload);
   const token = await login(payload.email, payload.password);
   setAuthToken(token.access_token);
+  setAuthDisplayName(deriveDisplayName(payload.email, payload.name));
 }
 
 export async function loginAndStore(email: string, password: string): Promise<void> {
   const token = await login(email, password);
   setAuthToken(token.access_token);
+  try {
+    const me = await fetchMe();
+    setAuthDisplayName(deriveDisplayName(me.email, me.profile?.name));
+  } catch {
+    // Keep sign-in resilient if profile lookup is temporarily unavailable.
+    setAuthDisplayName(deriveDisplayName(email));
+  }
 }
 
 export async function fetchMe(): Promise<MeResponse> {

@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { getAuthDisplayName } from "@/lib/authStorage";
 
 const navItems = [
   { href: "/", label: "Overview" },
@@ -12,6 +14,11 @@ const navItems = [
 
 export function WebShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [displayName, setDisplayName] = useState<string | null>(null);
+
+  useEffect(() => {
+    setDisplayName(getAuthDisplayName());
+  }, [pathname]);
 
   return (
     <div className="flex min-h-full flex-1 bg-background">
@@ -57,7 +64,12 @@ export function WebShell({ children }: { children: React.ReactNode }) {
             </p>
             <h1 className="font-display text-xl text-foreground"> Backoffice</h1>
           </div>
-          <p className="text-sm text-muted">Austin tech unit --- James Osei</p>
+          <div className="text-right">
+            {displayName ? (
+              <p className="text-sm font-medium text-foreground">Welcome, {displayName}</p>
+            ) : null}
+            <p className="text-sm text-muted">Austin tech unit --- James Osei</p>
+          </div>
         </header>
         <main className="flex-1 px-6 py-8">{children}</main>
       </div>
