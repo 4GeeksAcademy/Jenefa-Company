@@ -164,15 +164,3 @@ def _sync_postgres_sequences(session: Session) -> None:
             )
         )
     session.commit()
-if __name__ == "__main__":
-    # 1. Seed identity/auth systems
-    seed_identity_cache()
-    
-    # 2. Bind your engine and seed relational tables
-    # (Replace 'engine' with your application's actual SQLModel/SQLAlchemy engine)
-    from sqlmodel import create_engine
-    # engine = create_engine("postgresql://user:pass@localhost/dbname")
-    
-    with Session(engine) as session:
-        seed_relational_catalog(session)
-
