@@ -52,14 +52,27 @@ export function InventoryOutboundView() {
       return;
     }
 
+    let cancelled = false;
     void fetchProduct(Number(selectedItem))
       .then((detail) => {
-        setAvailableStock(detail.current_stock);
+        if (!cancelled) {
+          setAvailableStock(detail.current_stock);
+        }
       })
       .catch((err: unknown) => {
-        setError(toUserFacingMessage(err));
+        if (!cancelled) {
+          setError(toUserFacingMessage(err));
+        }
       })
-      .finally(() => setStockLoading(false));
+      .finally(() => {
+        if (!cancelled) {
+          setStockLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [selectedItem]);
 
   const quantityWarning =
@@ -146,10 +159,8 @@ export function InventoryOutboundView() {
               const nextValue = event.target.value;
               setSelectedItem(nextValue);
               setStockLoading(Boolean(nextValue));
+              setAvailableStock(null);
               setQuantityApiError(null);
-              if (!nextValue) {
-                setAvailableStock(null);
-              }
             }}
             required
             disabled={loading || submitting}

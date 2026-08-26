@@ -10,6 +10,32 @@ function movementLabel(kind: OrderRead["kind"]): string {
   return kind === "inbound" ? "Restock/Replenish" : "Fulfillment/Removal";
 }
 
+function timezoneForClinic(clinicId: string): string {
+  const normalized = clinicId.toUpperCase();
+  if (normalized.includes("-UK-")) {
+    return "Europe/London";
+  }
+  if (normalized.includes("-TX-")) {
+    return "America/Chicago";
+  }
+  if (normalized.includes("-FL-") || normalized.includes("-GA-")) {
+    return "America/New_York";
+  }
+  return "UTC";
+}
+
+function formatLoggedTimestamp(isoTimestamp: string, clinicId: string): string {
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+      timeZone: timezoneForClinic(clinicId),
+    }).format(new Date(isoTimestamp));
+  } catch {
+    return new Date(isoTimestamp).toLocaleString();
+  }
+}
+
 export function InventoryOrdersView() {
   const { isAuthorized } = useRequireAuth();
   const [loading, setLoading] = useState(true);
@@ -97,7 +123,7 @@ export function InventoryOrdersView() {
                       </span>
                     </td>
                     <td className="px-4 py-4 text-muted">
-                      {new Date(row.created_at).toLocaleString()}
+                      {formatLoggedTimestamp(row.created_at, row.clinic_id)}
                     </td>
                     <td className="px-4 py-4 font-mono text-xs text-muted">{row.user_uuid}</td>
                   </tr>
