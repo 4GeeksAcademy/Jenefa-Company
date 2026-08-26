@@ -7,6 +7,7 @@ from collections.abc import Iterator
 from pathlib import Path
 
 from fastapi import Depends, Request
+from dotenv import load_dotenv
 from sqlalchemy.engine import Engine
 from sqlalchemy.event import listen
 from sqlalchemy.pool import StaticPool
@@ -15,11 +16,15 @@ from sqlmodel import Session, SQLModel, create_engine
 from . import models as _models  # noqa: F401 — register table metadata
 
 DEFAULT_SQLITE = Path(__file__).resolve().parents[2] / "data" / "inventory.db"
+ENV_PATH = Path(__file__).resolve().parents[2] / ".env"
+
+load_dotenv(ENV_PATH)
 
 
 def inventory_database_url() -> str:
     explicit = (
-        os.getenv("INVENTORY_DATABASE_URL")
+        os.getenv("DB_URL")
+        or os.getenv("INVENTORY_DATABASE_URL")
         or os.getenv("SUPABASE_DB_URL")
         or os.getenv("DATABASE_URL")
         or ""
