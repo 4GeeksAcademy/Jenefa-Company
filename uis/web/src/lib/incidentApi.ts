@@ -1,3 +1,6 @@
+const API_BASE =
+  process.env.NEXT_PUBLIC_INCIDENT_API_URL?.replace(/\/$/, "") ||
+  "/backend";
 import { apiFetch, API_BASE, readJson } from "@/lib/api";
 
 export type IncidentAnalysis = {

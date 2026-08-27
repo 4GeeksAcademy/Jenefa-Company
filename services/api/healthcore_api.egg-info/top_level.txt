@@ -1,7 +1,0 @@
-app
-constants
-database
-main
-models
-routes
-seed

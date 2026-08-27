@@ -10,6 +10,7 @@ out/
 
 # Env
 .env
+.env.example
 .env*.local
 .env.production
 
@@ -17,7 +18,11 @@ out/
 .venv/
 __pycache__/
 *.pyc
+*.db
 results.csv
+.coverage
+htmlcov/
+.pytest_cache/
 services/api/data/auth.json
 
 # OS / editor

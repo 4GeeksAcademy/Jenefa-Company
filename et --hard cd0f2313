@@ -1,0 +1,47 @@
+[33mcd596e08[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfileIncident[m[33m)[m HEAD@{0}: commit (merge): Merge branch 'fileIncident' of https://github.com/4GeeksAcademy/Jenefa-Company into fileIncident
+[33mcd0f2313[m HEAD@{1}: checkout: moving from auth-unittesting to fileIncident
+[33m00e01d71[m[33m ([m[1;31morigin/orm-backend[m[33m, [m[1;32mauth-unittesting[m[33m)[m HEAD@{2}: rebase (abort): returning to refs/heads/auth-unittesting
+[33m775caaa6[m[33m ([m[1;31morigin/fileIncident[m[33m)[m HEAD@{3}: pull origin fileIncident --rebase (start): checkout 775caaa66720442490a40035db5b8d0ec363768e
+[33m00e01d71[m[33m ([m[1;31morigin/orm-backend[m[33m, [m[1;32mauth-unittesting[m[33m)[m HEAD@{4}: pull origin orm-backend: Fast-forward
+[33m83348951[m[33m ([m[1;31morigin/auth-unittesting[m[33m)[m HEAD@{5}: commit: screenshots in /auth-unittesting
+[33m8eb32968[m HEAD@{6}: pull origin: Fast-forward
+[33m74e18a9c[m HEAD@{7}: checkout: moving from feature/error-handling-audit to auth-unittesting
+[33mdc2eeab2[m[33m ([m[1;31morigin/feature/error-handling-audit[m[33m, [m[1;32mfeature/error-handling-audit[m[33m)[m HEAD@{8}: commit: error screenshots
+[33m1822a2e5[m HEAD@{9}: checkout: moving from feature/password-reset to feature/error-handling-audit
+[33m7bc34321[m[33m ([m[1;31morigin/feature/password-reset[m[33m, [m[1;32mfeature/password-reset[m[33m)[m HEAD@{10}: commit: /auth-passwordReset/README edited
+[33mcb9dc76a[m HEAD@{11}: commit: screenshots added
+[33m0ec5ee91[m HEAD@{12}: pull origin: Fast-forward
+[33m1b395b91[m HEAD@{13}: checkout: moving from feature/password-reset to feature/password-reset
+[33m1b395b91[m HEAD@{14}: checkout: moving from feature/auth-frontend to feature/password-reset
+[33mb921dbb2[m[33m ([m[1;31morigin/feature/auth-frontend[m[33m, [m[1;32mfeature/auth-frontend[m[33m)[m HEAD@{15}: commit: screenshots added to /auth-frontend
+[33mb0fc78e6[m HEAD@{16}: commit: login screenshots added
+[33mf14f25a9[m HEAD@{17}: checkout: moving from main to feature/auth-frontend
+[33mab645fa2[m[33m ([m[1;32mmain[m[33m)[m HEAD@{18}: checkout: moving from fileIncident to main
+[33mcd0f2313[m HEAD@{19}: checkout: moving from fileIncident to fileIncident
+[33mcd0f2313[m HEAD@{20}: rebase (finish): returning to refs/heads/fileIncident
+[33mcd0f2313[m HEAD@{21}: rebase (continue): specs added
+[33m1b958709[m HEAD@{22}: rebase (pick): FileIncidentContext added
+[33m480ad1e0[m HEAD@{23}: rebase (continue): document added
+[33md4230667[m[33m ([m[1;31morigin/milestone-4[m[33m)[m HEAD@{24}: pull origin fileIncident --rebase (start): checkout d423066735cf60e37829f284c8c41f9f3f2338ac
+[33m55152fe9[m HEAD@{25}: commit: specs added
+[33mab645fa2[m[33m ([m[1;32mmain[m[33m)[m HEAD@{26}: checkout: moving from main to fileIncident
+[33mab645fa2[m[33m ([m[1;32mmain[m[33m)[m HEAD@{27}: commit: FileIncidentContext added
+[33m86f8531d[m HEAD@{28}: checkout: moving from milestone-4 to main
+[33mcc61bec0[m[33m ([m[1;32mmilestone-4[m[33m)[m HEAD@{29}: commit: website edited
+[33mff404ee6[m HEAD@{30}: commit: repo edited
+[33m2f2c61ab[m HEAD@{31}: reset: moving to origin/milestone-4
+[33m912aa5a3[m HEAD@{32}: checkout: moving from milestone-4 to milestone-4
+[33m912aa5a3[m HEAD@{33}: commit: agents added
+[33mdbeb92b0[m HEAD@{34}: commit: progress added
+[33m4f6dcb9f[m HEAD@{35}: commit: techContext added
+[33m6af93f62[m HEAD@{36}: commit: project brief added
+[33m86f8531d[m HEAD@{37}: checkout: moving from main to milestone-4
+[33m86f8531d[m HEAD@{38}: commit: risks added
+[33me29bd68a[m HEAD@{39}: commit: risks added
+[33m5aafd569[m HEAD@{40}: commit: risks added
+[33m3636691c[m HEAD@{41}: pull origin main --rebase (finish): returning to refs/heads/main
+[33m3636691c[m HEAD@{42}: pull origin main --rebase (pick): directory added
+[33m665d4b39[m HEAD@{43}: pull origin main --rebase (pick): document added
+[33mbfd69308[m HEAD@{44}: pull origin main --rebase (start): checkout bfd69308a589ac0e40c9bddc6fac468f126c2b0a
+[33mdf01308b[m HEAD@{45}: commit: directory added
+[33m16c8e22f[m HEAD@{46}: commit: document added

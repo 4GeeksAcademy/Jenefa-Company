@@ -2,16 +2,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { getAuthDisplayName } from "@/lib/authStorage";
 import { logoutAndRedirect } from "@/lib/authStorage";
 
 const navItems = [
   { href: "/", label: "Overview" },
   { href: "/incidents", label: "Incident analysis" },
+  { href: "/backoffice/inventory", label: "Clinic supplies" },
+  { href: "/login", label: "Sign in" },
   { href: "/account/profile", label: "Profile" },
 ] as const;
 
 export function WebShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [displayName, setDisplayName] = useState<string | null>(null);
+
+  useEffect(() => {
+    setDisplayName(getAuthDisplayName());
+  }, [pathname]);
 
   return (
     <div className="flex min-h-full flex-1 bg-background">
@@ -56,6 +65,12 @@ export function WebShell({ children }: { children: React.ReactNode }) {
               Operations workspace
             </p>
             <h1 className="font-display text-xl text-foreground"> Backoffice</h1>
+          </div>
+          <div className="text-right">
+            {displayName ? (
+              <p className="text-sm font-medium text-foreground">Welcome, {displayName}</p>
+            ) : null}
+            <p className="text-sm text-muted">Austin tech unit --- James Osei</p>
           </div>
           <button
             type="button"

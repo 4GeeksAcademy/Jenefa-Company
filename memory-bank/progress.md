@@ -22,6 +22,18 @@
 - Added FastAPI service `services/api` with `POST /api/incidents/analyze` and `GET /api/incidents/results/export`.
 - Mounted Incident Analysis upload/dashboard/export UI at `uis/web` `/incidents` (sidebar nav link).
 
+### AUTH-088 completed (authentication unit test coverage)
+- Document-first plan and results in root `TESTING.md` (matrix, run commands, AI/regression notes, coverage).
+- FastAPI suite under `services/api/tests/` (`test_register.py`, `test_login.py`, `test_token.py`, plus `test_service_rules.py`); run via `cd services/api && uv run pytest` / `--cov=app.auth` — **84%** auth module coverage (gate ≥ 70%).
+- Registration now enforces minimum 8-character passwords (aligned with reset/change-password); covered by `test_register_rejects_password_shorter_than_eight_chars`.
+- Jest suite for clinic web auth utilities (`uis/web` `authStorage`, `userFacingError`, `api.readJson`) via `npx jest --coverage`.
+- Auth API sources (`services/api/app/auth`, error handlers, web `lib` auth helpers) restored onto `auth-unittesting` so the suite exercises the implemented structure.
+
+### Clinic supply inventory (SQLModel dual persistence)
+- Extended `services/api` with a dual-store inventory layer: TinyDB remains the identity/`get_current_user` source; SQLModel persists `MedicalSupply`, `InboundEntry`, and `OutboundExit` on SQLite locally or Supabase Postgres via `INVENTORY_DATABASE_URL`.
+- Stock is ledger-derived only (`inbound − outbound` by `clinic_id`). Outbound overdrafts return HTTP 400 before write. All `/inventory/*` routes require bearer auth and stamp `user_uuid` from the TinyDB session.
+- Spec seed catalog (gloves `450`, sedative `35`) loads on empty databases. Covered by `services/api/tests/test_inventory.py` (8 cases). Staff UI at `uis/web` `/inventory` plus `/login`.
+- Milestone 5 UI hardening completed in `uis/web`: all four backoffice inventory routes stay session-guarded; outbound dispersal resets and re-fetches stock immediately on item changes with stale-request protection; orders history now formats `created_at` by clinic timezone (UK -> `Europe/London`, TX -> `America/Chicago`, FL/GA -> `America/New_York`, fallback `UTC`) while preserving immutable audit columns and movement badges.
 ### AUTH-01 completed (JWT + TinyDB route protection)
 - Specs captured in `authentication-context.md` / `authentication-specs.md`.
 - Added zero-trust JWT layer under `services/api/app/auth/` (bcrypt via passlib/`libpass`, `python-jose`, env-driven `SECRET_KEY` + `ACCESS_TOKEN_EXPIRE_MINUTES`).
