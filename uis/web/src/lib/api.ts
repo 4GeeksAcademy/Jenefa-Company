@@ -5,6 +5,7 @@ export const API_BASE =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
   process.env.NEXT_PUBLIC_INCIDENT_API_URL?.replace(/\/$/, "") ||
   "/backend";
+  "http://127.0.0.1:8000";
 
 export type FieldError = {
   field: string;
@@ -72,6 +73,11 @@ export async function apiFetch(path: string, init: RequestInit = {}): Promise<Re
     path === "/auth/forgot-password" ||
     path === "/auth/reset-password" ||
     (path === "/users" && method === "POST");
+  const response = await fetch(`${API_BASE}${path}`, { ...init, headers });
+
+  const method = (init.method ?? "GET").toUpperCase();
+  const isPublicAuthCall =
+    path === "/auth/login" || (path === "/users" && method === "POST");
   if (response.status === 401 && token && !isPublicAuthCall) {
     logoutAndRedirect();
   }
@@ -103,6 +109,11 @@ export async function readJson<T>(response: Response): Promise<T> {
     const parsed = parseDetail(payload.detail);
     const fallback =
       typeof payload.error === "string" ? payload.error : messageForStatus(response.status);
+  const payload = (await response.json()) as T & { detail?: unknown; error?: string };
+  if (!response.ok) {
+    const parsed = parseDetail(payload.detail);
+    const fallback =
+      typeof payload.error === "string" ? payload.error : "Unable to complete the request.";
     throw new ApiRequestError(parsed.message || fallback, response.status, parsed.fieldErrors);
   }
   return payload as T;

@@ -23,6 +23,7 @@ results.csv
 .coverage
 htmlcov/
 .pytest_cache/
+services/api/data/auth.json
 
 # OS / editor
 .DS_Store

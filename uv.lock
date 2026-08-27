@@ -38,6 +38,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/61/cc/a381afa6efea9f496
 wheels = [
     { url = "https://files.pythonhosted.org/packages/da/35/f2287558c17e29fafc8ef3daf819bb9834061cfa43bff8014f7df7f63bdc/anyio-4.14.2-py3-none-any.whl", hash = "sha256:9f505dda5ac9f0c8309b5e8bd445a8c2bf7246f3ce950121e45ea15bc41d1494", size = 125813, upload-time = "2026-07-12T20:29:05.763Z" },
 ]
+requires-python = ">=3.14"
 
 [[package]]
 name = "bcrypt"
@@ -556,6 +557,12 @@ dependencies = [
 test = [
     { name = "pytest" },
     { name = "pytest-cov" },
+name = "jenefa-company"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "libpass", extra = ["bcrypt"] },
+    { name = "python-jose", extra = ["cryptography"] },
 ]
 
 [package.metadata]
@@ -680,6 +687,8 @@ requires-dist = [
     { name = "healthcore-api", editable = "services/api" },
     { name = "pytest", specifier = ">=8.0" },
     { name = "pytest-cov", specifier = ">=5.0" },
+    { name = "libpass", extras = ["bcrypt"], specifier = ">=1.9.3" },
+    { name = "python-jose", extras = ["cryptography"], specifier = ">=3.5.0" },
 ]
 
 [[package]]

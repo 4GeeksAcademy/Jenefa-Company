@@ -16,6 +16,7 @@ DEFAULT_TOKEN_EXPIRE_MINUTES = 30
 DEFAULT_PASSWORD_RESET_EXPIRE_MINUTES = 60
 DEFAULT_AUTH_DB = Path(__file__).resolve().parents[2] / "data" / "auth.json"
 DEFAULT_FRONTEND_BASE_URL = "http://localhost:3001"
+DEFAULT_AUTH_DB = Path(__file__).resolve().parents[2] / "data" / "auth.json"
 
 
 class AuthSettings:

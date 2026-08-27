@@ -41,6 +41,7 @@ class AtomicJSONStorage(Storage):
         except OSError:
             logger.exception("Failed to read authentication store")
             raise
+        raw = self.path.read_text(encoding="utf-8")
         try:
             data = json.loads(raw, parse_float=self._parse_float)
         except json.JSONDecodeError:

@@ -34,6 +34,19 @@
 - Stock is ledger-derived only (`inbound − outbound` by `clinic_id`). Outbound overdrafts return HTTP 400 before write. All `/inventory/*` routes require bearer auth and stamp `user_uuid` from the TinyDB session.
 - Spec seed catalog (gloves `450`, sedative `35`) loads on empty databases. Covered by `services/api/tests/test_inventory.py` (8 cases). Staff UI at `uis/web` `/inventory` plus `/login`.
 - Milestone 5 UI hardening completed in `uis/web`: all four backoffice inventory routes stay session-guarded; outbound dispersal resets and re-fetches stock immediately on item changes with stale-request protection; orders history now formats `created_at` by clinic timezone (UK -> `Europe/London`, TX -> `America/Chicago`, FL/GA -> `America/New_York`, fallback `UTC`) while preserving immutable audit columns and movement badges.
+### AUTH-01 completed (JWT + TinyDB route protection)
+- Specs captured in `authentication-context.md` / `authentication-specs.md`.
+- Added zero-trust JWT layer under `services/api/app/auth/` (bcrypt via passlib/`libpass`, `python-jose`, env-driven `SECRET_KEY` + `ACCESS_TOKEN_EXPIRE_MINUTES`).
+- User/Profile collections stored only in TinyDB (`services/api/data/auth.json`); dual-DB rule enforced (no user tables in SQL).
+- Public `POST /users`, `POST /auth/login`; protected `GET /auth/me`, `/users`, `/profiles/me`, plus five hardened business stubs: `/clinics/telemetry`, `/appointments/booking`, `/billing/claims/{id}`, `/compliance/audit-logs`, `/ai/clinical-documentation`.
+- Distinct `401` (missing/invalid token) vs `403` (ownership/role) responses verified with TestClient scenarios.
+
+### AUTH-02 completed (frontend JWT session + protected views)
+- Client token lifecycle in `uis/web`: `localStorage` key `hc_auth_token`, `Authorization: Bearer` on outbound API calls, and immediate token clear + `/login` redirect on protected `401`s.
+- Public staff views `/login` and `/register` (register chains `POST /users` then `POST /auth/login`); protected `/`, `/incidents`, and `/account/profile` sit behind a zero-flash client route guard + `WebShell`.
+- Profile UI maps email from `User` (`GET /auth/me`) and name/phone/address from `Profile` (`GET`/`PUT /profiles/me`), with explicit logout.
+- `uis/website` is unchanged — no token checks on the public marketing site.
+- Restored AUTH-01 FastAPI modules under `services/api/app/auth/` (sources had been missing; bytecode/TinyDB store remained) so the frontend can hit live auth routes.
 
 ## Planned Next Steps
 - Dr. Sandra Okonkwo has newly commissioned HealthCore Digital as an internal unit specifically to build out modern, intelligent systems from scratch. The target deployment roadmap spans across six primary operational fronts:

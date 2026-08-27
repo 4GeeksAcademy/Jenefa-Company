@@ -4,12 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getAuthDisplayName } from "@/lib/authStorage";
+import { logoutAndRedirect } from "@/lib/authStorage";
 
 const navItems = [
   { href: "/", label: "Overview" },
   { href: "/incidents", label: "Incident analysis" },
   { href: "/backoffice/inventory", label: "Clinic supplies" },
   { href: "/login", label: "Sign in" },
+  { href: "/account/profile", label: "Profile" },
 ] as const;
 
 export function WebShell({ children }: { children: React.ReactNode }) {
@@ -70,6 +72,13 @@ export function WebShell({ children }: { children: React.ReactNode }) {
             ) : null}
             <p className="text-sm text-muted">Austin tech unit --- James Osei</p>
           </div>
+          <button
+            type="button"
+            onClick={() => logoutAndRedirect()}
+            className="text-sm text-muted hover:text-foreground"
+          >
+            Log out
+          </button>
         </header>
         <main className="flex-1 px-6 py-8">{children}</main>
       </div>
