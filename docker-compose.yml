@@ -1,0 +1,49 @@
+services:
+  ui:
+    build:
+      context: .
+      dockerfile: uis/Dockerfile
+    env_file:
+      - .env
+    environment:
+      HC_API_INTERNAL_URL: http://backend:8000
+      NEXT_PUBLIC_API_URL: /backend
+      NEXT_PUBLIC_INCIDENT_API_URL: /backend
+      NEXT_PUBLIC_INVENTORY_API_URL: /backend
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    volumes:
+      - ./:/workspace
+      - ui_root_node_modules:/workspace/node_modules
+      - ui_src_node_modules:/workspace/src/node_modules
+      - ui_website_node_modules:/workspace/uis/website/node_modules
+      - ui_web_node_modules:/workspace/uis/web/node_modules
+    depends_on:
+      - backend
+    networks:
+      - healthcore-network
+
+  backend:
+    build:
+      context: ./services
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./services:/services
+      - ./scripts:/scripts
+    networks:
+      - healthcore-network
+
+networks:
+  healthcore-network:
+    name: healthcore-network
+
+volumes:
+  ui_root_node_modules:
+  ui_src_node_modules:
+  ui_website_node_modules:
+  ui_web_node_modules:
