@@ -3,10 +3,6 @@
 from __future__ import annotations
 
 import json
-"""Authentication routes: login and current session."""
-
-from __future__ import annotations
-
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
