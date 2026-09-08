@@ -38,11 +38,18 @@ class TelemetryEvent(BaseModel):
     properties: dict[str, Any] = Field(..., description="Metadata container for context payload maps")
 
 
-class TelemetryBatchRequest(BaseModel):
-    events: list[TelemetryEvent] = Field(
-        ..., description="Array batch containing individual telemetry signals"
+class TelemetryIngestRequest(BaseModel):
+    """Loose envelope: `events` stays `list[dict]` so one corrupt row cannot
+    trigger a global 422 and drop the whole batch (see specs-storageTelemetry.md).
+    Each item is validated individually against `TelemetryEvent` in the router.
+    """
+
+    events: list[dict[str, Any]] = Field(
+        ..., description="Array batch containing raw telemetry signal dictionaries"
     )
 
 
-class TelemetryBatchResponse(BaseModel):
-    received: int = Field(..., description="Total number of events successfully parsed")
+class TelemetryBatchResult(BaseModel):
+    received: int = Field(..., description="Total number of events in the batch")
+    stored: int = Field(..., description="Events that passed validation and were persisted")
+    rejected: int = Field(..., description="Events that failed per-event validation")

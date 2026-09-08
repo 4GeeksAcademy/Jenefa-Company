@@ -20,3 +20,15 @@ def get_telemetry_endpoint() -> str:
     infra config anchor to a single source of truth instead of a hardcoded path.
     """
     return os.getenv("TELEMETRY_ENDPOINT", DEFAULT_TELEMETRY_ENDPOINT)
+
+
+DEFAULT_TELEMETRY_ENVIRONMENT = "sandbox"
+
+
+def get_deployment_environment() -> str:
+    """Return this API process's runtime environment tag for stored rows.
+
+    Not part of the client payload (frontend never sends it); read from
+    `TELEMETRY_ENVIRONMENT` (e.g. `us_clinic_prod`, `uk_clinic_prod`, `sandbox`).
+    """
+    return os.getenv("TELEMETRY_ENVIRONMENT", DEFAULT_TELEMETRY_ENVIRONMENT)

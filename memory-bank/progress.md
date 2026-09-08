@@ -48,6 +48,14 @@
 - `uis/website` is unchanged — no token checks on the public marketing site.
 - Restored AUTH-01 FastAPI modules under `services/api/app/auth/` (sources had been missing; bytecode/TinyDB store remained) so the frontend can hit live auth routes.
 
+### Telemetry storage (Phase 3) completed — real Supabase-backed ingestion
+- Replaced the Phase 1 `/telemetry/events` stub with a real pipeline in `services/api/app/telemetry/`: `models.py` (`TelemetryEventRecord` SQLModel table `telemetry_events`, 8 columns, B-Tree indexes on `timestamp`/`event_type`, GIN index on `tags`), `database.py` (reuses the existing inventory SQLModel engine/session so the table is created via the same `init_inventory_schema(engine)` lifespan step), `service.py` (per-event `TelemetryEvent.model_validate` loop, derives `service` from an `event_type → module` map and `environment` from `TELEMETRY_ENVIRONMENT`, single `session.add_all` + commit bulk insert), and `router.py`/`schemas.py` (loose `{"events": list[dict]}` envelope, response `{received, stored, rejected}`).
+- Zero frontend changes: `uis/web` and `uis/backoffice` `TelemetryService` clients are untouched; they only read the HTTP status code.
+- `services/api/tests/test_telemetry.py` rewritten for the real contract (partial validation, persistence assertions via `client.app.state.inventory_engine`); full suite `python -m pytest` in `services/api` — **39 passed**.
+- Manually verified end-to-end against a scratch SQLite DB: mixed valid/invalid batch returned `{"received": 2, "stored": 1, "rejected": 1}` and the valid row persisted with correct `event_type`, `timestamp`, derived `service`, `tags`, `user_id`, `session_id`, `environment`.
+- Documented `TELEMETRY_ENVIRONMENT` env var and the `/telemetry/events` endpoint in `services/api/README.md`.
+
+
 ## Planned Next Steps
 - Dr. Sandra Okonkwo has newly commissioned HealthCore Digital as an internal unit specifically to build out modern, intelligent systems from scratch. The target deployment roadmap spans across six primary operational fronts:
 
