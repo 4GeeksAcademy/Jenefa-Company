@@ -10,7 +10,7 @@ the caller (router) always supplies a resolved `start_date`/`end_date`.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 from sqlmodel import Session, select
@@ -40,7 +40,7 @@ def events_per_day(session: Session, start_date: datetime, end_date: datetime) -
     df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
     df["date"] = df["timestamp"].dt.date.astype(str)
     grouped = df.groupby("date").size().reset_index(name="event_count")
-    return grouped.to_dict(orient="records")
+    return cast(list[dict[str, Any]], grouped.to_dict(orient="records"))
 
 
 def _is_error_flag(tags: dict[str, Any]) -> bool:
@@ -60,7 +60,7 @@ def error_rate_by_type(session: Session, start_date: datetime, end_date: datetim
     df["is_error"] = df["tags"].apply(_is_error_flag)
     grouped = df.groupby("event_type")["is_error"].mean().reset_index(name="error_rate")
     grouped["error_rate"] = grouped["error_rate"].round(4)
-    return grouped.to_dict(orient="records")
+    return cast(list[dict[str, Any]], grouped.to_dict(orient="records"))
 
 
 def average_latency_by_day(session: Session, start_date: datetime, end_date: datetime) -> list[dict[str, Any]]:
@@ -76,4 +76,4 @@ def average_latency_by_day(session: Session, start_date: datetime, end_date: dat
     df["date"] = df["timestamp"].dt.date.astype(str)
     grouped = df.groupby("date")["latency_ms"].mean().reset_index(name="avg_latency_ms")
     grouped["avg_latency_ms"] = grouped["avg_latency_ms"].round(2)
-    return grouped.to_dict(orient="records")
+    return cast(list[dict[str, Any]], grouped.to_dict(orient="records"))
