@@ -1,6 +1,5 @@
 import { apiFetch, readJson } from "@/lib/api";
 import { setAuthDisplayName, setAuthToken } from "@/lib/authStorage";
-import { setAuthToken } from "@/lib/authStorage";
 
 export type Profile = {
   id: string;

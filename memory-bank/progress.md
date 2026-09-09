@@ -48,6 +48,23 @@
 - `uis/website` is unchanged — no token checks on the public marketing site.
 - Restored AUTH-01 FastAPI modules under `services/api/app/auth/` (sources had been missing; bytecode/TinyDB store remained) so the frontend can hit live auth routes.
 
+### Telemetry storage (Phase 3) completed — real Supabase-backed ingestion
+- Replaced the Phase 1 `/telemetry/events` stub with a real pipeline in `services/api/app/telemetry/`: `models.py` (`TelemetryEventRecord` SQLModel table `telemetry_events`, 8 columns, B-Tree indexes on `timestamp`/`event_type`, GIN index on `tags`), `database.py` (reuses the existing inventory SQLModel engine/session so the table is created via the same `init_inventory_schema(engine)` lifespan step), `service.py` (per-event `TelemetryEvent.model_validate` loop, derives `service` from an `event_type → module` map and `environment` from `TELEMETRY_ENVIRONMENT`, single `session.add_all` + commit bulk insert), and `router.py`/`schemas.py` (loose `{"events": list[dict]}` envelope, response `{received, stored, rejected}`).
+- Zero frontend changes: `uis/web` and `uis/backoffice` `TelemetryService` clients are untouched; they only read the HTTP status code.
+- `services/api/tests/test_telemetry.py` rewritten for the real contract (partial validation, persistence assertions via `client.app.state.inventory_engine`); full suite `python -m pytest` in `services/api` — **39 passed**.
+- Manually verified end-to-end against a scratch SQLite DB: mixed valid/invalid batch returned `{"received": 2, "stored": 1, "rejected": 1}` and the valid row persisted with correct `event_type`, `timestamp`, derived `service`, `tags`, `user_id`, `session_id`, `environment`.
+- Documented `TELEMETRY_ENVIRONMENT` env var and the `/telemetry/events` endpoint in `services/api/README.md`.
+
+### Telemetry report endpoint completed — Pandas analysis pipeline + TTL cache
+- Added `services/api/app/telemetry/analysis.py`: three independent, side-effect-free Pandas pipelines (`events_per_day`, `error_rate_by_type`, `average_latency_by_day`), each loading its own `telemetry_events` SQL window via SQLModel, converting `timestamp` with `pd.to_datetime(..., utc=True)` before any `groupby()`, and returning `.to_dict(orient="records")` (no manual loops).
+- `error_rate_by_type` derives a boolean error flag from `tags.is_error` when present, otherwise from `system_health_checked`'s `status_state != "healthy"` (the only failure signal in the current event catalogue); `average_latency_by_day` reads `tags.latency_ms`.
+- Added `GET /telemetry/report` to `services/api/app/telemetry/router.py`: optional `start_date`/`end_date` ISO 8601 query params (default last 7 days, UTC, resolved once by the route and passed into every analysis function), `400` on invalid dates or `start_date > end_date`, and a 60-second in-memory TTL cache keyed by the resolved `(start_date, end_date)` pair to avoid recomputation.
+- Response contract: `{"period": {"from", "to"}, "metrics": {"events_per_day", "error_rate_by_type", "average_latency_by_day"}}` per `specs-reportTelemetry.md`.
+- Added `pandas>=2.2.0` to `services/api/requirements.txt` / `pyproject.toml`.
+- New `services/api/tests/test_telemetry_report.py` (7 cases: default window, grouping, error-rate derivation, latency averaging, invalid/inverted dates, cache hit/clear); full suite `python -m pytest` in `services/api` — **46 passed**.
+- Documented `GET /telemetry/report` in `services/api/README.md`.
+
+
 ## Planned Next Steps
 - Dr. Sandra Okonkwo has newly commissioned HealthCore Digital as an internal unit specifically to build out modern, intelligent systems from scratch. The target deployment roadmap spans across six primary operational fronts:
 

@@ -1,7 +1,8 @@
 # HealthCore API
 
 FastAPI service for incident CSV analysis, staff JWT authentication (TinyDB),
-and clinic supply inventory (SQLModel ledger on SQLite or Supabase PostgreSQL).
+clinic supply inventory (SQLModel ledger on SQLite or Supabase PostgreSQL),
+and telemetry event ingestion (`telemetry_events`, same SQLModel engine).
 
 ## Run locally
 
@@ -27,6 +28,7 @@ uvicorn app.main:app --reload --port 8000
 | `DB_URL` | No | Preferred SQLModel engine URL for relational inventory persistence. Accepts `postgres://`, `postgresql://`, or full SQLAlchemy URLs. |
 | `INVENTORY_DATABASE_URL` | No | Legacy alias for inventory SQLModel URL. Also accepts `SUPABASE_DB_URL` / `DATABASE_URL`. Default: SQLite `data/inventory.db` when no DB URL variable is set. |
 | `INVENTORY_SEED_PASSWORD` | No | Password for seeded clinic operators (`usr-hc-9901`, `usr-hc-2544`) |
+| `TELEMETRY_ENVIRONMENT` | No (default `sandbox`) | Runtime environment tag stamped on stored telemetry rows (e.g. `us_clinic_prod`, `uk_clinic_prod`) |
 | `EMAIL_PROVIDER` | No | `resend`, `sendgrid`, or omit (auto / console fallback) |
 | `RESEND_API_KEY` | For Resend | Resend API key — never hardcode |
 | `SENDGRID_API_KEY` | For SendGrid | SendGrid API key — never hardcode |
@@ -54,6 +56,8 @@ Without a provider API key, password-reset emails are logged to the API console 
 | `POST` | `/inventory/orders/inbound` | Bearer | Ledger inbound; stamps TinyDB `user_uuid` |
 | `POST` | `/inventory/orders/outbound` | Bearer | Ledger outbound; `400` if partition would go negative |
 | `GET` | `/inventory/orders` | Bearer | Unified inbound/outbound log with preloaded supplies |
+| `POST` | `/telemetry/events` | Public | Ingest a telemetry batch; per-event partial validation + bulk insert into `telemetry_events`, returns `{received, stored, rejected}` |
+| `GET` | `/telemetry/report` | Public | Pandas-driven operational report (`events_per_day`, `error_rate_by_type`, `average_latency_by_day`) over an optional `start_date`/`end_date` ISO 8601 window (defaults to the last 7 days, UTC); results cached in-memory per window for 60s |
 
 On first boot, empty catalog databases are seeded to the HealthCore spec balances (gloves `450`, sedative `35`). Stock is never stored on `MedicalSupply` rows.
 

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getAuthDisplayName } from "@/lib/authStorage";
 import { logoutAndRedirect } from "@/lib/authStorage";
+import { initTelemetry, track } from "@/lib/telemetry";
 
 const navItems = [
   { href: "/", label: "Overview" },
@@ -21,6 +22,10 @@ export function WebShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setDisplayName(getAuthDisplayName());
   }, [pathname]);
+
+  useEffect(() => {
+    initTelemetry();
+  }, []);
 
   return (
     <div className="flex min-h-full flex-1 bg-background">
@@ -42,6 +47,13 @@ export function WebShell({ children }: { children: React.ReactNode }) {
                 key={item.label}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
+                onClick={() =>
+                  track("client_navigation_tracked", {
+                    origin_route: pathname,
+                    destination_route: item.href,
+                    user_type: "operations_staff",
+                  })
+                }
                 className={`rounded-md px-3 py-2 text-sm transition-colors ${
                   active
                     ? "bg-sidebar-hover font-medium text-white"
