@@ -55,6 +55,15 @@
 - Manually verified end-to-end against a scratch SQLite DB: mixed valid/invalid batch returned `{"received": 2, "stored": 1, "rejected": 1}` and the valid row persisted with correct `event_type`, `timestamp`, derived `service`, `tags`, `user_id`, `session_id`, `environment`.
 - Documented `TELEMETRY_ENVIRONMENT` env var and the `/telemetry/events` endpoint in `services/api/README.md`.
 
+### Telemetry report endpoint completed — Pandas analysis pipeline + TTL cache
+- Added `services/api/app/telemetry/analysis.py`: three independent, side-effect-free Pandas pipelines (`events_per_day`, `error_rate_by_type`, `average_latency_by_day`), each loading its own `telemetry_events` SQL window via SQLModel, converting `timestamp` with `pd.to_datetime(..., utc=True)` before any `groupby()`, and returning `.to_dict(orient="records")` (no manual loops).
+- `error_rate_by_type` derives a boolean error flag from `tags.is_error` when present, otherwise from `system_health_checked`'s `status_state != "healthy"` (the only failure signal in the current event catalogue); `average_latency_by_day` reads `tags.latency_ms`.
+- Added `GET /telemetry/report` to `services/api/app/telemetry/router.py`: optional `start_date`/`end_date` ISO 8601 query params (default last 7 days, UTC, resolved once by the route and passed into every analysis function), `400` on invalid dates or `start_date > end_date`, and a 60-second in-memory TTL cache keyed by the resolved `(start_date, end_date)` pair to avoid recomputation.
+- Response contract: `{"period": {"from", "to"}, "metrics": {"events_per_day", "error_rate_by_type", "average_latency_by_day"}}` per `specs-reportTelemetry.md`.
+- Added `pandas>=2.2.0` to `services/api/requirements.txt` / `pyproject.toml`.
+- New `services/api/tests/test_telemetry_report.py` (7 cases: default window, grouping, error-rate derivation, latency averaging, invalid/inverted dates, cache hit/clear); full suite `python -m pytest` in `services/api` — **46 passed**.
+- Documented `GET /telemetry/report` in `services/api/README.md`.
+
 
 ## Planned Next Steps
 - Dr. Sandra Okonkwo has newly commissioned HealthCore Digital as an internal unit specifically to build out modern, intelligent systems from scratch. The target deployment roadmap spans across six primary operational fronts:
