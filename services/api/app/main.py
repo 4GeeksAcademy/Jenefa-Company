@@ -22,6 +22,7 @@ from .errors import GENERIC_INTERNAL, json_error, register_exception_handlers
 from .inventory.database import create_inventory_engine, init_inventory_schema
 from .inventory.router import router as inventory_router
 from .inventory.seed import seed_identity_cache, seed_relational_catalog
+from .reporting.router import router as reporting_router
 from .telemetry.router import router as telemetry_router
 
 # Import shared core after path bootstrap.
@@ -65,6 +66,7 @@ app.include_router(profiles_router)
 app.include_router(protected_router)
 app.include_router(inventory_router)
 app.include_router(telemetry_router)
+app.include_router(reporting_router)
 
 app.add_middleware(
     CORSMiddleware,
