@@ -10,11 +10,11 @@
 ## 2. HealthCore Monorepo Structural Blueprint
 The telemetry architecture must adhere to the following rigid folder boundaries:
 * `data/pipelines/` — Orchestration layers, main flows, and independent subflows (Starting point: `data/pipelines/pipeline.py`).
-* `data/process/` — Pure functional transformation logic and analytical tasks.
+* `data/process/` — Pure functional transformation logic and analytical tasks (Target: `data/process/kpis.py`).
 * `data/raw/` — Source ingestion files and raw telemetry mock payloads.
-* `data/eval/` — Downstream validation logs and analytical output artifacts.
+* `data/eval/` — Downstream validation logs and analytical output artifacts (Target: `data/eval/latest_run_eval.json`).
 * `tests/pipelines/` — Isolated pipeline validation testing code (Target: `tests/pipelines/test_pipeline.py`).
-* `uis/backoffice/` — Leadership-facing reporting and visualization pages.
+* `uis/backoffice/` — Next.js TypeScript App Router interface (Target: `uis/backoffice/src/app/reporting/page.tsx`).
 
 ---
 
@@ -24,7 +24,7 @@ The telemetry architecture must adhere to the following rigid folder boundaries:
 The single main flow located inside `data/pipelines/pipeline.py` must be completely refactored to delegate all primary execution phases to at least **three distinct subflows** decorated with `@flow`. 
 * **Extraction Subflow:** Handles querying or parsing source data from `telemetry_events` and associated domain source models across our split EHR systems.
 * **Transformation Subflow:** Coordinates individual processing tasks that compute required metrics.
-* **Load Subflow:** Directs database writes or state persistence into the explicit target destination tables named within `CONTEXT-company.md`.
+* **Load Subflow:** Directs database writes or state persistence into the explicit target destination tables named within `CONTEXT-company.md`, outputting run summaries to `data/eval/latest_run_eval.json`.
 
 ### 3.2 Interface Isolation Constraints
 * **State & Parameter Hygiene:** Global variables are strictly prohibited for transferring datasets or contexts between steps. Each subflow must declare explicit, strongly typed input arguments and deterministic return signatures.
@@ -66,12 +66,16 @@ python data/pipelines/pipeline.py
 ## 6. Executive Business Dashboard (Phase 4)
 
 ### 6.1 Data Acquisition & Connectivity
-The presentation layer must be established within the `uis/backoffice/` directory (e.g., a dedicated `/reporting` page). It must dynamically query data directly from the established `services/reporting/` API endpoint configured in previous sessions.
+The presentation layer is fully established at `uis/backoffice/src/app/reporting/page.tsx` as a Next.js server-side component. It dynamically queries live analytical aggregates using `fetchExecutiveKpis()` imported directly from the `uis/backoffice/src/services/reporting.ts` service layout.
 
-### 6.2 Visualization & Usability Standards
-* **KPI Domain Consistency:** Every chart or data table must be labeled using the exact nomenclature found in the "KPIs to Measure" section of `CONTEXT-company.md`. 
-* **Temporal Context:** Every metric visualization must clearly explicitly display the bounding period it covers (e.g., specifying a Weekly or Monthly cadence matching Dr. Okonkwo's management schedule).
-* **UI Polish Requirement:** Visual styling or aesthetic polish is secondary. The mandatory target is a functional, structurally accurate view rendering real metrics straight from your destination database tables. The layout must be immediately legible to executive stakeholders without technical explanations.
+### 6.2 Visualization & Data Contract Mapping
+The table layout binds directly to the processed database columns to ensure data tracking consistency:
+* **`Clinic`** — Renders target string values matching `clinic_location_id`.
+* **`Region`** — Renders target market identifiers matching `market_region`.
+* **`Network appointment volume`** — Reflects overall volume metrics via `network_appointment_volume`.
+* **`Global no-show rate`** — Displays regional risk proportions via `global_no_show_rate`.
+* **`Claims denial rate`** — Surfaces structural billing leaks via `claims_denial_rate`.
+* **`Revenue net settled`** — Formats currency context natively using `revenue_currency` and `revenue_net_settled`.
 
 ---
 
@@ -94,3 +98,5 @@ To ensure a successful operational evaluation, the project must adhere to the fo
 ## 8. Additional Resiliency & Observability Enhancements
 *(Note: If you identified operational improvements while reviewing your design questions in Part 1—such as an Idempotency-Key pattern for safe task retries, a pipeline heartbeat monitor, or concurrency locks to prevent overlapping executions—they should be noted below and documented inside `data/pipelines/PIPELINE_DESIGN.md` explaining which design question they satisfy).*
 
+* **Enhancement 1:** [To be populated based on your specific design choices if applicable]
+* **Enhancement 2:** [To be populated based on your specific design choices if applicable]

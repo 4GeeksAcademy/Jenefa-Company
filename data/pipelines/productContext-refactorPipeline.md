@@ -11,12 +11,12 @@ While the previous iterations successfully proved that our software can read fro
 * **Zero Operational Disruption:** This entire pipeline refactor must happen transparently. The existing source tracking layer (`telemetry_events`) and core analytical infrastructure (`services/telemetry/analysis.py`) must remain completely unmodified.
 
 ## 3. User Personas & System Interactions
-* **The Strategic Stakeholder (Dr. Sandra Okonkwo, CEO):** Needs to view data inside `uis/backoffice/` to instantly assess network trajectory. She expects every metric to mirror the specific terminology she uses in daily business tracking—such as exact no-show breakdowns or regional denial updates—without needing technical translation.
+* **The Strategic Stakeholder (Dr. Sandra Okonkwo, CEO):** Needs to view data inside `uis/backoffice/src/app/reporting/page.tsx` to instantly assess network trajectory. She expects every metric to mirror the specific terminology she uses in daily business tracking—such as exact no-show breakdowns or regional denial updates—without needing technical translation.
 * **The Department Managers (Priya Nair & Tom Callahan):** Need direct operational visibility to proactively monitor and correct their respective domain failures (e.g., tracking the 22% network no-show rate or the 14% US claims denial rate).
 * **The Technology Team (James Osei, CTO):** Responsible for maintaining the pipeline, expanding metrics, and triaging processing failures. They require isolated, highly structured execution patterns so they can fix breaking transformations before bad code or malformed event records reach the production analytical layers.
 
 ## 4. Architectural Domain Vocabularies
 Generic system labels like `extract_data`, `transform_logic`, or `load_table` are strictly prohibited. The code architecture must directly speak the language of our business. All subflows, data tasks, processing files, and unit tests must explicitly derive their nomenclature from the specific domain entities and tracking categories established in the "KPIs to Measure" section of `CONTEXT-company.md`, mapping cleanly to:
-* **Patient Experience and Access KPIs:** Tracking network-wide booking patterns, localized trends, and at-risk booking attributes.
-* **Revenue Cycle and Billing KPIs:** Tracking regional claims submissions, coding behaviors, and financial collection rates.
-* **Clinical Operations & Logistics:** Tracking documentation latency metrics and clinic-level appointment flows across US and UK jurisdictions.
+* **Patient Experience and Access KPIs:** Tracking network-wide booking patterns (`network_appointment_volume`), localized trends (`clinic_location_id`), and at-risk booking attributes (`global_no_show_rate`).
+* **Revenue Cycle and Billing KPIs:** Tracking regional claims submissions, coding behaviors, and financial collection rates (`claims_denial_rate`, `revenue_net_settled`, `revenue_currency`).
+* **Clinical Operations & Logistics:** Tracking documentation latency metrics and clinic-level appointment flows across US and UK jurisdictions (`market_region`, `reporting_window_timestamp`).
