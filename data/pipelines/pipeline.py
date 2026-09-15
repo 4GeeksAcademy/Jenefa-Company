@@ -367,6 +367,38 @@ def _week_window(reference: datetime | None = None) -> tuple[datetime, datetime]
     return window_start, window_end
 
 
+@flow(name="patient_access_and_billing_extraction_subflow")
+def patient_access_and_billing_extraction_subflow(
+    engine: Engine, window_start: datetime, window_end: datetime
+) -> list[dict[str, Any]]:
+    """Extract the bounded, read-only telemetry source for all KPI domains."""
+    return extract_telemetry_source_task(engine, window_start, window_end)
+
+
+@flow(name="executive_kpi_transformation_subflow")
+def executive_kpi_transformation_subflow(
+    rows: list[dict[str, Any]], window_start: datetime
+) -> list[dict[str, Any]]:
+    """Calculate Patient Experience, Revenue Cycle, and Operations KPIs."""
+    return transform_business_kpis_task(rows, window_start)
+
+
+@flow(name="executive_reporting_destination_load_subflow")
+def executive_reporting_destination_load_subflow(
+    engine: Engine, kpi_rows: list[dict[str, Any]]
+) -> int:
+    """Persist idempotent rows into the executive reporting destination."""
+    return load_reporting_destination_task(engine, kpi_rows)
+
+
+@flow(name="executive_pipeline_evaluation_subflow")
+def executive_pipeline_evaluation_subflow(
+    engine: Engine, window_start: datetime, kpi_rows: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Write a non-critical validation artifact without touching source data."""
+    return evaluate_pipeline_output_task(engine, window_start, kpi_rows)
+
+
 @flow(name="healthcore_business_performance_pipeline_flow")
 def healthcore_business_performance_pipeline_flow(
     window_start: datetime | None = None,
@@ -385,13 +417,15 @@ def healthcore_business_performance_pipeline_flow(
     audit_id = _record_audit_start(engine, start_time)
 
     try:
-        extracted_rows = extract_telemetry_source_task(engine, window_start, window_end)
-        kpi_rows = transform_business_kpis_task(extracted_rows, window_start)
-        records_loaded = load_reporting_destination_task(engine, kpi_rows)
+        extracted_rows = patient_access_and_billing_extraction_subflow(
+            engine, window_start, window_end
+        )
+        kpi_rows = executive_kpi_transformation_subflow(extracted_rows, window_start)
+        records_loaded = executive_reporting_destination_load_subflow(engine, kpi_rows)
 
         # Non-critical evaluation step: state-checked so a failure here never
         # blocks the core extract -> transform -> load path from completing.
-        eval_state: State = evaluate_pipeline_output_task(
+        eval_state: State = executive_pipeline_evaluation_subflow(
             engine, window_start, kpi_rows, return_state=True
         )
         if eval_state.is_failed():
