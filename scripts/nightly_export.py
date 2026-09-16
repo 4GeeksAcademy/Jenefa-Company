@@ -102,10 +102,11 @@ def run() -> int:
             path, count = export_telemetry(target_date, engine)
             logger.info("Export complete. %s rows written to %s.", count, path.relative_to(REPO_ROOT))
             subprocess.run(
-                [sys.executable, "-m", "data.pipelines.telemetry_kpi_daily.run", "--no-prefect"],
-                cwd=REPO_ROOT,
-                check=True,
-            )
+    [sys.executable, "-m", "data.pipelines.pipeline"],
+    cwd=REPO_ROOT,
+    check=True,
+)
+
             update_job_status(record.id, "completed", engine=engine)
             logger.info("Execution completed successfully.")
             return 0
