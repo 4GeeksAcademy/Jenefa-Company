@@ -1,101 +1,35 @@
 import Link from "next/link";
+import { fetchExecutiveKpis, ExecutiveKpi } from "../../services/reporting";
 
-const colors = {
-  background: "#f4f7f8",
-  foreground: "#1a2b32",
-  surface: "#ffffff",
-  sidebar: "#0f3d3e",
-  sidebarMuted: "#9ebdbd",
-  sidebarHover: "#165153",
-  accent: "#1f7a7a",
-  accentSoft: "#d7ecec",
-  border: "#d5e0e2",
-  muted: "#5c7278",
-};
+const colors = { background: "#f4f7f8", foreground: "#1a2b32", surface: "#ffffff", sidebar: "#0f3d3e", sidebarMuted: "#9ebdbd", sidebarHover: "#165153", accent: "#1f7a7a", border: "#d5e0e2", muted: "#5c7278" };
 
-const navItems = [
-  { href: "/", label: "Overview", active: true },
-  { href: "/", label: "Executive reporting" },
-  { href: "/inventory", label: "Clinic supplies" },
-];
+function percent(value: number | null): string { return value === null ? "—" : `${(value * 100).toFixed(1)}%`; }
+export const dynamic = "force-dynamic";
 
-const metrics = [
-  { label: "Network clinics", value: "12", note: "Across US and UK" },
-  { label: "Open operational alerts", value: "04", note: "Requires review" },
-  { label: "Inventory status", value: "Stable", note: "Last checked today" },
-];
+export default async function ReportingPage() {
+  let rows: ExecutiveKpi[] = [];
+  let error = "";
+  try { rows = await fetchExecutiveKpis(); } catch (cause) { error = cause instanceof Error ? cause.message : "Unable to load reporting data"; }
+  const period = rows[0]?.reporting_window_timestamp ? new Date(rows[0].reporting_window_timestamp).toLocaleDateString() : "No completed weekly run";
+  const totalVolume = rows.reduce((total, row) => total + (row.network_appointment_volume ?? 0), 0);
+  const averageNoShow = rows.length ? rows.reduce((total, row) => total + (row.global_no_show_rate ?? 0), 0) / rows.length : null;
+  const averageDenial = rows.length ? rows.reduce((total, row) => total + (row.claims_denial_rate ?? 0), 0) / rows.length : null;
+  const navItems = [{ href: "/", label: "Overview" }, { href: "/reporting", label: "Executive reporting" }, { href: "/inventory", label: "Clinic supplies" }];
 
-export default function BackofficeHomePage() {
-  return (
-    <div style={{ minHeight: "100vh", display: "flex", background: colors.background, color: colors.foreground, fontFamily: "Arial, sans-serif" }}>
-      <aside style={{ width: 240, flexShrink: 0, display: "flex", flexDirection: "column", background: colors.sidebar, color: "white" }}>
-        <div style={{ padding: "28px 24px", borderBottom: "1px solid rgba(255,255,255,.1)" }}>
-          <div style={{ fontFamily: "Georgia, serif", fontSize: 24 }}>HealthCore</div>
-          <div style={{ marginTop: 8, color: colors.sidebarMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: ".16em" }}>Internal use only</div>
-        </div>
-        <nav aria-label="Backoffice navigation" style={{ display: "flex", flex: 1, flexDirection: "column", gap: 5, padding: "20px 12px" }}>
-          {navItems.map((item) => (
-            <Link key={item.href} href={item.href} style={{ display: "block", borderRadius: 6, padding: "11px 13px", color: item.active ? "white" : colors.sidebarMuted, background: item.active ? colors.sidebarHover : "transparent", textDecoration: "none", fontSize: 14, fontWeight: item.active ? 600 : 400 }}>
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-        <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,.1)", color: colors.sidebarMuted, fontSize: 11 }}>Staff only · HIPAA / UK GDPR</div>
-      </aside>
-
-      <div style={{ minWidth: 0, flex: 1 }}>
-        <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, borderBottom: `1px solid ${colors.border}`, background: colors.surface, padding: "20px 36px" }}>
-          <div>
-            <div style={{ color: colors.muted, fontSize: 11, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase" }}>Operations workspace</div>
-            <div style={{ marginTop: 5, fontFamily: "Georgia, serif", fontSize: 22 }}>Backoffice</div>
-          </div>
-          <div style={{ textAlign: "right", fontSize: 13 }}>
-            <div style={{ fontWeight: 600 }}>Welcome, James Osei</div>
-            <div style={{ marginTop: 4, color: colors.muted }}>Austin tech unit</div>
-          </div>
-        </header>
-
-        <main style={{ maxWidth: 1180, margin: "0 auto", padding: "40px 36px" }}>
-          <section style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 24, marginBottom: 32 }}>
-            <div>
-              <div style={{ color: colors.accent, fontSize: 12, fontWeight: 700, letterSpacing: ".16em", textTransform: "uppercase" }}>Good morning, James</div>
-              <h1 style={{ margin: "10px 0 8px", fontFamily: "Georgia, serif", fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 400, letterSpacing: "-.03em" }}>A clearer view of care operations.</h1>
-              <p style={{ maxWidth: 620, margin: 0, color: colors.muted, fontSize: 15, lineHeight: 1.7 }}>Monitor clinic activity, review executive performance, and keep essential supplies moving across the network.</p>
-            </div>
-            <Link href="/" style={{ flexShrink: 0, borderRadius: 5, background: colors.accent, padding: "12px 17px", color: "white", textDecoration: "none", fontSize: 13, fontWeight: 700 }}>View reporting</Link>
-          </section>
-
-          <section aria-label="Operational summary" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 16, marginBottom: 28 }}>
-            {metrics.map((metric) => (
-              <article key={metric.label} style={{ border: `1px solid ${colors.border}`, borderRadius: 8, background: colors.surface, padding: "22px 20px" }}>
-                <div style={{ color: colors.muted, fontSize: 11, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase" }}>{metric.label}</div>
-                <div style={{ marginTop: 13, fontFamily: "Georgia, serif", fontSize: 30 }}>{metric.value}</div>
-                <div style={{ marginTop: 6, color: colors.muted, fontSize: 12 }}>{metric.note}</div>
-              </article>
-            ))}
-          </section>
-
-          <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 18 }}>
-            <article style={{ border: `1px solid ${colors.border}`, borderRadius: 8, background: colors.surface, padding: 24 }}>
-              <div style={{ color: colors.accent, fontSize: 11, fontWeight: 700, letterSpacing: ".15em", textTransform: "uppercase" }}>Executive reporting</div>
-              <h2 style={{ margin: "12px 0 8px", fontFamily: "Georgia, serif", fontSize: 25, fontWeight: 400 }}>Weekly network performance</h2>
-              <p style={{ margin: "0 0 20px", color: colors.muted, fontSize: 14, lineHeight: 1.65 }}>Review appointment volume, no-show rates, claims denials, and settled revenue by clinic.</p>
-              <Link href="/" style={{ color: colors.accent, fontSize: 13, fontWeight: 700, textDecoration: "none" }}>Open reporting →</Link>
-            </article>
-            <article style={{ border: `1px solid ${colors.border}`, borderRadius: 8, background: colors.surface, padding: 24 }}>
-              <div style={{ color: colors.accent, fontSize: 11, fontWeight: 700, letterSpacing: ".15em", textTransform: "uppercase" }}>Inventory control</div>
-              <h2 style={{ margin: "12px 0 8px", fontFamily: "Georgia, serif", fontSize: 25, fontWeight: 400 }}>Clinic supplies ledger</h2>
-              <p style={{ margin: "0 0 20px", color: colors.muted, fontSize: 14, lineHeight: 1.65 }}>Check current balances and record inbound deliveries or outbound dispersals.</p>
-              <Link href="/inventory" style={{ color: colors.accent, fontSize: 13, fontWeight: 700, textDecoration: "none" }}>Open inventory →</Link>
-            </article>
-            <article style={{ border: `1px solid ${colors.border}`, borderRadius: 8, background: colors.accentSoft, padding: 24 }}>
-              <div style={{ color: colors.sidebar, fontSize: 11, fontWeight: 700, letterSpacing: ".15em", textTransform: "uppercase" }}>Operations note</div>
-              <h2 style={{ margin: "12px 0 8px", fontFamily: "Georgia, serif", fontSize: 25, fontWeight: 400 }}>Everything in one workspace.</h2>
-              <p style={{ margin: 0, color: colors.sidebar, fontSize: 14, lineHeight: 1.65 }}>Use the navigation to move between daily supply work and leadership-level reporting.</p>
-            </article>
-          </section>
-        </main>
-      </div>
+  return <div style={{ minHeight: "100vh", display: "flex", background: colors.background, color: colors.foreground, fontFamily: "Arial, sans-serif" }}>
+    <aside style={{ width: 240, flexShrink: 0, display: "flex", flexDirection: "column", background: colors.sidebar, color: "white" }}>
+      <div style={{ padding: "28px 24px", borderBottom: "1px solid rgba(255,255,255,.1)" }}><div style={{ fontFamily: "Georgia, serif", fontSize: 24 }}>HealthCore</div><div style={{ marginTop: 8, color: colors.sidebarMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: ".16em" }}>Internal use only</div></div>
+      <nav aria-label="Backoffice navigation" style={{ display: "flex", flex: 1, flexDirection: "column", gap: 5, padding: "20px 12px" }}>{navItems.map((item) => { const active = item.href === "/reporting"; return <Link key={item.href} href={item.href} style={{ display: "block", borderRadius: 6, padding: "11px 13px", color: active ? "white" : colors.sidebarMuted, background: active ? colors.sidebarHover : "transparent", textDecoration: "none", fontSize: 14, fontWeight: active ? 600 : 400 }}>{item.label}</Link>; })}</nav>
+      <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,.1)", color: colors.sidebarMuted, fontSize: 11 }}>Staff only · HIPAA / UK GDPR</div>
+    </aside>
+    <div style={{ minWidth: 0, flex: 1 }}>
+      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, borderBottom: `1px solid ${colors.border}`, background: colors.surface, padding: "20px 36px" }}><div><div style={{ color: colors.muted, fontSize: 11, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase" }}>Operations workspace</div><div style={{ marginTop: 5, fontFamily: "Georgia, serif", fontSize: 22 }}>Executive reporting</div></div><div style={{ textAlign: "right", fontSize: 13 }}><div style={{ fontWeight: 600 }}>Welcome, James Osei</div><div style={{ marginTop: 4, color: colors.muted }}>Austin tech unit</div></div></header>
+      <main style={{ maxWidth: 1180, margin: "0 auto", padding: "40px 36px" }}>
+        <section style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 24, marginBottom: 32 }}><div><div style={{ color: colors.accent, fontSize: 12, fontWeight: 700, letterSpacing: ".16em", textTransform: "uppercase" }}>Leadership view</div><h1 style={{ margin: "10px 0 8px", fontFamily: "Georgia, serif", fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 400, letterSpacing: "-.03em" }}>Weekly network performance.</h1><p style={{ maxWidth: 650, margin: 0, color: colors.muted, fontSize: 15, lineHeight: 1.7 }}>A concise view of appointment activity, access to care, and financial performance across HealthCore clinics.</p></div><Link href="/" style={{ flexShrink: 0, border: `1px solid ${colors.border}`, borderRadius: 5, background: colors.surface, padding: "11px 16px", color: colors.accent, textDecoration: "none", fontSize: 13, fontWeight: 700 }}>← Back to overview</Link></section>
+        {error ? <div role="alert" style={{ marginBottom: 24, border: "1px solid #f0b8b8", borderRadius: 8, background: "#fff5f5", padding: "14px 16px", color: "#8b2525", fontSize: 14 }}>Reporting data unavailable: {error}</div> : null}
+        <section aria-label="Reporting summary" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 16, marginBottom: 28 }}>{[{ label: "Reporting period", value: period, note: "Latest completed run" }, { label: "Network appointments", value: totalVolume.toLocaleString(), note: "Across reporting rows" }, { label: "Average no-show rate", value: percent(averageNoShow), note: "Network average" }, { label: "Average denial rate", value: percent(averageDenial), note: "Claims performance" }].map((metric) => <article key={metric.label} style={{ border: `1px solid ${colors.border}`, borderRadius: 8, background: colors.surface, padding: "22px 20px" }}><div style={{ color: colors.muted, fontSize: 11, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase" }}>{metric.label}</div><div style={{ marginTop: 13, fontFamily: "Georgia, serif", fontSize: metric.label === "Reporting period" ? 21 : 30 }}>{metric.value}</div><div style={{ marginTop: 6, color: colors.muted, fontSize: 12 }}>{metric.note}</div></article>)}</section>
+        <section style={{ border: `1px solid ${colors.border}`, borderRadius: 8, background: colors.surface, overflowX: "auto" }}><div style={{ padding: "24px 24px 18px", borderBottom: `1px solid ${colors.border}` }}><div style={{ color: colors.accent, fontSize: 11, fontWeight: 700, letterSpacing: ".15em", textTransform: "uppercase" }}>Clinic detail</div><h2 style={{ margin: "10px 0 0", fontFamily: "Georgia, serif", fontSize: 27, fontWeight: 400 }}>Performance by location</h2></div><table style={{ borderCollapse: "collapse", width: "100%", minWidth: 760, fontSize: 14 }}><thead><tr style={{ borderBottom: `1px solid ${colors.border}`, color: colors.muted, fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase" }}>{["Clinic", "Region", "Appointments", "No-show rate", "Denial rate", "Net settled"].map((heading) => <th key={heading} style={{ padding: "14px 20px", textAlign: "left" }}>{heading}</th>)}</tr></thead><tbody>{rows.length ? rows.map((row) => <tr key={`${row.reporting_window_timestamp}-${row.clinic_location_id}`} style={{ borderBottom: `1px solid ${colors.border}` }}><td style={{ padding: "16px 20px", fontWeight: 600 }}>{row.clinic_location_id}</td><td style={{ padding: "16px 20px", color: colors.muted }}>{row.market_region}</td><td style={{ padding: "16px 20px" }}>{row.network_appointment_volume ?? "—"}</td><td style={{ padding: "16px 20px" }}>{percent(row.global_no_show_rate)}</td><td style={{ padding: "16px 20px" }}>{percent(row.claims_denial_rate)}</td><td style={{ padding: "16px 20px", fontWeight: 600 }}>{row.revenue_net_settled === null ? "—" : `${row.revenue_currency ?? ""} ${row.revenue_net_settled.toFixed(2)}`}</td></tr>) : <tr><td colSpan={6} style={{ padding: "24px 20px", color: colors.muted }}>No completed reporting rows are available.</td></tr>}</tbody></table></section>
+      </main>
     </div>
-  );
+  </div>;
 }
