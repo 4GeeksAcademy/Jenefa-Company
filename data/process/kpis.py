@@ -22,7 +22,14 @@ class RawTelemetryRow(TypedDict):
 
 
 def _tags(row: RawTelemetryRow) -> dict[str, Any]:
-    return row.get("tags") or {}
+    tags = row.get("tags")
+    return tags if isinstance(tags, dict) else {}
+
+
+def _event_type(row: RawTelemetryRow) -> str:
+    """Return a safe event type for malformed telemetry rows."""
+    event_type = row.get("event_type")
+    return event_type if isinstance(event_type, str) else ""
 
 
 def network_appointment_volume(rows: list[RawTelemetryRow]) -> list[dict[str, Any]]:
@@ -30,7 +37,7 @@ def network_appointment_volume(rows: list[RawTelemetryRow]) -> list[dict[str, An
     counts: dict[str, int] = defaultdict(int)
     regions: dict[str, str] = {}
     for row in rows:
-        if row["event_type"] != "appointment_booked":
+        if _event_type(row) != "appointment_booked":
             continue
         tags = _tags(row)
         location_id = tags.get("location_id")
@@ -62,10 +69,10 @@ def global_no_show_rate(rows: list[RawTelemetryRow]) -> list[dict[str, Any]]:
         location_id = tags.get("location_id")
         if not location_id:
             continue
-        if row["event_type"] == "appointment_booked":
+        if _event_type(row) == "appointment_booked":
             booked[location_id] += 1
             regions[location_id] = tags.get("region", regions.get(location_id, ""))
-        elif row["event_type"] == "appointment_noshow_predicted":
+        elif _event_type(row) == "appointment_noshow_predicted":
             predicted_noshow[location_id] += 1
 
     results = []
@@ -91,14 +98,18 @@ def claims_denial_rate(rows: list[RawTelemetryRow]) -> list[dict[str, Any]]:
     risk_totals: dict[str, float] = defaultdict(float)
     risk_counts: dict[str, int] = defaultdict(int)
     for row in rows:
-        if row["event_type"] != "billing_claim_compiled":
+        if _event_type(row) != "billing_claim_compiled":
             continue
         tags = _tags(row)
         region = tags.get("region")
         risk = tags.get("pre_check_denial_risk")
         if not region or risk is None:
             continue
-        risk_totals[region] += float(risk)
+        try:
+            risk_value = float(risk)
+        except (TypeError, ValueError):
+            continue
+        risk_totals[region] += risk_value
         risk_counts[region] += 1
 
     return [
@@ -121,14 +132,17 @@ def revenue_by_location(rows: list[RawTelemetryRow]) -> list[dict[str, Any]]:
     currency_to_region = {"USD": "US", "GBP": "UK"}
     totals: dict[str, float] = defaultdict(float)
     for row in rows:
-        if row["event_type"] != "revenue_stream_reconciled":
+        if _event_type(row) != "revenue_stream_reconciled":
             continue
         tags = _tags(row)
         currency = tags.get("currency")
         net_amount = tags.get("net_settled_amount")
         if not currency or net_amount is None:
             continue
-        totals[currency] += float(net_amount)
+        try:
+            totals[currency] += float(net_amount)
+        except (TypeError, ValueError):
+            continue
 
     return [
         {
