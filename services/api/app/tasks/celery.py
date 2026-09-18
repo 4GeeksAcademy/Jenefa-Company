@@ -84,8 +84,15 @@ class AuditedTask(Task):
 
 
 @app.task(bind=True, base=AuditedTask, name="healthcore.reporting.generate", max_retries=3)
-def generate_reporting_task(self: AuditedTask, database_url: str | None = None) -> dict[str, Any]:
+def generate_reporting_task(self: AuditedTask, database_url: str | None = None, **kwargs: Any) -> dict[str, Any]:
     """Generate executive reporting from a database reference, never a raw data blob."""
+    # Robust alignment fix: If the payload came in inside a nested kwargs layout, extract it safely
+    if not database_url and "payload" in kwargs:
+        database_url = kwargs["payload"].get("database_url")
+    elif not database_url and kwargs:
+        # Fallback to handle direct top-level unpacked keyword values safely
+        database_url = kwargs.get("database_url")
+        
     started = time.perf_counter()
     attempt = self.request.retries + 1
     task_id = self.request.id or "unknown"
@@ -130,6 +137,5 @@ def generate_reporting_task(self: AuditedTask, database_url: str | None = None) 
     finally:
         if engine is not None:
             engine.dispose()
-
 
 __all__ = ["app", "AsyncTaskFailure", "generate_reporting_task"]
