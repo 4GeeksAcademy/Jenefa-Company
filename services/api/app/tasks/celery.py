@@ -47,8 +47,16 @@ class AsyncTaskFailure(SQLModel, table=True):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
-def _record_terminal_failure(task_id: str, attempt_number: int, error: str, database_url: str | None) -> None:
-    engine = create_inventory_engine(database_url or inventory_database_url())
+def _record_terminal_failure(task_id: str, attempt_number: int, error: str) -> None:
+    """Persist a DLQ row in the platform's own operational database.
+
+    Deliberately independent of the task's ``database_url``: if the task
+    failed because its target database is unreachable, the DLQ must still
+    be able to record the failure. A DLQ write failure is logged and
+    swallowed so the original task error keeps propagating to the result
+    backend and Flower.
+    """
+    engine = create_inventory_engine(inventory_database_url())
     try:
         SQLModel.metadata.create_all(engine, tables=[AsyncTaskFailure.__table__])
         with Session(engine) as session:
@@ -60,6 +68,10 @@ def _record_terminal_failure(task_id: str, attempt_number: int, error: str, data
                 )
             )
             session.commit()
+    except Exception:
+        logger.exception(
+            "async_task_dlq_write_failed task_id=%s attempt_number=%s", task_id, attempt_number
+        )
     finally:
         engine.dispose()
 
@@ -77,8 +89,12 @@ def generate_reporting_task(self: AuditedTask, database_url: str | None = None) 
     started = time.perf_counter()
     attempt = self.request.retries + 1
     task_id = self.request.id or "unknown"
-    engine = create_inventory_engine(database_url or inventory_database_url())
+    engine = None
     try:
+        # Engine creation stays inside the guarded region: eager failures
+        # (bad URL, missing driver) must be retried and audited like any
+        # other task error, never escape as unhandled worker exceptions.
+        engine = create_inventory_engine(database_url or inventory_database_url())
         result = trigger_batch_execution(engine)
         duration_ms = round((time.perf_counter() - started) * 1000, 2)
         logger.info(
@@ -92,7 +108,7 @@ def generate_reporting_task(self: AuditedTask, database_url: str | None = None) 
         duration_ms = round((time.perf_counter() - started) * 1000, 2)
         error = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
         if self.request.retries >= self.max_retries:
-            _record_terminal_failure(task_id, attempt, error, database_url)
+            _record_terminal_failure(task_id, attempt, error)
             logger.error(
                 "async_task_failed task_id=%s attempt_number=%s status=failure duration_ms=%s error=%s",
                 task_id,
@@ -112,7 +128,8 @@ def generate_reporting_task(self: AuditedTask, database_url: str | None = None) 
         )
         raise self.retry(exc=exc, countdown=countdown)
     finally:
-        engine.dispose()
+        if engine is not None:
+            engine.dispose()
 
 
 __all__ = ["app", "AsyncTaskFailure", "generate_reporting_task"]

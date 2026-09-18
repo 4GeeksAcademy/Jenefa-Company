@@ -1,14 +1,14 @@
-"""FastAPI producer endpoints for Celery-backed operations."""
+"""FastAPI producer endpoints for Celery-backed async operations."""
 
 from __future__ import annotations
 
 from typing import Any
 
 from celery.result import AsyncResult
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, status
 from pydantic import BaseModel, ConfigDict
 
-from services.celery_app import app as celery_app, generate_reporting_task
+from app.tasks.celery import app as celery_app, generate_reporting_task
 
 router = APIRouter(tags=["async-tasks"])
 _ALLOWED_STATES = {"PENDING", "STARTED", "SUCCESS", "FAILURE"}

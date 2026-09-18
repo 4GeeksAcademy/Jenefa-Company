@@ -64,6 +64,14 @@
 - New `services/api/tests/test_telemetry_report.py` (7 cases: default window, grouping, error-rate derivation, latency averaging, invalid/inverted dates, cache hit/clear); full suite `python -m pytest` in `services/api` — **46 passed**.
 - Documented `GET /telemetry/report` in `services/api/README.md`.
 
+### Async task queue completed (Ticket #DEV-55 — Redis + Celery)
+- Added `services/api/app/tasks/celery.py` (Celery app: Redis broker/backend, `task_acks_late`, `task_track_started`) with `healthcore.reporting.generate` wrapping the existing reporting pipeline; `services/celery_app.py` is the spec-mandated entry point that loads the repo `.env`, adds `services/api` to `sys.path`, and re-exports `app.tasks.celery` so the API and worker share ONE module identity (avoids duplicate SQLModel `medicalsupply` metadata registration that crashed the API).
+- Producer endpoints in `app/async_tasks.py` (router registered in `main.py`): `POST /reports/generate` → `202 {"task_id"}` (**83ms**, spec <200ms), payload accepts only an optional `database_url` reference (no data blobs); `GET /tasks/{task_id}` → lowercase Celery state (`pending`/`started`/`success`/`failure`) + result on success.
+- Reliability: `max_retries=3` with exponential backoff (2s/4s/8s), late-ack + `task_reject_on_worker_lost`; engine creation kept INSIDE the try block so eager failures (bad URL/missing driver) still retry and log instead of escaping as unhandled worker errors.
+- DLQ: `async_task_failures` table (`task_id`, `attempt_number`, `error` traceback, `timestamp`) written to the platform's own operational DB (`inventory_database_url()`), never the task's target DB, with the DLQ write failure swallowed + logged so the original task error still reaches the result backend/Flower.
+- Structured logs per task: `async_task_completed|retry|failed` with `task_id`, `attempt_number`, `status`, `duration_ms`, full error text.
+- `docker-compose.yml`: `redis` (7-alpine, `--maxmemory-policy noeviction`), independent `worker` (`celery -A services.celery_app worker`), `flower` on :5555; `services/Dockerfile` ships `celery_app.py` + `PYTHONPATH=/services:/services/api`. API deps gained `celery`/`redis`.
+- README runbook: start/stop worker + Flower, trigger/poll endpoints. Verified end-to-end on real processes: 202 in 83ms, success result polled back (SQLite pipeline run COMPLETED), failure path retried 3× then `failure` + DLQ row persisted, Flower HTTP 200, worker pre-flight registered `healthcore.reporting.generate`; full suite **47 passed**.
 
 ## Planned Next Steps
 - Dr. Sandra Okonkwo has newly commissioned HealthCore Digital as an internal unit specifically to build out modern, intelligent systems from scratch. The target deployment roadmap spans across six primary operational fronts:
