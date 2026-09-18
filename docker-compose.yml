@@ -38,6 +38,48 @@ services:
     networks:
       - healthcore-network
 
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--maxmemory-policy", "noeviction"]
+    ports:
+      - "6379:6379"
+    networks:
+      - healthcore-network
+
+  worker:
+    build:
+      context: ./services
+      dockerfile: Dockerfile
+    command: celery -A services.celery_app worker --loglevel=info
+    env_file:
+      - .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./services:/services
+      - ./scripts:/scripts
+    depends_on:
+      - redis
+    networks:
+      - healthcore-network
+
+  flower:
+    build:
+      context: ./services
+      dockerfile: Dockerfile
+    command: celery -A services.celery_app flower --port=5555
+    env_file:
+      - .env
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+    networks:
+      - healthcore-network
+
 networks:
   healthcore-network:
     name: healthcore-network

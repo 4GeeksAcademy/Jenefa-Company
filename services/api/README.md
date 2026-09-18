@@ -4,6 +4,8 @@ FastAPI service for incident CSV analysis, staff JWT authentication (TinyDB),
 clinic supply inventory (SQLModel ledger on SQLite or Supabase PostgreSQL),
 and telemetry event ingestion (`telemetry_events`, same SQLModel engine).
 
+Async reporting is dispatched to the independent Celery worker through Redis.
+
 ## Run locally
 
 ```bash
@@ -58,6 +60,8 @@ Without a provider API key, password-reset emails are logged to the API console 
 | `GET` | `/inventory/orders` | Bearer | Unified inbound/outbound log with preloaded supplies |
 | `POST` | `/telemetry/events` | Public | Ingest a telemetry batch; per-event partial validation + bulk insert into `telemetry_events`, returns `{received, stored, rejected}` |
 | `GET` | `/telemetry/report` | Public | Pandas-driven operational report (`events_per_day`, `error_rate_by_type`, `average_latency_by_day`) over an optional `start_date`/`end_date` ISO 8601 window (defaults to the last 7 days, UTC); results cached in-memory per window for 60s |
+| `POST` | `/reports/generate` | Public | Queue executive report generation; accepts only a database reference and returns `202` with a Celery `task_id` |
+| `GET` | `/tasks/{task_id}` | Public | Return Celery task state (`pending`, `started`, `success`, or `failure`) |
 
 On first boot, empty catalog databases are seeded to the HealthCore spec balances (gloves `450`, sedative `35`). Stock is never stored on `MedicalSupply` rows.
 

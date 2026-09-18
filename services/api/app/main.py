@@ -18,6 +18,7 @@ from .auth.routers.auth import router as auth_router
 from .auth.routers.profiles import router as profiles_router
 from .auth.routers.protected import router as protected_router
 from .auth.routers.users import router as users_router
+from .async_tasks import router as async_tasks_router
 from .errors import GENERIC_INTERNAL, json_error, register_exception_handlers
 from .inventory.database import create_inventory_engine, init_inventory_schema
 from .inventory.router import router as inventory_router
@@ -68,6 +69,7 @@ app.include_router(protected_router)
 app.include_router(inventory_router)
 app.include_router(telemetry_router)
 app.include_router(reporting_router)
+app.include_router(async_tasks_router)
 
 app.add_middleware(
     CORSMiddleware,
