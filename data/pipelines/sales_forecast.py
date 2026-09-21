@@ -186,14 +186,28 @@ def run(input_path: str | Path, output_dir: str | Path) -> ForecastResult:
     available_years = sorted(data["month"].dt.year.unique())
     if len(available_years) < 10:
         raise ValueError("At least 10 distinct years are required for an 8/2 temporal split")
+    
     # The checked-in production extract currently spans 2016-2025. This keeps
     # the required first-eight/final-two rule while remaining data-driven.
     train, test = split_by_years(data, available_years[0], available_years[7], available_years[8], available_years[9])
+    
     output_dir = Path(output_dir)
     result = train_and_evaluate(train, test, output_dir / "sales_forecast.png")
+    
+    # Save the sequential prediction holdout results
     result.predictions.to_csv(output_dir / "sales_forecast_predictions.csv", index=False)
-    pd.Series(result.metrics, name="value").to_csv(output_dir / "sales_forecast_metrics.csv", header=True)
+    
+    # Flatten the metrics map into structured, named dataframe columns
+    metrics_data = {
+        "metric": list(result.metrics.keys()),
+        "value": list(result.metrics.values())
+    }
+    
+    # Export a clean table with explicit headers (removes the empty index column)
+    pd.DataFrame(metrics_data).to_csv(output_dir / "sales_forecast_metrics.csv", index=False)
+    
     return result
+
 
 
 if __name__ == "__main__":
