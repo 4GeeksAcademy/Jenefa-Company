@@ -5,6 +5,8 @@ split as a small, testable function.  It uses the available production history;
 when a dataset contains the specification's 2011-2020 window, callers can pass
 those years explicitly to :func:`split_by_years`.
 """
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+
 from __future__ import annotations
 
 import argparse
@@ -124,6 +126,8 @@ def _k2(residuals: np.ndarray) -> float:
     return float(np.clip(1.0 - abs(correlation), 0.0, 1.0))
 
 
+from sklearn.metrics import mean_squared_error, mean_absolute_error  # Ensure mean_absolute_error is imported at the top
+
 def train_and_evaluate(train: pd.DataFrame, test: pd.DataFrame, figure_path: str | Path) -> ForecastResult:
     numeric = ["visits_count", "avg_revenue_per_visit_usd", "year", "month_number", "quarter"]
     categorical = ["region"]
@@ -143,15 +147,22 @@ def train_and_evaluate(train: pd.DataFrame, test: pd.DataFrame, figure_path: str
     predicted = model.predict(_features(test))
     actual = test["revenue_usd"].to_numpy()
     residuals = actual - predicted
+    
+    # Calculate Mean Absolute Error (MAE) for business-friendly finance reporting
+    mae_val = float(mean_absolute_error(actual, predicted))
+    
     prediction_frame = test[["month", "revenue_usd"]].rename(columns={"revenue_usd": "actual_revenue_usd"}).copy()
     prediction_frame["predicted_revenue_usd"] = predicted
     prediction_frame["residual_usd"] = residuals
+    
     metrics = {
+        "mae": mae_val,
         "mse": float(mean_squared_error(actual, predicted)),
         "psi": float(np.mean([_psi(train[column], test[column]) for column in ["visits_count", "avg_revenue_per_visit_usd"]])),
         "gini": _gini(actual, predicted),
         "k2": _k2(residuals),
     }
+    
     figure_path = Path(figure_path)
     figure_path.parent.mkdir(parents=True, exist_ok=True)
     plt.figure(figsize=(11, 5))
@@ -166,6 +177,7 @@ def train_and_evaluate(train: pd.DataFrame, test: pd.DataFrame, figure_path: str
     plt.tight_layout()
     plt.savefig(figure_path, dpi=150)
     plt.close()
+    
     return ForecastResult(metrics, prediction_frame, figure_path, tuple(sorted(train["month"].dt.year.unique())), tuple(sorted(test["month"].dt.year.unique())))
 
 
