@@ -5,9 +5,10 @@ split as a small, testable function.  It uses the available production history;
 when a dataset contains the specification's 2011-2020 window, callers can pass
 those years explicitly to :func:`split_by_years`.
 """
-from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 from __future__ import annotations
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+
 
 import argparse
 from dataclasses import dataclass
