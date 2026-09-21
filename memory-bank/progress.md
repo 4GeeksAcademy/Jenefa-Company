@@ -74,6 +74,7 @@
 - README runbook: start/stop worker + Flower, trigger/poll endpoints. Verified end-to-end on real processes: 202 in 83ms, success result polled back (SQLite pipeline run COMPLETED), failure path retried 3× then `failure` + DLQ row persisted, Flower HTTP 200, worker pre-flight registered `healthcore.reporting.generate`; full suite **47 passed**.
 
 ## Planned Next Steps
+- Sales forecasting feasibility prototype completed: added a reproducible Random Forest pipeline at `data/pipelines/sales_forecast.py` using the protected production extract, schema/null validation, robust scaling, first-eight/final-two temporal partitioning, MSE/PSI/Gini/K2 metrics, and an actual-vs-predicted error-band plot. Added split/leakage and artifact tests at `tests/pipelines/test_sales_forecast.py`; focused suite passes (`3 passed`).
 - Dr. Sandra Okonkwo has newly commissioned HealthCore Digital as an internal unit specifically to build out modern, intelligent systems from scratch. The target deployment roadmap spans across six primary operational fronts:
 
 ### Core Engineering & Integration (James Osei)
