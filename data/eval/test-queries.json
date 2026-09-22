@@ -1,0 +1,10 @@
+[
+  {"question": "How many clinics does HealthCore operate?", "expected_source": "healthcore-operating-principles.md"},
+  {"question": "Where must US patient records remain?", "expected_source": "healthcore-operating-principles.md"},
+  {"question": "Where must UK patient records remain?", "expected_source": "healthcore-operating-principles.md"},
+  {"question": "What is required for cross-border data views?", "expected_source": "healthcore-operating-principles.md"},
+  {"question": "What voice should executive answers use?", "expected_source": "healthcore-operating-principles.md"},
+  {"question": "What should happen when documentation is missing?", "expected_source": "healthcore-operating-principles.md"},
+  {"question": "How should assistant answers be supported?", "expected_source": "healthcore-operating-principles.md"},
+  {"question": "What kind of decisions does HealthCore require?", "expected_source": "healthcore-operating-principles.md"}
+]
