@@ -9,6 +9,7 @@ try:
 except ImportError:  # pragma: no cover
     QdrantClient = Any  # type: ignore[misc,assignment]
 
+# Direct imports from your underlying process script layer to resolve naming boundaries
 from data.process.rag import COLLECTION_NAME, embed
 
 # Configuration Parameters mapping straight from .env variables
