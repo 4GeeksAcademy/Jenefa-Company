@@ -31,7 +31,7 @@ def test_run_produces_metrics_predictions_and_visualization(tmp_path):
 
     assert result.train_years == (2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023)
     assert result.test_years == (2024, 2025)
-    assert set(result.metrics) == {"mse", "psi", "gini", "k2"}
+    assert set(result.metrics) == {"mse", "psi", "gini", "k2", "mae"}
     assert len(result.predictions) == 24
     assert result.figure_path.exists()
     assert (tmp_path / "sales_forecast_predictions.csv").exists()
