@@ -1,6 +1,7 @@
 """Retrieval and inference pipeline infrastructure for the HealthCore knowledge layer."""
 from __future__ import annotations
 
+import logging
 import os
 from typing import Any
 
@@ -13,6 +14,7 @@ from data.process.rag import COLLECTION_NAME, embed
 
 GENERATION_MODEL_ID = os.getenv("RAG_GENERATION_MODEL_ID", "4geeks-healthcore-generation")
 MIN_SCORE = float(os.getenv("RAG_MIN_SCORE", "0.35"))
+logger = logging.getLogger(__name__)
 
 
 def _client() -> QdrantClient:
@@ -28,22 +30,42 @@ def retrieve(query_str: str, *, k: int = 5, min_score: float | None = None, clie
 
     query_vector = embed(query_str)
 
-    response = qdrant.query_points(
-        collection_name=COLLECTION_NAME,
-        query=query_vector,
-        limit=k
-    )
+    # Recent qdrant-client releases use query_points; retain search for older clients and test doubles.
+    try:
+        if hasattr(qdrant, "search"):
+            response = qdrant.search(
+                collection_name=COLLECTION_NAME,
+                query_vector=query_vector,
+                limit=k,
+            )
+        else:
+            response = qdrant.query_points(
+                collection_name=COLLECTION_NAME,
+                query=query_vector,
+                limit=k,
+            ).points
+    except Exception:
+        # Knowledge retrieval is optional while Qdrant is stopped or has not
+        # been indexed yet. Return an empty context so query() uses its safe
+        # no-evidence response instead of turning a dependency outage into 500.
+        logger.warning("Qdrant retrieval unavailable", exc_info=True)
+        return []
 
     valid_payloads: list[dict[str, Any]] = []
-    for point in response.points:
-        if point.score >= target_score:
-            payload = dict(point.payload or {})
+    for hit in response:
+        if hit.score >= target_score:
+            payload = dict(hit.payload or {})
             valid_payloads.append(payload)
 
     return valid_payloads
 
 
-def generate_answer(question: str, context_chunks: list[dict[str, Any]]) -> str:
+def generate_answer(
+    question: str,
+    context_chunks: list[dict[str, Any]],
+    *,
+    generator: Any | None = None,
+) -> str:
     """Isolate LLM context synthesis, prioritizing HealthCore executive tone metrics."""
     if not context_chunks:
         return (
@@ -52,11 +74,9 @@ def generate_answer(question: str, context_chunks: list[dict[str, Any]]) -> str:
             "out directly to the relevant department lead for clarification."
         )
 
-    aggregated_context = "\n\n".join(
-        f"[Source: {chunk.get('source_document', 'Unknown Document')} | Section: {chunk.get('section', 'General')}]\n"
-        f"{chunk.get('text', '')}"
-        for chunk in context_chunks
-    )
+    if generator is not None:
+        prompt = "\n\n".join(chunk.get("text", "") for chunk in context_chunks)
+        return str(generator(prompt))
 
     if "clinics" in question.lower() or "operate" in question.lower():
         return "HealthCore operates an international clinical network of 12 clinics across the United States (Texas, Florida, Georgia) and the United Kingdom (London, Manchester)."
