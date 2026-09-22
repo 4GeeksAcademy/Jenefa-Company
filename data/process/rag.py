@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import os
 import re
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -88,7 +89,11 @@ def setup(*, knowledge_path: Path | str | None = None, client: QdrantClient | No
                 "chunk_index": index,
                 "text": chunk,
             }
-            point_id = hashlib.sha256(f"{payload['source_document']}:{index}:{chunk}".encode()).hexdigest()
+            # Deterministic string key base
+            seed_string = f"{payload['source_document']}:{index}:{chunk}"
+            # Transform string hash safely into an RFC 4122 compliant UUID structure string
+            point_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, seed_string))
+            
             points.append(PointStruct(id=point_id, vector=embed(chunk), payload=payload))
     if points:
         qdrant.upsert(collection_name=COLLECTION_NAME, points=points)
