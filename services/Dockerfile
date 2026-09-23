@@ -5,14 +5,18 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /services/api
 
-ENV PYTHONPATH=/services:/services/api
+ENV PYTHONPATH=/:/services:/services/api
 
 RUN pip install --no-cache-dir uv
 
-COPY api/requirements.txt ./requirements.txt
+COPY services/api/requirements.txt ./requirements.txt
 RUN uv pip install --system --no-cache -r requirements.txt
 
-COPY api/ ./
-COPY celery_app.py /services/celery_app.py
+COPY services/api/ ./
+COPY services/celery_app.py /services/celery_app.py
+# The API imports the shared data pipelines and incident analysis package.
+COPY data/ /data/
+COPY scripts/ /scripts/
+COPY docs/ /docs/
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
