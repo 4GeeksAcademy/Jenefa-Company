@@ -1,0 +1,10 @@
+[
+  {"question": "How many clinics does HealthCore operate?", "expected_doc": "healthcore-overview.md"},
+  {"question": "Who is the founder and CEO of HealthCore?", "expected_doc": "healthcore-overview.md"},
+  {"question": "What is the average time-to-hire for clinical roles?", "expected_doc": "healthcore-overview.md"},
+  {"question": "What legal frameworks protect patient data in the US and UK?", "expected_doc": "healthcore-overview.md"},
+  {"question": "What is the appointment no-show rate across the network?", "expected_doc": "healthcore-overview.md"},
+  {"question": "What is the claims denial rate in the United States clinics?", "expected_doc": "healthcore-overview.md"},
+  {"question": "Who is the Director of Clinical Operations?", "expected_doc": "healthcore-overview.md"},
+  {"question": "How many employees work at HealthCore across both countries?", "expected_doc": "healthcore-overview.md"}
+]

@@ -26,8 +26,8 @@ services:
 
   backend:
     build:
-      context: ./services
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/Dockerfile
     env_file:
       - .env
     ports:
@@ -48,8 +48,8 @@ services:
 
   worker:
     build:
-      context: ./services
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/Dockerfile
     command: celery -A services.celery_app worker --loglevel=info
     env_file:
       - .env
@@ -65,8 +65,8 @@ services:
 
   flower:
     build:
-      context: ./services
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/Dockerfile
     command: celery -A services.celery_app flower --port=5555
     env_file:
       - .env
@@ -80,6 +80,19 @@ services:
     networks:
       - healthcore-network
 
+  # === ADDED QDRANT SERVICE VECTOR DATABASE ===
+  qdrant:
+    image: qdrant/qdrant:v1.12.0
+    container_name: healthcore_qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - healthcore-network
+    restart: unless-stopped
+
 networks:
   healthcore-network:
     name: healthcore-network
@@ -89,3 +102,5 @@ volumes:
   ui_src_node_modules:
   ui_website_node_modules:
   ui_web_node_modules:
+  # === ADDED PERSISTENT VOLUME FOR VECTOR DATABASE DATA ===
+  qdrant_data:

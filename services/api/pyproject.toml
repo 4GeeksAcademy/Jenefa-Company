@@ -19,6 +19,7 @@ dependencies = [
   "prefect>=3",
   "celery>=5.6.3",
   "redis>=8.1.0",
+  "qdrant-client>=1.14.0",
 ]
 
 [project.optional-dependencies]

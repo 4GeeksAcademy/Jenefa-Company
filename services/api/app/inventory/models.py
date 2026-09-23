@@ -14,6 +14,7 @@ def _utc_now() -> datetime:
 
 
 class MedicalSupply(SQLModel, table=True):
+    __table_args__ = {"extend_existing": True}
     id: int | None = Field(default=None, primary_key=True)
     name: str
     sku: str = Field(unique=True, index=True)
@@ -25,6 +26,7 @@ class MedicalSupply(SQLModel, table=True):
 
 
 class InboundEntry(SQLModel, table=True):
+    __table_args__ = {"extend_existing": True}
     id: int | None = Field(default=None, primary_key=True)
     medical_supply_id: int = Field(foreign_key="medicalsupply.id", index=True)
     quantity: int
@@ -36,6 +38,7 @@ class InboundEntry(SQLModel, table=True):
 
 
 class OutboundExit(SQLModel, table=True):
+    __table_args__ = {"extend_existing": True}
     id: int | None = Field(default=None, primary_key=True)
     medical_supply_id: int = Field(foreign_key="medicalsupply.id", index=True)
     quantity: int
