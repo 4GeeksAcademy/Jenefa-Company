@@ -14,6 +14,31 @@ logger = logging.getLogger(__name__)
 DEFAULT_TIMEOUT_SECONDS = 4.0
 
 
+def mcp_connections() -> dict[str, dict[str, str]]:
+    """Return the authenticated MCP connection used by LangChain adapters."""
+    url = os.getenv("HEALTHCORE_MCP_URL")
+    if not url:
+        raise ExternalToolError("mcp", "HEALTHCORE_MCP_URL is not configured")
+    token = os.getenv("HEALTHCORE_SERVICE_TOKEN") or os.getenv("HEALTHCORE_API_KEY")
+    if not token:
+        raise ExternalToolError("mcp", "HEALTHCORE_SERVICE_TOKEN is not configured")
+    return {
+        "healthcore": {
+            "transport": "http",
+            "url": url.rstrip("/"),
+            "headers": {"Authorization": f"Bearer {token}"},
+        }
+    }
+
+
+async def get_mcp_tools() -> list[Any]:
+    """Discover protected tools through langchain-mcp-adapters."""
+    from langchain_mcp_adapters.client import MultiServerMCPClient
+
+    client = MultiServerMCPClient(mcp_connections())
+    return await client.get_tools(server_name="healthcore")
+
+
 class IncidentLookup(BaseModel):
     """Optional incident identifier and filters sent to the incident service."""
 
