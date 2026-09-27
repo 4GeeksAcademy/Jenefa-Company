@@ -164,3 +164,11 @@ def export_results() -> Response:
         media_type="text/csv",
         headers={"Content-Disposition": 'attachment; filename="results.csv"'},
     )
+@app.get("/api/incidents/{ticket_id}")
+def get_mock_ticket(ticket_id: str):
+    return {
+        "id": ticket_id,
+        "status": "In Progress",
+        "category": "Billing Compliance",
+        "source": "US Market Clinic Network"
+    }
