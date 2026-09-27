@@ -25,4 +25,9 @@ def query_agent(payload: AgentQuery) -> dict[str, Any]:
     except Exception:
         logger.exception("LangGraph agent execution failed")
         return {"answer": None, "error": "The agent could not process the request safely."}
-    return {"answer": state.get("answer"), "error": state.get("error")}
+    return {
+        "answer": state.get("answer"),
+        "error": state.get("error"),
+        "route": state.get("route"),
+        "contacted_sources": state.get("contacted_sources", []),
+    }
