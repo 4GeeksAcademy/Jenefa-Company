@@ -56,8 +56,13 @@ def retrieve(query_str: str, *, k: int = 5, min_score: float | None = None, clie
     return valid_payloads
 
 
-def generate_answer(question: str, context_chunks: list[dict[str, Any]]) -> str:
+def generate_answer(question: str, context_chunks: list[dict[str, Any]], *, generator: Any = None) -> str:
     """Isolate LLM context synthesis, prioritizing HealthCore executive tone metrics."""
+    # 0. Check if a test mock generator function was injected into the keyword arguments
+    if generator is not None:
+        mock_prompt = f"Question: {question} Context: {context_chunks}"
+        return generator(mock_prompt)
+
     # 1. Fallback Trigger if Qdrant returns nothing above threshold
     if not context_chunks:
         return (
@@ -67,7 +72,6 @@ def generate_answer(question: str, context_chunks: list[dict[str, Any]]) -> str:
         )
 
     # 2. Strict Intent & Semantic Filtering for Mock Local Testing Environment
-    # This prevents un-targeted questions from accidentally serving unrelated text pieces due to mock vector loops
     q_lower = question.lower()
     
     if "clinic" in q_lower or "operate" in q_lower or "location" in q_lower:
