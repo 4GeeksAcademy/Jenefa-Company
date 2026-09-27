@@ -15,6 +15,7 @@ dependencies = [
   "xgboost>=3.2.0",
   "pandas>=3.0.5",
   "matplotlib>=3.11.2",
+  "langgraph>=1.2.12",
 ]
 
 [tool.uv.sources]

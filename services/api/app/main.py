@@ -27,6 +27,7 @@ from .reporting.router import router as reporting_router
 from .telemetry.router import router as telemetry_router
 from data.pipelines.rag import query as rag_query
 from services.job_runner import JobRunRecord as _JobRunRecord  # noqa: F401 — register unified metadata
+from services.langgraph_agent.router import router as agent_router
 
 # Import shared core after path bootstrap.
 from incident_core import analyze_csv_bytes, results_to_csv_text  # noqa: E402
@@ -71,6 +72,7 @@ app.include_router(inventory_router)
 app.include_router(telemetry_router)
 app.include_router(reporting_router)
 app.include_router(async_tasks_router)
+app.include_router(agent_router)
 
 
 @app.post("/knowledge/query")
