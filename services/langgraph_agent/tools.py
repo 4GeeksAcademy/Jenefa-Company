@@ -32,11 +32,77 @@ def mcp_connections() -> dict[str, dict[str, str]]:
 
 
 async def get_mcp_tools() -> list[Any]:
-    """Discover protected tools through langchain-mcp-adapters."""
-    from langchain_mcp_adapters.client import MultiServerMCPClient
+    """Discover protected tools through a resilient stateless HTTP tool wrapper."""
+    from langchain_core.tools import Tool
+    
+    connections = mcp_connections()
+    healthcore_config = connections.get("healthcore", {})
+    url = healthcore_config.get("url")
+    headers = healthcore_config.get("headers", {})
 
-    client = MultiServerMCPClient(mcp_connections())
-    return await client.get_tools(server_name="healthcore")
+    if not url:
+        raise ExternalToolError("mcp", "HEALTHCORE_MCP_URL is not configured")
+
+    # Ensure trailing slash matching for the stateless Starlette mount route rules
+    base_mcp_url = url if url.endswith("/") else f"{url}/"
+
+    # 1. Fetch available tools list using a direct, stateless HTTP POST query
+    async def fetch_tools_list() -> list[dict[str, Any]]:
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT_SECONDS) as client:
+            try:
+                response = await client.post(
+                    base_mcp_url,
+                    headers=headers,
+                    json={"jsonrpc": "2.0", "id": "list", "method": "tools/list", "params": {}}
+                )
+                if response.status_code == 401:
+                    logger.warning("MCP client authorization rejected by server.")
+                    return []
+                response.raise_for_status()
+                return response.json().get("result", {}).get("tools", [])
+            except Exception as exc:
+                logger.error(f"Stateless MCP discovery check failed: {exc}")
+                return []
+
+    mcp_tools_metadata = await fetch_tools_list()
+    langchain_adapter_tools = []
+
+    # 2. Build individual custom LangChain wrapper tools dynamically
+    for tool_meta in mcp_tools_metadata:
+        name = tool_meta.get("name")
+        description = tool_meta.get("description", "")
+
+        def make_call_fn(tool_name: str = name):
+            async def call_mcp_tool(arguments: dict[str, Any]) -> str:
+                async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT_SECONDS) as client:
+                    resp = await client.post(
+                        base_mcp_url,
+                        headers=headers,
+                        json={
+                            "jsonrpc": "2.0",
+                            "id": f"call_{tool_name}",
+                            "method": "tools/call",
+                            "params": {"name": tool_name, "arguments": arguments}
+                        }
+                    )
+                    resp.raise_for_status()
+                    content = resp.json().get("result", {}).get("content", [{}])
+                    if content and isinstance(content, list):
+                        return str(content[0].get("text", ""))
+                    return ""
+            return call_mcp_tool
+
+        # Construct standard LangChain wrapper objects
+        langchain_adapter_tools.append(
+            Tool(
+                name=name,
+                description=description,
+                func=None,  # Handled as an async tool function hook
+                coroutine=make_call_fn(name)
+            )
+        )
+
+    return langchain_adapter_tools
 
 
 class IncidentLookup(BaseModel):
@@ -78,7 +144,6 @@ def _base_url(name: str) -> str:
 
 
 def _get_json(tool: str, url: str, params: dict[str, str]) -> Any:
-    # Log only the tool and endpoint: query values may contain operational or PHI.
     logger.info("healthcore_external_lookup tool=%s endpoint=%s", tool, url)
     try:
         with _client() as client:

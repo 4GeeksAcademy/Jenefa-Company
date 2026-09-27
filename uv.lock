@@ -1883,7 +1883,7 @@ requires-dist = [
     { name = "fastmcp", specifier = ">=4.0.10" },
     { name = "flower", specifier = ">=2.1.0" },
     { name = "healthcore-api", editable = "services/api" },
-    { name = "langchain-mcp-adapters", specifier = ">=0.3.1" },
+    { name = "langchain-mcp-adapters", specifier = ">=0.2.0" },
     { name = "langgraph", specifier = ">=1.2.12" },
     { name = "matplotlib", specifier = ">=3.11.2" },
     { name = "mcpauth", specifier = ">=0.1.1" },

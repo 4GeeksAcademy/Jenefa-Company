@@ -6,20 +6,22 @@ FastMCP's auth providers are not used.
 """
 
 from __future__ import annotations
-
 import json
 import logging
 import os
 from typing import Any, Literal
 
 import httpx
+import jwt as pyjwt
 from fastmcp import FastMCP
 from mcpauth import AuthInfo, MCPAuth
 from mcpauth.config import AuthServerConfig, AuthServerType, AuthorizationServerMetadata
 from pydantic import BaseModel, ConfigDict, Field
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
-from starlette.routing import Mount
+from starlette.routing import Mount, Route
+from starlette.responses import JSONResponse
+from mcpauth.exceptions import MCPAuthTokenVerificationException, MCPAuthTokenVerificationExceptionCode
 
 logger = logging.getLogger(__name__)
 
@@ -202,45 +204,114 @@ async def query_inventory(query: InventoryQuery) -> Any:
 
 
 def _build_auth() -> MCPAuth:
-    issuer = os.environ["MCP_OAUTH_ISSUER"]
+    issuer = os.getenv("MCP_OAUTH_ISSUER", "").strip().rstrip("/")
+    jwks_uri = os.getenv("MCP_OAUTH_JWKS_URI", "").strip()
+    if not issuer:
+        raise RuntimeError("MCP_OAUTH_ISSUER must identify the OAuth issuer")
+    if not jwks_uri:
+        raise RuntimeError(
+            "MCP_OAUTH_JWKS_URI must point to the OAuth provider's JWKS endpoint"
+        )
+
     metadata = AuthorizationServerMetadata(
         issuer=issuer,
-        authorization_endpoint=os.environ.get("MCP_OAUTH_AUTHORIZATION_ENDPOINT", f"{issuer}/authorize"),
-        token_endpoint=os.environ.get("MCP_OAUTH_TOKEN_ENDPOINT", f"{issuer}/token"),
-        jwks_uri=os.environ.get("MCP_OAUTH_JWKS_URI"),
+        authorization_endpoint=os.getenv(
+            "MCP_OAUTH_AUTHORIZATION_ENDPOINT", f"{issuer}/authorize"
+        ),
+        token_endpoint=os.getenv("MCP_OAUTH_TOKEN_ENDPOINT", f"{issuer}/token"),
+        jwks_uri=jwks_uri,
         response_types_supported=["code"],
         grant_types_supported=["authorization_code", "client_credentials"],
         code_challenge_methods_supported=["S256"],
         scope_supported=INCIDENT_SCOPES + INCIDENT_WRITE_SCOPES + INVENTORY_SCOPES,
     )
-    return MCPAuth(AuthServerConfig(metadata=metadata, type=AuthServerType.OAUTH))
+    return MCPAuth(
+        server=AuthServerConfig(metadata=metadata, type=AuthServerType.OAUTH)
+    )
 
 
-# Constructed at import time so FastAPI/uvicorn can mount this module predictably.
+def _verify_dev_hs256(token: str) -> AuthInfo:
+    """Verify a local-development HS256 token.
+
+    The normal ``mcpauth`` JWT mode intentionally accepts asymmetric algorithms
+    only and obtains the public key from JWKS.  The repository's local mock token
+    is HS256, so it needs an explicit, opt-in development verifier. This path is
+    disabled unless ``MCP_OAUTH_DEV_HS256_SECRET`` is set and must not be used in
+    production.
+    """
+    secret = os.getenv("MCP_OAUTH_DEV_HS256_SECRET")
+    if not secret:
+        raise RuntimeError("MCP_OAUTH_DEV_HS256_SECRET is not configured")
+    try:
+        claims = pyjwt.decode(
+            token,
+            secret,
+            algorithms=["HS256"],
+            options={"verify_aud": False, "verify_iss": False},
+        )
+        scope_claim = claims.get("scope", claims.get("scopes", []))
+        scopes = scope_claim.split() if isinstance(scope_claim, str) else scope_claim
+        return AuthInfo(
+            token=token,
+            issuer=claims["iss"],
+            client_id=claims.get("client_id", claims.get("azp")),
+            subject=claims["sub"],
+            audience=claims.get("aud"),
+            scopes=scopes or [],
+            claims=claims,
+        )
+    except (pyjwt.PyJWTError, KeyError, TypeError, ValueError) as exc:
+        raise MCPAuthTokenVerificationException(
+            MCPAuthTokenVerificationExceptionCode.INVALID_TOKEN,
+            cause=exc,
+        ) from exc
+
+
+# Initialize auth mapping to make the module ready for app runtime imports.
 auth = _build_auth()
 
+# Keep a public health endpoint. The MCP endpoint itself remains protected.
+async def root_health_check(request: Any) -> JSONResponse:
+    """Return a simple liveness response instead of a root 404."""
+    return JSONResponse({"status": "online", "server": "HealthCore OAuth MCP Server"})
 
-def create_app() -> Any:
-    """Return a Starlette app with public OAuth metadata and protected MCP."""
-    auth_middleware = [
+
+def _protected_mcp_app() -> Any:
+    """Build the streamable HTTP app with mcpauth around only the MCP routes."""
+    verifier: Any = "jwt"
+    if os.getenv("MCP_OAUTH_DEV_HS256_SECRET"):
+        verifier = _verify_dev_hs256
+
+    middleware = [
         Middleware(
             auth.bearer_auth_middleware(
-                "jwt",
-                audience=os.getenv("MCP_OAUTH_AUDIENCE"),
+                verifier,
+                audience=os.getenv("MCP_OAUTH_AUDIENCE") or None,
                 show_error_details=False,
             )
         )
     ]
-    return Starlette(
-        routes=[
-            auth.metadata_route(),
-            Mount(
-                "/mcp",
-                app=mcp.http_app(transport="streamable-http", stateless_http=True),
-                middleware=auth_middleware,
-            ),
-        ]
+    return mcp.http_app(
+        # The app is mounted under /mcp by the outer Starlette application.
+        # Its internal route must therefore be relative to the mount root;
+        # otherwise FastMCP registers /mcp inside the /mcp mount and the
+        # client request to /mcp/ cannot match it.
+        path="/",
+        transport="streamable-http",
+        stateless_http=True,
+        middleware=middleware,
     )
 
-
-app = create_app()
+# Mounting at /mcp is important: clients must POST to /mcp/, not to /.well-known
+# or the root health endpoint. OAuth metadata remains public. The FastMCP app's
+# lifespan must also be passed to the parent Starlette app; otherwise its
+# streamable HTTP session manager has no initialized task group and returns 500.
+fastmcp_app = _protected_mcp_app()
+app = Starlette(
+    lifespan=fastmcp_app.lifespan,
+    routes=[
+        Route("/", endpoint=root_health_check, methods=["GET"]),
+        auth.metadata_route(),
+        Mount("/mcp", app=fastmcp_app),
+    ]
+)
