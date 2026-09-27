@@ -16,6 +16,9 @@ dependencies = [
   "pandas>=3.0.5",
   "matplotlib>=3.11.2",
   "langgraph>=1.2.12",
+  "fastmcp>=4.0.10",
+  "mcpauth>=0.1.1",
+  "langchain-mcp-adapters>=0.2.0",
 ]
 
 [tool.uv.sources]
