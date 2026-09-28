@@ -1,4 +1,18 @@
+# =============================================================================
+# HealthCore Digital — Local Development Orchestration
+# =============================================================================
+# One command to boot the full stack for every engineer on every machine.
+#
+#   docker compose up --build
+#
+# Security (HIPAA / UK GDPR):
+#   - Zero secrets, tokens, or medical metadata are hardcoded here.
+#   - All environment variables are injected from the root .env file.
+#   - .env is listed in .gitignore and must never be committed.
+# =============================================================================
+
 services:
+  # ── Frontend ──────────────────────────────────────────────────────────────
   ui:
     build:
       context: .
@@ -6,15 +20,19 @@ services:
     env_file:
       - .env
     environment:
+      # Internal Docker DNS — the UI proxy rewrites /backend/* to this URL.
       HC_API_INTERNAL_URL: http://backend:8000
       NEXT_PUBLIC_API_URL: /backend
       NEXT_PUBLIC_INCIDENT_API_URL: /backend
       NEXT_PUBLIC_INVENTORY_API_URL: /backend
     ports:
-      - "3000:3000"
-      - "3001:3001"
+      - "3000:3000"   # Public-facing patient portal (website)
+      - "3001:3001"   # Internal clinical / admin panel (web / backoffice)
     volumes:
+      # Bind-mount the entire repo so code edits are instantly reflected.
       - ./:/workspace
+      # Persist node_modules across container restarts (bind-mounts would
+      # otherwise mask the image-installed node_modules).
       - ui_root_node_modules:/workspace/node_modules
       - ui_src_node_modules:/workspace/src/node_modules
       - ui_website_node_modules:/workspace/uis/website/node_modules
@@ -24,6 +42,7 @@ services:
     networks:
       - healthcore-network
 
+  # ── Backend ───────────────────────────────────────────────────────────────
   backend:
     build:
       context: ./services
@@ -31,17 +50,27 @@ services:
     env_file:
       - .env
     ports:
-      - "8000:8000"
+      - "8000:8000"   # FastAPI / Uvicorn
     volumes:
+      # Bind-mount for hot-reload: code changes on the host instantly
+      # propagate to the container so uvicorn --reload picks them up.
       - ./services:/services
+      # The incident_core analysis scripts are shared across services.
       - ./scripts:/scripts
     networks:
       - healthcore-network
 
+# ── Networking ──────────────────────────────────────────────────────────────
+# Both services communicate over an explicitly named internal bridge network.
+# The UI reaches the API via http://backend:8000 (Docker DNS), never via
+# localhost or hardcoded IP addresses.
 networks:
   healthcore-network:
     name: healthcore-network
+    driver: bridge
 
+# ── Persistent volumes ─────────────────────────────────────────────────────
+# Named volumes prevent bind-mounts from shadowing image-layer node_modules.
 volumes:
   ui_root_node_modules:
   ui_src_node_modules:
