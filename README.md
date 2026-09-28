@@ -56,6 +56,19 @@ ai-engineering-company-project-monorepo/
 
 ## How to start
 
+### Async task worker
+
+Start Redis, the independent Celery worker, and Flower with:
+
+```bash
+docker compose up -d redis worker flower
+```
+
+The API can enqueue an executive report with `POST /reports/generate`; poll
+`GET /tasks/{task_id}` for `pending`, `started`, `success`, or `failure`.
+Flower is available at <http://localhost:5555>. Stop the background processes
+without stopping the API with `docker compose stop worker flower redis`.
+
 1. **Use this repository as a template** and create your own project repo.
 2. **Clone** your repository (or open it in Codespaces).
 3. **Replace** `CONTEXT.md` with the full context for your assigned company.

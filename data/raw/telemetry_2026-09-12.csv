@@ -1,0 +1,5 @@
+id,event_type,timestamp,service,tags,user_id,session_id,environment
+15008ca5-6688-484e-8f11-1cfd7b43b698,appointment_booked,2026-09-12T12:00:00+00:00,healthcore,"{'region': 'US', 'location_id': 'CLINIC-01'}",,,
+b6930b96-c24e-4fdc-93f1-5cfead408c0a,appointment_noshow_predicted,2026-09-12T12:00:00+00:00,healthcore,"{'region': 'US', 'location_id': 'CLINIC-01'}",,,
+7b6a4537-680d-4ba3-aaa9-c2bf76b0a5de,billing_claim_compiled,2026-09-12T12:00:00+00:00,healthcore,"{'region': 'US', 'pre_check_denial_risk': 0.15}",,,
+280a49ea-f1e4-4072-92aa-b006dc13b35c,revenue_stream_reconciled,2026-09-12T12:00:00+00:00,healthcore,"{'currency': 'USD', 'net_settled_amount': 12500.0}",,,

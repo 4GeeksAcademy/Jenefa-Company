@@ -42,16 +42,22 @@ def _normalize_url(url: str) -> str:
         return "postgresql+psycopg://" + url[len("postgresql://") :]
     return url
 
-
 def create_inventory_engine(url: str | None = None) -> Engine:
     resolved = url or inventory_database_url()
     connect_args: dict[str, object] = {}
     kwargs: dict[str, object] = {"pool_pre_ping": True}
+    
     if resolved.startswith("sqlite"):
         connect_args["check_same_thread"] = False
         if resolved in {"sqlite://", "sqlite:///:memory:"}:
             kwargs["poolclass"] = StaticPool
+            
+    # CORRECT FIX FOR SQLALCHEMY 2.0: Disable server-side named prepared statements via psycopg
+    elif resolved.startswith("postgres") or "postgresql" in resolved:
+        connect_args["prepare_threshold"] = None
+
     engine = create_engine(resolved, connect_args=connect_args, **kwargs)
+    
     if resolved.startswith("sqlite"):
         listen(engine, "connect", _enable_sqlite_foreign_keys)
     return engine

@@ -18,10 +18,16 @@ from .auth.routers.auth import router as auth_router
 from .auth.routers.profiles import router as profiles_router
 from .auth.routers.protected import router as protected_router
 from .auth.routers.users import router as users_router
+from .async_tasks import router as async_tasks_router
 from .errors import GENERIC_INTERNAL, json_error, register_exception_handlers
 from .inventory.database import create_inventory_engine, init_inventory_schema
 from .inventory.router import router as inventory_router
 from .inventory.seed import seed_identity_cache, seed_relational_catalog
+from .reporting.router import router as reporting_router
+from .telemetry.router import router as telemetry_router
+from data.pipelines.rag import query as rag_query
+from services.job_runner import JobRunRecord as _JobRunRecord  # noqa: F401 — register unified metadata
+from services.langgraph_agent.router import router as agent_router
 
 # Import shared core after path bootstrap.
 from incident_core import analyze_csv_bytes, results_to_csv_text  # noqa: E402
@@ -63,6 +69,19 @@ app.include_router(users_router)
 app.include_router(profiles_router)
 app.include_router(protected_router)
 app.include_router(inventory_router)
+app.include_router(telemetry_router)
+app.include_router(reporting_router)
+app.include_router(async_tasks_router)
+app.include_router(agent_router)
+
+
+@app.post("/knowledge/query")
+def knowledge_query(payload: dict[str, str]) -> dict[str, str]:
+    question = payload.get("question", "").strip()
+    if not question:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="question is required")
+    return {"answer": rag_query(question)}
 
 app.add_middleware(
     CORSMiddleware,
@@ -145,3 +164,11 @@ def export_results() -> Response:
         media_type="text/csv",
         headers={"Content-Disposition": 'attachment; filename="results.csv"'},
     )
+@app.get("/api/incidents/{ticket_id}")
+def get_mock_ticket(ticket_id: str):
+    return {
+        "id": ticket_id,
+        "status": "In Progress",
+        "category": "Billing Compliance",
+        "source": "US Market Clinic Network"
+    }

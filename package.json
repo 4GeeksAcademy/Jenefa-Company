@@ -19,5 +19,8 @@
     "build:website": "npm run build -w website",
     "dev:web": "npm run dev -w web",
     "build:web": "npm run build -w web"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2"
   }
 }

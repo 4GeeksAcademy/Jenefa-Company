@@ -35,3 +35,7 @@ body {
   color: var(--foreground);
   font-family: var(--font-manrope), system-ui, sans-serif;
 }
+
+.loading-state {
+  min-height: 40vh;
+}

@@ -4,12 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getAuthDisplayName } from "@/lib/authStorage";
+import { logoutAndRedirect } from "@/lib/authStorage";
+import { initTelemetry, track } from "@/lib/telemetry";
 
 const navItems = [
   { href: "/", label: "Overview" },
   { href: "/incidents", label: "Incident analysis" },
   { href: "/backoffice/inventory", label: "Clinic supplies" },
   { href: "/login", label: "Sign in" },
+  { href: "/account/profile", label: "Profile" },
 ] as const;
 
 export function WebShell({ children }: { children: React.ReactNode }) {
@@ -19,6 +22,10 @@ export function WebShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setDisplayName(getAuthDisplayName());
   }, [pathname]);
+
+  useEffect(() => {
+    initTelemetry();
+  }, []);
 
   return (
     <div className="flex min-h-full flex-1 bg-background">
@@ -40,6 +47,13 @@ export function WebShell({ children }: { children: React.ReactNode }) {
                 key={item.label}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
+                onClick={() =>
+                  track("client_navigation_tracked", {
+                    origin_route: pathname,
+                    destination_route: item.href,
+                    user_type: "operations_staff",
+                  })
+                }
                 className={`rounded-md px-3 py-2 text-sm transition-colors ${
                   active
                     ? "bg-sidebar-hover font-medium text-white"
@@ -70,6 +84,13 @@ export function WebShell({ children }: { children: React.ReactNode }) {
             ) : null}
             <p className="text-sm text-muted">Austin tech unit --- James Osei</p>
           </div>
+          <button
+            type="button"
+            onClick={() => logoutAndRedirect()}
+            className="text-sm text-muted hover:text-foreground"
+          >
+            Log out
+          </button>
         </header>
         <main className="flex-1 px-6 py-8">{children}</main>
       </div>

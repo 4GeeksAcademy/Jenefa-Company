@@ -1,0 +1,215 @@
+{
+  "$schema": "http://json-schema.org",
+  "title": "HealthCoreTelemetryEnvelope",
+  "type": "object",
+  "required": [
+    "eventId",
+    "timestamp",
+    "sessionId",
+    "userId",
+    "event_type",
+    "schemaVersion",
+    "requestId",
+    "properties"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[4][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sessionId": {
+      "type": "string"
+    },
+    "userId": {
+      "type": ["string", "null"]
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "appointment_booked",
+        "appointment_noshow_predicted",
+        "billing_claim_compiled",
+        "revenue_stream_reconciled",
+        "patient_data_accessed",
+        "system_health_checked",
+        "clinical_documentation_abandoned",
+        "client_navigation_tracked"
+      ]
+    },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "requestId": {
+      "type": "string"
+    },
+    "properties": {
+      "type": "object"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "event_type": { "const": "appointment_booked" } }
+      },
+      "then": {
+        "properties": {
+          "properties": {
+            "type": "object",
+            "required": ["location_id", "region", "booking_channel", "specialty_requested"],
+            "additionalProperties": false,
+            "properties": {
+              "location_id": { "type": "string" },
+              "region": { "type": "string", "enum": ["US", "UK"] },
+              "booking_channel": { "type": "string", "enum": ["phone", "front_desk", "online_portal"] },
+              "specialty_requested": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "event_type": { "const": "appointment_noshow_predicted" } }
+      },
+      "then": {
+        "properties": {
+          "properties": {
+            "type": "object",
+            "required": ["location_id", "calculated_risk_score", "lead_time_days"],
+            "additionalProperties": false,
+            "properties": {
+              "location_id": { "type": "string" },
+              "calculated_risk_score": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "lead_time_days": { "type": "integer" },
+              "risk_factors": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "event_type": { "const": "billing_claim_compiled" } }
+      },
+      "then": {
+        "properties": {
+          "properties": {
+            "type": "object",
+            "required": ["claim_id", "region", "payer_type", "coding_standard", "pre_check_denial_risk"],
+            "additionalProperties": false,
+            "properties": {
+              "claim_id": { "type": "string" },
+              "region": { "type": "string", "enum": ["US", "UK"] },
+              "payer_type": { "type": "string", "enum": ["commercial", "medicare", "medicaid", "private_pay", "nhs_contract"] },
+              "coding_standard": { "type": "string" },
+              "pre_check_denial_risk": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "event_type": { "const": "revenue_stream_reconciled" } }
+      },
+      "then": {
+        "properties": {
+          "properties": {
+            "type": "object",
+            "required": ["reconciliation_id", "currency", "gross_amount", "net_settled_amount"],
+            "additionalProperties": false,
+            "properties": {
+              "reconciliation_id": { "type": "string" },
+              "currency": { "type": "string", "enum": ["USD", "GBP"] },
+              "gross_amount": { "type": "number" },
+              "net_settled_amount": { "type": "number" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "event_type": { "const": "patient_data_accessed" } }
+      },
+      "then": {
+        "properties": {
+          "properties": {
+            "type": "object",
+            "required": ["ehr_source", "accessing_role", "jurisdiction", "anonymized_patient_token"],
+            "additionalProperties": false,
+            "properties": {
+              "ehr_source": { "type": "string", "enum": ["us_ehr_platform", "uk_ehr_platform"] },
+              "accessing_role": { "type": "string" },
+              "jurisdiction": { "type": "string", "enum": ["HIPAA", "GDPR"] },
+              "anonymized_patient_token": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "event_type": { "const": "system_health_checked" } }
+      },
+      "then": {
+        "properties": {
+          "properties": {
+            "type": "object",
+            "required": ["target_subsystem", "status_state", "latency_ms"],
+            "additionalProperties": false,
+            "properties": {
+              "target_subsystem": { "type": "string" },
+              "status_state": { "type": "string", "enum": ["healthy", "degraded", "unreachable"] },
+              "latency_ms": { "type": "integer" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "event_type": { "const": "clinical_documentation_abandoned" } }
+      },
+      "then": {
+        "properties": {
+          "properties": {
+            "type": "object",
+            "required": ["screen_view_id", "time_spent_seconds", "character_count"],
+            "additionalProperties": false,
+            "properties": {
+              "screen_view_id": { "type": "string" },
+              "time_spent_seconds": { "type": "integer" },
+              "character_count": { "type": "integer" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "event_type": { "const": "client_navigation_tracked" } }
+      },
+      "then": {
+        "properties": {
+          "properties": {
+            "type": "object",
+            "required": ["origin_route", "destination_route", "user_type"],
+            "additionalProperties": false,
+            "properties": {
+              "origin_route": { "type": "string" },
+              "destination_route": { "type": "string" },
+              "user_type": { "type": "string", "enum": ["patient", "clinical_staff", "operations_staff"] }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

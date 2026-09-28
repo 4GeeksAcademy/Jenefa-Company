@@ -1,0 +1,1 @@
+"""Shared repository services that are safe for standalone workers."""

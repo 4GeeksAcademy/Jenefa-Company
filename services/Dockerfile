@@ -16,6 +16,19 @@ RUN uv pip install --no-cache -r api/requirements.txt
 
 # ── Layer 2: Copy application code ─────────────────────────────────────────
 COPY api/ ./api/
+ENV PYTHONPATH=/:/services:/services/api
+
+RUN pip install --no-cache-dir uv
+
+COPY services/api/requirements.txt ./requirements.txt
+RUN uv pip install --system --no-cache -r requirements.txt
+
+COPY services/api/ ./
+COPY services/celery_app.py /services/celery_app.py
+# The API imports the shared data pipelines and incident analysis package.
+COPY data/ /data/
+COPY scripts/ /scripts/
+COPY docs/ /docs/
 
 # ── Layer 3: Mount points for hot-reload bind volumes ──────────────────────
 # The docker-compose.yml bind-mounts ./services/ to /services/ so that

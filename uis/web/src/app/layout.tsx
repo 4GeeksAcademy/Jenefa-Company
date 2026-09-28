@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Fraunces, Manrope } from "next/font/google";
-import { WebShell } from "@/components/WebShell";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -29,9 +28,7 @@ export default function RootLayout({
       lang="en"
       className={`${manrope.variable} ${fraunces.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans">
-        <WebShell>{children}</WebShell>
-      </body>
+      <body className="min-h-full flex flex-col font-sans">{children}</body>
     </html>
   );
 }
