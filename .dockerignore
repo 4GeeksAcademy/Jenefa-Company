@@ -1,0 +1,59 @@
+# =============================================================================
+# HealthCore Digital — Root .dockerignore
+# =============================================================================
+# The `ui` service uses build context `.` (repo root). This file prevents
+# large / unnecessary files from being sent to the Docker daemon during
+# image builds. Each service-specific .dockerignore lives alongside its
+# Dockerfile (uis/.dockerignore, services/.dockerignore) and is picked up
+# automatically when the build context is scoped to that directory.
+#
+# Exclusions apply to ALL builds that use `.` as context.
+# =============================================================================
+
+# ── Dependencies ──────────────────────────────────────────────────────────
+node_modules/
+**/node_modules/
+
+# ── Next.js build artifacts ────────────────────────────────────────
+.next/
+**/.next/
+
+# ── Environment files (secrets — never ship into an image layer) ──
+.env*
+!.env.example
+
+# ── Python artifacts ──────────────────────────────────────────────────────
+__pycache__/
+**/__pycache__/
+*.pyc
+.venv/
+.venv*/
+
+# ── Logs ──────────────────────────────────────────────────────────────────
+*.log
+
+# ── OS / editor artifacts ─────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ── IDE / project config (not needed at runtime) ───────────────────────────
+.git/
+.gitignore
+.gitattributes
+.vscode/
+.idea/
+
+# ── Large generated data ──────────────────────────────────────────────────
+*.db
+results.csv
+htmlcov/
+.coverage
+.pytest_cache/
+data/
+
+# ── Dockerfiles (already referenced explicitly) ──────────────────────────
+uis/Dockerfile
+services/Dockerfile
