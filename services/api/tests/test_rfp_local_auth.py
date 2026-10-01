@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 
+from fastapi import Request
 from fastapi.testclient import TestClient
 
 
@@ -92,3 +94,50 @@ def test_local_bff_credential_is_rejected_when_missing_or_incorrect(
 
     assert missing.status_code == 401
     assert incorrect.status_code == 401
+
+
+def test_rfp_event_stream_requires_authentication(auth_db, tmp_path, monkeypatch) -> None:
+    with _client(auth_db, tmp_path, monkeypatch, bypass=False) as client:
+        response = client.get("/rfp/events")
+
+    assert response.status_code == 401
+
+
+def test_rfp_event_stream_has_sse_headers_and_initial_frame(auth_db, tmp_path, monkeypatch) -> None:
+    from app.rfp.router import stream_rfp_events
+
+    request = Request(
+        {
+            "type": "http",
+            "method": "GET",
+            "path": "/rfp/events",
+            "headers": [],
+            "client": ("127.0.0.1", 50000),
+            "server": ("testserver", 80),
+            "scheme": "http",
+            "query_string": b"",
+        }
+    )
+    response = asyncio.run(stream_rfp_events(request, {}))
+
+    assert response.media_type == "text/event-stream"
+    assert response.headers["cache-control"] == "no-cache"
+    assert response.headers["connection"] == "keep-alive"
+    assert asyncio.run(response.body_iterator.__anext__()) == ": connected\n\n"
+
+
+def test_rfp_event_stream_emits_named_json_event() -> None:
+    from app.rfp.events import RFPEventHub
+
+    async def read_event() -> str:
+        hub = RFPEventHub()
+        stream = hub.stream()
+        await stream.__anext__()
+        await hub.publish({"ticket_id": "ticket-1", "status": "analyzing"})
+        event = await stream.__anext__()
+        await stream.aclose()
+        return event
+
+    assert asyncio.run(read_event()) == (
+        'event: rfp_ticket_created\ndata: {"ticket_id":"ticket-1","status":"analyzing"}\n\n'
+    )

@@ -14,6 +14,13 @@ type EvaluationResult = { overall_pass: boolean; feedback_for_generator: string;
 type ResponseSection = { section_id: string; department_id: string; department: string; draft: string; iteration_count: number; evaluation_result: EvaluationResult };
 type ApprovalBranch = { branch_id: string; department_id: string; department: string; owner: string; status: string; decision?: string | null; feedback?: string | null; thread_id: string; iteration_count: number; draft: string; requirements: string; warnings: string[]; changelog: Array<{ iteration: number; draft: string; decision?: string; feedback?: string }> };
 type Ticket = { ticket_id: string; status: string; created_at: string; metrics: Record<string, number>; synthesizer_payload?: { sales_summary?: string; workstream_structure?: Workstream[] } | null; response_sections?: ResponseSection[]; approval?: { branches: ApprovalBranch[]; final_proposal: Record<string, unknown> | null } | null; error?: string | null };
+type TicketCreatedEvent = Pick<Ticket, "ticket_id" | "status" | "created_at"> & { updated_at: string };
+
+function parseSseFrame(frame: string): { event: string; data: string } | null {
+  const event = frame.match(/^event:\s*(.+)$/m)?.[1]?.trim() ?? "message";
+  const data = frame.match(/^data:\s*(.+)$/m)?.[1]?.trim();
+  return data ? { event, data } : null;
+}
 
 export default function RfpPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -22,6 +29,7 @@ export default function RfpPage() {
   const [generatingTicket, setGeneratingTicket] = useState("");
   const [approvalBusy, setApprovalBusy] = useState("");
   const [approvalFeedback, setApprovalFeedback] = useState<Record<string, string>>({});
+  const [liveNotice, setLiveNotice] = useState("");
   const getRequestHeaders = (): Record<string, string> => {
     // The local API's loopback bypass is intentionally anonymous. Do not send
     // a stale saved session token in development, since it would be validated
@@ -54,7 +62,69 @@ export default function RfpPage() {
     }
   }, []);
 
-  useEffect(() => { void refresh(); const timer = window.setInterval(() => void refresh(), 5000); return () => window.clearInterval(timer); }, [refresh]);
+  useEffect(() => {
+    let active = true;
+    let reconnectTimer: number | undefined;
+    let reconnectDelay = 1000;
+    let connectedBefore = false;
+    let controller: AbortController | undefined;
+
+    const waitForReconnect = () => new Promise<void>(resolve => {
+      reconnectTimer = window.setTimeout(resolve, reconnectDelay);
+      reconnectDelay = Math.min(reconnectDelay * 2, 16000);
+    });
+
+    const connect = async () => {
+      while (active) {
+        controller = new AbortController();
+        try {
+          const response = await fetch(`${API_BASE}/rfp/events`, {
+            headers: getRequestHeaders(),
+            cache: "no-store",
+            signal: controller.signal,
+          });
+          if (!response.ok) throw new Error(`SSE connection failed (${response.status}).`);
+          if (!response.body) throw new Error("SSE response did not include a stream.");
+          if (connectedBefore) await refresh();
+          connectedBefore = true;
+          reconnectDelay = 1000;
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+          while (active) {
+            const chunk = await reader.read();
+            if (chunk.done) break;
+            buffer += decoder.decode(chunk.value, { stream: true });
+            const frames = buffer.split("\n\n");
+            buffer = frames.pop() ?? "";
+            for (const frame of frames) {
+              const parsed = parseSseFrame(frame);
+              if (!parsed || parsed.event !== "rfp_ticket_created") continue;
+              const ticket = JSON.parse(parsed.data) as TicketCreatedEvent;
+              setTickets(current => current.some(item => item.ticket_id === ticket.ticket_id)
+                ? current
+                : [{ ...ticket, metrics: {} }, ...current]);
+              setLiveNotice(`New RFP ticket received: ${ticket.ticket_id.slice(0, 8)}`);
+            }
+          }
+          reader.releaseLock();
+          throw new Error("SSE connection closed.");
+        } catch (cause) {
+          if (!active || (cause instanceof DOMException && cause.name === "AbortError")) break;
+          await waitForReconnect();
+        }
+      }
+    };
+
+    void refresh();
+    void connect();
+    return () => {
+      active = false;
+      controller?.abort();
+      if (reconnectTimer) window.clearTimeout(reconnectTimer);
+    };
+  }, [refresh]);
 
   async function upload(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -127,6 +197,7 @@ export default function RfpPage() {
     <div style={{ minWidth: 0, flex: 1 }}><header style={{ borderBottom: `1px solid ${colors.border}`, background: colors.surface, padding: "20px 36px" }}><div style={{ color: colors.muted, fontSize: 11, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase" }}>Operations workspace</div><h1 style={{ margin: "5px 0 0", fontFamily: "Georgia, serif", fontSize: 24, fontWeight: 400 }}>RFP intake & routing</h1></header>
       <main style={{ maxWidth: 1180, margin: "0 auto", padding: "40px 36px" }}><section style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, marginBottom: 28 }}><div><p style={{ maxWidth: 680, margin: 0, color: colors.muted, lineHeight: 1.7 }}>Upload a proposal request to extract its requirements, route sections to the responsible teams, and prepare a sales handoff. Processing continues asynchronously.</p></div><label style={{ flexShrink: 0, cursor: busy ? "wait" : "pointer", borderRadius: 5, background: colors.accent, padding: "12px 17px", color: "white", fontSize: 13, fontWeight: 700 }}>{busy ? "Uploading…" : "Upload PDF"}<input aria-label="Upload RFP PDF" type="file" accept="application/pdf,.pdf" disabled={busy} onChange={upload} style={{ display: "none" }} /></label></section>
         {error ? <div role="alert" style={{ marginBottom: 20, border: "1px solid #f0b8b8", borderRadius: 8, background: "#fff5f5", padding: 14, color: "#8b2525" }}>{error}</div> : null}
+        {liveNotice ? <div role="status" aria-live="polite" style={{ marginBottom: 20, border: "1px solid #89c8c0", borderLeft: `5px solid ${colors.accent}`, borderRadius: 8, background: "#eaf8f5", padding: 14, color: colors.sidebar, fontWeight: 700 }}>{liveNotice}</div> : null}
         <section aria-label="RFP ticket list" style={{ display: "grid", gap: 16 }}>{tickets.length ? tickets.map(ticket => <article key={ticket.ticket_id} style={{ border: `1px solid ${colors.border}`, borderRadius: 8, background: colors.surface, padding: 22 }}><div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12 }}><div><strong>Ticket {ticket.ticket_id.slice(0, 8)}</strong><div style={{ marginTop: 5, color: colors.muted, fontSize: 12 }}>Received {new Date(ticket.created_at).toLocaleString()}</div></div><span style={{ borderRadius: 20, background: ticket.status === "intake_complete" ? "#e3f3e9" : ticket.status === "discarded" || ticket.status === "failed" ? "#fff0ee" : "#e9f1f5", padding: "7px 11px", fontSize: 12, fontWeight: 700 }}>{ticket.status.replaceAll("_", " ")}</span></div>
           {ticket.status === "intake_complete" ? <button type="button" onClick={() => void generateResponse(ticket.ticket_id)} disabled={generatingTicket === ticket.ticket_id} style={{ marginTop: 16, border: 0, borderRadius: 5, background: colors.accent, padding: "10px 14px", color: "white", cursor: generatingTicket === ticket.ticket_id ? "wait" : "pointer", fontWeight: 700 }}>{generatingTicket === ticket.ticket_id ? "Generating drafts…" : "Generate response drafts"}</button> : null}
           {ticket.response_sections?.length && !ticket.approval?.branches?.length && ["under_evaluation", "needs_human_review"].includes(ticket.status) ? <button type="button" onClick={() => void beginApproval(ticket.ticket_id)} disabled={approvalBusy === `${ticket.ticket_id}:begin`} style={{ marginTop: 16, marginLeft: 10, border: 0, borderRadius: 5, background: colors.accent, padding: "10px 14px", color: "white", fontWeight: 700 }}>{approvalBusy === `${ticket.ticket_id}:begin` ? "Preparing approvals…" : "Start departmental approvals"}</button> : null}
