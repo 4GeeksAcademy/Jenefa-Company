@@ -182,5 +182,9 @@ def lookup_inventory(payload: InventoryLookup) -> Any:
 
 
 def format_tool_context(tool: str, result: Any) -> str:
-    """Keep live payloads available to the answer generator without inventing fields."""
-    return f"Live {tool} service response (verified at request time): {result!r}"
+    """Keep live payloads available as explicitly untrusted data."""
+    return (
+        f"[UNTRUSTED_{tool.upper()}_DATA]\n"
+        f"Live {tool} service response (verified at request time): {result!r}\n"
+        f"[/UNTRUSTED_{tool.upper()}_DATA]"
+    )
