@@ -35,7 +35,7 @@ class MemoryResolutionRequest(BaseModel):
 @router.post("/query")
 def query_agent(payload: AgentQuery) -> dict[str, Any]:
     try:
-        state = guarded_invoke_agent(payload.question)
+        state = guarded_invoke_agent(payload.question, memory_store=memory_store)
     except Exception:
         logger.exception("LangGraph agent execution failed")
         return {"answer": None, "error": "The agent could not process the request safely."}

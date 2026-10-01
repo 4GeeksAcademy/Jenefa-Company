@@ -17,6 +17,7 @@ from .tools import (
     lookup_incident,
     lookup_inventory,
 )
+from .memory import AgentMemoryStore
 
 HONEST_REFUSAL = "I don't have information about that."
 
@@ -197,6 +198,7 @@ def invoke_agent(
     retriever: Callable[..., list[dict[str, Any]]] = retrieve,
     generator: Callable[[str, list[dict[str, Any]]], str] = generate_answer,
     trace_callback: TraceCallback | None = None,
+    memory_store: AgentMemoryStore | None = None,
 ) -> AgentState:
     """Invoke a compiled graph with a stable thread id for checkpointing."""
     graph = agent_graph if retriever is retrieve and generator is generate_answer and trace_callback is None else build_graph(
@@ -214,6 +216,8 @@ def invoke_agent(
             "route": "rag",
             "answer": None,
             "error": None,
+            "memory_context": memory_store.search(question) if memory_store else [],
+            "memory_proposal": None,
         },
         config=run_config,
     )
