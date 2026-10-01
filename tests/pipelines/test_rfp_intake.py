@@ -15,7 +15,7 @@ def test_classifier_requires_multiple_structural_rfp_signals():
 
 
 def test_orchestrator_assigns_unmapped_section_without_dropping_it():
-    tasks = orchestrate("# Clinical operations\nClinic staffing and care access requirements.\n\n# Unknown domain\nThe bid includes a cafeteria meal service.")
+    tasks = orchestrate("# Clinical operations\nSoftware platform and clinic staffing requirements.\n\n# Unknown domain\nThe bid includes a cafeteria meal service.")
     by_department = {task["department_name"]: task["relevant_markdown_extract"] for task in tasks}
     assert "Engineering" in by_department
     assert "Unassigned / General Review" in by_department

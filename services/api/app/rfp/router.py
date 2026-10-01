@@ -56,7 +56,7 @@ async def upload_rfp(
     prefix = await file.read(5)
     if prefix != b"%PDF-":
         raise HTTPException(status_code=415, detail="Uploaded file is not a valid PDF")
-    body = prefix + await file.read(MAX_UPLOAD_BYTES + 1)
+    body = prefix + await file.read(MAX_UPLOAD_BYTES - len(prefix) + 1)
     if len(body) > MAX_UPLOAD_BYTES:
         raise HTTPException(status_code=413, detail="PDF exceeds the 25 MB upload limit")
 

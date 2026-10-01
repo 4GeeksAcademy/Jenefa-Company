@@ -9,15 +9,17 @@ persistence, routing, or the API contract.
 from __future__ import annotations
 
 import re
+from concurrent.futures import ThreadPoolExecutor
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from markitdown import MarkItDown
 from sqlmodel import Session, select
+from langgraph.graph import END, START, StateGraph
+from typing import TypedDict
 
-from services.api.app.rfp.models import DepartmentSectionAspect, RFPTicket
+from app.rfp.models import DepartmentSectionAspect, RFPTicket
 
 # In this repository no CONTEXT-company.md exists yet. Keep the supported map in
 # one place and make that fact explicit rather than silently consulting unrelated context.
@@ -28,6 +30,17 @@ DEPARTMENTS: dict[str, tuple[str, ...]] = {
     "Finance": ("finance", "pricing", "cost", "budget", "payment", "invoice"),
 }
 
+class RFPGraphState(TypedDict, total=False):
+    ticket_id: str
+    markdown_content: str
+    is_valid_rfp: bool | None
+    metadata: dict[str, Any]
+    tasks: list[dict[str, str]]
+    worker_outputs: list[dict[str, Any]]
+    final_summary: dict[str, Any]
+    force: bool
+
+
 RFP_SIGNALS = (
     "request for proposal", "rfp", "proposal submission", "evaluation criteria",
     "submission deadline", "scope of work", "statement of work", "vendor response",
@@ -36,6 +49,10 @@ RFP_SIGNALS = (
 
 def convert_pdf(file_path: str | Path) -> str:
     """Convert a PDF to Markdown using MarkItDown."""
+    try:
+        from markitdown import MarkItDown
+    except ImportError as exc:
+        raise RuntimeError("PDF conversion requires the optional MarkItDown dependency") from exc
     result = MarkItDown().convert(str(file_path))
     text = result.text_content.strip()
     if not text:
@@ -161,6 +178,79 @@ def synthesize(outputs: list[dict[str, Any]]) -> dict[str, Any]:
     return {"sales_summary": "\n\n".join(lines), "workstream_structure": workstreams, "warnings": warnings}
 
 
+def build_rfp_graph(engine: Any):
+    """Compile the intake state graph with a classifier gate and parallel map workers."""
+    def load_document(state: RFPGraphState) -> dict[str, Any]:
+        with Session(engine) as session:
+            ticket = session.get(RFPTicket, state["ticket_id"])
+            if ticket is None:
+                raise ValueError("RFP ticket not found")
+            markdown = convert_pdf(ticket.file_path)
+            metrics = readability_metrics(markdown)
+            ticket.metrics = metrics
+            ticket.updated_at = datetime.now(timezone.utc)
+            session.add(ticket)
+            session.commit()
+        return {"markdown_content": markdown}
+
+    def classify_node(state: RFPGraphState) -> dict[str, Any]:
+        valid, signals = classify_rfp(state["markdown_content"], force=state.get("force", False))
+        return {"is_valid_rfp": valid, "metadata": {"classifier_signals": signals, "converter": "MarkItDown", "forced": state.get("force", False)}}
+
+    def discard_node(state: RFPGraphState) -> dict[str, Any]:
+        with Session(engine) as session:
+            ticket = session.get(RFPTicket, state["ticket_id"])
+            if ticket:
+                ticket.status = "discarded"
+                ticket.raw_metadata = state.get("metadata", {})
+                ticket.updated_at = datetime.now(timezone.utc)
+                session.add(ticket)
+                session.commit()
+        return {}
+
+    def orchestrator_node(state: RFPGraphState) -> dict[str, Any]:
+        return {"tasks": orchestrate(state["markdown_content"])}
+
+    def worker_node(state: RFPGraphState) -> dict[str, Any]:
+        tasks = state.get("tasks", [])
+        with ThreadPoolExecutor(max_workers=min(8, max(1, len(tasks)))) as pool:
+            results = list(pool.map(lambda task: worker(task, state.get("metadata", {})), tasks))
+        with Session(engine) as session:
+            for result in results:
+                session.add(DepartmentSectionAspect(ticket_id=state["ticket_id"], department=result["department"], key_aspects=result["key_aspects"], contacts=result["contacts"]))
+            session.commit()
+        return {"worker_outputs": results}
+
+    def synthesizer_node(state: RFPGraphState) -> dict[str, Any]:
+        handoff = synthesize(state.get("worker_outputs", []))
+        with Session(engine) as session:
+            ticket = session.get(RFPTicket, state["ticket_id"])
+            if ticket:
+                ticket.raw_metadata = state.get("metadata", {})
+                ticket.synthesizer_payload = handoff
+                ticket.status = "intake_complete"
+                ticket.updated_at = datetime.now(timezone.utc)
+                session.add(ticket)
+                session.commit()
+        return {"final_summary": handoff}
+
+    builder = StateGraph(RFPGraphState)
+    builder.add_node("load_document", load_document)
+    builder.add_node("classifier", classify_node)
+    builder.add_node("discard", discard_node)
+    builder.add_node("orchestrator", orchestrator_node)
+    builder.add_node("parallel_workers", worker_node)
+    builder.add_node("synthesizer", synthesizer_node)
+    builder.add_edge(START, "load_document")
+    builder.add_edge("load_document", "classifier")
+    builder.add_conditional_edges("classifier", lambda state: "orchestrator" if state.get("is_valid_rfp") else "discard", {"orchestrator": "orchestrator", "discard": "discard"})
+    builder.add_edge("discard", END)
+    builder.add_edge("orchestrator", "parallel_workers")
+    builder.add_edge("parallel_workers", "synthesizer")
+    builder.add_edge("synthesizer", END)
+    return builder.compile()
+
+
 def process_ticket(engine: Any, ticket_id: str, *, force: bool = False, markdown_override: str | None = None) -> None:
     """Execute pipeline and persist each transition in the shared SQL database."""
     with Session(engine) as session:
@@ -171,9 +261,16 @@ def process_ticket(engine: Any, ticket_id: str, *, force: bool = False, markdown
         session.add(ticket)
         session.commit()
         try:
-            markdown = markdown_override if markdown_override is not None else convert_pdf(ticket.file_path)
+            if markdown_override is None:
+                session.close()
+                build_rfp_graph(engine).invoke({"ticket_id": ticket_id, "force": force})
+                return
+            markdown = markdown_override
             metrics = readability_metrics(markdown)
             ticket.metrics = metrics
+            ticket.updated_at = datetime.now(timezone.utc)
+            session.add(ticket)
+            session.commit()
             valid, signals = classify_rfp(markdown, force=force)
             ticket.raw_metadata = {"classifier_signals": signals, "converter": "MarkItDown", "forced": force}
             ticket.updated_at = datetime.now(timezone.utc)
@@ -186,7 +283,8 @@ def process_ticket(engine: Any, ticket_id: str, *, force: bool = False, markdown
             existing = session.exec(select(DepartmentSectionAspect).where(DepartmentSectionAspect.ticket_id == ticket_id)).all()
             for row in existing:
                 session.delete(row)
-            outputs = [worker(task, ticket.raw_metadata) for task in tasks]
+            with ThreadPoolExecutor(max_workers=min(8, max(1, len(tasks)))) as pool:
+                outputs = list(pool.map(lambda task: worker(task, ticket.raw_metadata), tasks))
             for result in outputs:
                 session.add(DepartmentSectionAspect(ticket_id=ticket_id, department=result["department"], key_aspects=result["key_aspects"], contacts=result["contacts"]))
             handoff = synthesize(outputs)

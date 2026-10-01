@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
-from sqlalchemy import Column, DateTime, ForeignKey, Text
+from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKey, Text
 from sqlalchemy.types import JSON
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, SQLModel
@@ -18,7 +18,10 @@ def _now() -> datetime:
 
 class RFPTicket(SQLModel, table=True):
     __tablename__ = "rfp_tickets"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = (
+        CheckConstraint("status IN ('analyzing', 'discarded', 'intake_complete')", name="ck_rfp_ticket_status"),
+        {"extend_existing": True},
+    )
 
     ticket_id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
     status: str = Field(default="analyzing", index=True)
