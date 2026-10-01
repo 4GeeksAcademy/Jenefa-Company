@@ -70,3 +70,33 @@ def test_agent_websocket_interrupt_cancels_active_turn(sample_user, auth_db, tmp
 
     assert frame["type"] == "generation_interrupted"
     assert frame["message_id"] == "turn-1"
+
+
+def test_local_qdrant_placeholder_uses_safe_retriever(monkeypatch) -> None:
+    from services.langgraph_agent import websocket as agent_ws
+
+    monkeypatch.setenv("QDRANT_URL", "sqlite:///:memory:")
+    assert agent_ws._local_retriever()("question")[0]["text"].startswith("HealthCore operates")
+
+
+def test_local_chat_answers_known_topics_instead_of_refusing(monkeypatch) -> None:
+    from services.langgraph_agent import websocket as agent_ws
+
+    monkeypatch.setenv("QDRANT_URL", "sqlite:///:memory:")
+    frames: list[str] = []
+
+    async def send(frame: str) -> None:
+        frames.append(frame)
+
+    asyncio.run(
+        agent_ws._stream_answer(
+            "What framework protects HIPAA records?",
+            session_id="session-1",
+            thread_id="thread-1",
+            message_id="turn-1",
+            send=send,
+        )
+    )
+
+    assert "HIPAA" in "".join(frames)
+    assert "I don't have information about that" not in "".join(frames)
