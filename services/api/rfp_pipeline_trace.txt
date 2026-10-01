@@ -1,0 +1,15 @@
+============================= test session starts ==============================
+platform linux -- Python 3.14.2, pytest-9.1.1, pluggy-1.6.0 -- /home/codespace/.python/current/bin/python
+cachedir: .pytest_cache
+rootdir: /workspaces/Jenefa-Company
+configfile: pyproject.toml
+plugins: anyio-4.15.1, langsmith-0.14.2
+collecting ... collected 5 items
+
+../../tests/pipelines/test_rfp_approval.py::test_scoped_interrupts_allow_department_b_to_approve_while_a_waits PASSED [ 20%]
+../../tests/pipelines/test_rfp_approval.py::test_request_changes_resumes_one_branch_and_records_changelog PASSED [ 40%]
+../../tests/pipelines/test_rfp_approval.py::test_invalid_decisions_and_feedback_are_rejected PASSED [ 60%]
+../../tests/pipelines/test_rfp_approval.py::test_iteration_ceiling_and_fixed_human_arbitration PASSED [ 80%]
+../../tests/pipelines/test_rfp_approval.py::test_all_human_signoffs_synthesize_final_proposal_and_lineage PASSED [100%]
+
+============================== 5 passed in 1.14s ===============================
