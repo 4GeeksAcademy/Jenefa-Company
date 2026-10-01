@@ -5,6 +5,12 @@ import { ChangeEvent, useCallback, useEffect, useState } from "react";
 
 const colors = { background: "#f4f7f8", foreground: "#1a2b32", surface: "#ffffff", sidebar: "#0f3d3e", sidebarMuted: "#9ebdbd", sidebarHover: "#165153", accent: "#1f7a7a", border: "#d5e0e2", muted: "#5c7278" };
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+// Local development convenience only. The local API must use
+// SECRET_KEY=local-rfp-development-only-secret-not-for-production.
+// Never use this token or secret in production.
+const LOCAL_TEST_TOKEN = process.env.NODE_ENV === "development"
+  ? "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3ItaGMtOTkwMSIsImV4cCI6NDEwMjQ0NDgwMH0.JQ7xIxAV96gYuNh1-tpbAAlD2qKPu7FkyaKAgIpDLDw"
+  : null;
 type Workstream = { department: string; key_aspects: string; contacts: string[]; warnings?: string[] };
 type Ticket = { ticket_id: string; status: string; created_at: string; metrics: Record<string, number>; synthesizer_payload?: { sales_summary?: string; workstream_structure?: Workstream[] } | null; error?: string | null };
 
@@ -12,7 +18,7 @@ export default function RfpPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const token = typeof window === "undefined" ? null : window.localStorage.getItem("hc_auth_token");
+  const token = typeof window === "undefined" ? null : (window.localStorage.getItem("hc_auth_token") || LOCAL_TEST_TOKEN);
 
   const refresh = useCallback(async () => {
     if (!token) { setError("Sign in to view RFP intake tickets."); return; }
