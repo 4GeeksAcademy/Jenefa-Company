@@ -155,7 +155,7 @@ def _after_input(state: AgentState) -> str:
 
 
 def _after_retrieve(state: AgentState) -> str:
-    return "generate_answer" if state.get("retrieved_context") else "honest_refusal"
+    return "generate_answer" if state.get("retrieved_context") or state.get("memory_context") else "honest_refusal"
 
 
 def build_graph(

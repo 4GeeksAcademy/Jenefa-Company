@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -68,12 +68,7 @@ def test_expired_memory_is_purged(tmp_path):
     try:
         proposal = store.propose("Temporary clinic workaround", "Quarterly exception", "Remember this")
         store.resolve("yes")
-        expired_at = (proposal.created_at and (store._connection.execute(
-            "SELECT expires_at FROM memory_proposals WHERE proposal_id = ?", (proposal.proposal_id,)
-        ).fetchone()[0]))
-        expired_at = (store._connection.execute(
-            "SELECT datetime(?, '-1 day')", (expired_at,)
-        ).fetchone()[0])
+        expired_at = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
         store._connection.execute(
             "UPDATE agent_memory SET expires_at = ?", (expired_at,)
         )

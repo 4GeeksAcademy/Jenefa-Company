@@ -62,10 +62,20 @@ Without a provider API key, password-reset emails are logged to the API console 
 | `GET` | `/telemetry/report` | Public | Pandas-driven operational report (`events_per_day`, `error_rate_by_type`, `average_latency_by_day`) over an optional `start_date`/`end_date` ISO 8601 window (defaults to the last 7 days, UTC); results cached in-memory per window for 60s |
 | `POST` | `/reports/generate` | Public | Queue executive report generation; accepts only a database reference and returns `202` with a Celery `task_id` |
 | `GET` | `/tasks/{task_id}` | Public | Return Celery task state (`pending`, `started`, `success`, or `failure`) |
+| `POST` | `/agent/memory/proposals` | Public | Create one pending, human-confirmed episodic memory proposal |
+| `GET` | `/agent/memory/pending` | Public | Read the single unresolved memory proposal |
+| `POST` | `/agent/memory/resolve` | Public | Approve, reject, edit, or discard a proposal by strict intent classification |
+| `GET` | `/agent/memory/audit` | Public | Read the immutable memory lifecycle audit ledger |
 
 On first boot, empty catalog databases are seeded to the HealthCore spec balances (gloves `450`, sedative `35`). Stock is never stored on `MedicalSupply` rows.
 
 Incident responses never include `patient_id` or other PHI — only aggregate counts and rule labels.
+
+Agent episodic memory is stored separately from corporate knowledge retrieval. Set
+`AGENT_MEMORY_DB_PATH` to the dedicated SQLite path when running the API; approved
+facts expire after 90 days, and every resolution (including rejection or ambiguity)
+is retained in the audit ledger. The memory endpoints do not write to `*_knowledge`
+collections.
 
 ## Tests
 
