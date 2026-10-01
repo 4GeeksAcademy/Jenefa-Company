@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import logging
 import os
+import ipaddress
+from urllib.parse import urlparse
 from typing import Any
 
 import httpx
@@ -12,6 +14,28 @@ from pydantic import BaseModel, ConfigDict, Field
 logger = logging.getLogger(__name__)
 
 DEFAULT_TIMEOUT_SECONDS = 4.0
+
+
+def _validate_outbound_url(name: str, value: str) -> str:
+    """Allow only explicit HTTP(S) service URLs on public hosts."""
+    parsed = urlparse(value)
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+        raise ExternalToolError(name, f"{name} must be an HTTP(S) URL")
+    if parsed.username or parsed.password or parsed.query or parsed.fragment:
+        raise ExternalToolError(name, f"{name} contains unsupported URL components")
+
+    hostname = parsed.hostname.rstrip(".").lower()
+    if hostname in {"localhost", "ip6-localhost"} or hostname.endswith(".localhost"):
+        raise ExternalToolError(name, f"{name} cannot target a local host")
+    try:
+        address = ipaddress.ip_address(hostname)
+    except ValueError:
+        address = None
+    if address is not None and (
+        address.is_private or address.is_loopback or address.is_link_local or address.is_reserved
+    ):
+        raise ExternalToolError(name, f"{name} cannot target a private or reserved address")
+    return value.rstrip("/")
 
 
 def mcp_connections() -> dict[str, dict[str, str]]:
@@ -25,7 +49,7 @@ def mcp_connections() -> dict[str, dict[str, str]]:
     return {
         "healthcore": {
             "transport": "http",
-            "url": url.rstrip("/"),
+            "url": _validate_outbound_url("HEALTHCORE_MCP_URL", url),
             "headers": {"Authorization": f"Bearer {token}"},
         }
     }
@@ -140,7 +164,7 @@ def _base_url(name: str) -> str:
     value = os.getenv(name)
     if not value:
         raise ExternalToolError(name, f"{name} is not configured")
-    return value.rstrip("/")
+    return _validate_outbound_url(name, value)
 
 
 def _get_json(tool: str, url: str, params: dict[str, str]) -> Any:

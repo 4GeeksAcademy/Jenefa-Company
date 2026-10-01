@@ -34,6 +34,12 @@ COPY docs/ /docs/
 # The docker-compose.yml bind-mounts ./services/ to /services/ so that
 # code changes are reflected immediately via uvicorn --reload.
 
+RUN groupadd --system hc-runtime \
+    && useradd --system --gid hc-runtime --home-dir /nonexistent --shell /usr/sbin/nologin hc-runtime \
+    && chown -R hc-runtime:hc-runtime /services /data /scripts /docs
+
+USER hc-runtime
+
 EXPOSE 8000
 
 CMD ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
