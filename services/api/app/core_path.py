@@ -14,7 +14,7 @@ if __name__.startswith("services.api.app."):
     import services.api.app as _api_package
 
     sys.modules.setdefault("app", _api_package)
-    for _subpackage in ("inventory", "telemetry", "auth"):
+    for _subpackage in ("inventory", "telemetry", "auth", "rfp"):
         _module_name = f"services.api.app.{_subpackage}"
         _module = __import__(_module_name, fromlist=[_subpackage])
         sys.modules.setdefault(f"app.{_subpackage}", _module)

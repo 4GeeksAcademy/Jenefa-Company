@@ -62,6 +62,8 @@ Without a provider API key, password-reset emails are logged to the API console 
 | `GET` | `/inventory/orders` | Bearer | Unified inbound/outbound log with preloaded supplies |
 | `POST` | `/telemetry/events` | Public | Ingest a telemetry batch; per-event partial validation + bulk insert into `telemetry_events`, returns `{received, stored, rejected}` |
 | `GET` | `/telemetry/report` | Public | Pandas-driven operational report (`events_per_day`, `error_rate_by_type`, `average_latency_by_day`) over an optional `start_date`/`end_date` ISO 8601 window (defaults to the last 7 days, UTC); results cached in-memory per window for 60s |
+| `POST` | `/rfp/tickets/{ticket_id}/generate-response` | RFP auth | Generate bounded department response drafts only from an `intake_complete` ticket's structured handoff; persists each draft and evaluation result |
+| `GET` | `/rfp/tickets/{ticket_id}/response` | RFP auth | Retrieve saved response sections, evaluator results, and ticket lifecycle state |
 | `POST` | `/reports/generate` | Public | Queue executive report generation; accepts only a database reference and returns `202` with a Celery `task_id` |
 | `GET` | `/tasks/{task_id}` | Public | Return Celery task state (`pending`, `started`, `success`, or `failure`) |
 | `POST` | `/agent/memory/proposals` | Public | Create one pending, human-confirmed episodic memory proposal |
@@ -79,6 +81,16 @@ then restart both processes. The Next.js server forwards the secret only to
 `/rfp/*` requests sent to the local API. GitHub tunnel cookies and forwarded
 client headers are not accepted as application credentials. Do not enable this
 bypass or reuse its secret in production.
+
+RFP response generation uses the existing Part 1 `synthesizer_payload` and
+department requirement rows; it does not reopen the uploaded PDF. Drafts avoid
+unverified pricing, capacity, delivery, or service-level commitments. Evaluator
+results are stored per department in `rfp_response_sections`, and any section
+that does not pass within three iterations remains persisted and is surfaced
+under `needs_human_review` for authorized staff review. The deterministic
+compliance checks are grounded in
+`docs/company-knowledge-base/healthcore-operating-principles.md`; they are not
+a substitute for legal approval.
 
 Agent episodic memory is stored separately from corporate knowledge retrieval. Set
 `AGENT_MEMORY_DB_PATH` to the dedicated SQLite path when running the API; approved

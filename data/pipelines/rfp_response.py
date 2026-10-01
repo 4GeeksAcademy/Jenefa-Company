@@ -9,15 +9,16 @@ from __future__ import annotations
 
 import re
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import Column, UniqueConstraint
+from sqlalchemy import Column, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.types import JSON
 from sqlmodel import Field, Session, SQLModel, select
 
-from services.api.app.rfp.models import DepartmentSectionAspect, RFPTicket
+from app.rfp.models import DepartmentSectionAspect, RFPTicket
 
 COMPANY_RULES_PATH = Path(__file__).resolve().parents[2] / "docs" / "company-knowledge-base" / "healthcore-operating-principles.md"
 MAX_ITERATIONS = 3
@@ -62,7 +63,7 @@ class RFPResponseSection(SQLModel, table=True):
     section_id: str
     department_id: str
     department_name: str
-    draft: str = Field(sa_type=__import__("sqlalchemy").Text)
+    draft: str = Field(sa_type=Text)
     iteration_count: int = Field(default=1)
     evaluation_result: dict[str, Any] = Field(
         default_factory=dict,
@@ -142,7 +143,9 @@ def _relevance_evaluator(draft: str, key_aspects: str) -> dict[str, Any]:
 
 
 def _compliance_evaluator(draft: str, rules: list[dict[str, str]]) -> dict[str, Any]:
-    lowered = draft.casefold()
+    # Only inspect HealthCore-authored response text, not quoted RFP demands.
+    response_position = draft.split("### HealthCore response position", 1)[-1]
+    lowered = response_position.casefold()
     violations: list[str] = []
     rule_ids: list[str] = []
 
@@ -276,8 +279,10 @@ def generate_ticket_response(engine: Any, ticket_id: str) -> dict[str, Any]:
         if not sections:
             raise ValueError("The structured Part 1 handoff contains no response requirements")
 
+        if ticket.status not in {"intake_complete", "drafting"}:
+            raise ValueError("RFP intake must be complete before response generation")
         ticket.status = "drafting"
-        ticket.updated_at = __import__("datetime").datetime.now(__import__("datetime").timezone.utc)
+        ticket.updated_at = datetime.now(timezone.utc)
         session.add(ticket)
         session.commit()
 
@@ -285,7 +290,7 @@ def generate_ticket_response(engine: Any, ticket_id: str) -> dict[str, Any]:
         with Session(engine) as session:
             ticket = session.get(RFPTicket, ticket_id)
             ticket.status = "under_evaluation"
-            ticket.updated_at = __import__("datetime").datetime.now(__import__("datetime").timezone.utc)
+            ticket.updated_at = datetime.now(timezone.utc)
             session.add(ticket)
             session.commit()
 
@@ -311,7 +316,7 @@ def generate_ticket_response(engine: Any, ticket_id: str) -> dict[str, Any]:
                     )
                 )
             ticket.status = "needs_human_review" if needs_review else "under_evaluation"
-            ticket.updated_at = __import__("datetime").datetime.now(__import__("datetime").timezone.utc)
+            ticket.updated_at = datetime.now(timezone.utc)
             ticket.raw_metadata = {**ticket.raw_metadata, "response_generation": {"iterations": MAX_ITERATIONS, "section_count": len(results)}}
             session.add(ticket)
             session.commit()

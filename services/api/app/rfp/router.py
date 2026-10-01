@@ -64,7 +64,10 @@ async def _authorized_user(
     return await get_current_user(token)
 
 
-def _ticket_response(ticket: RFPTicket) -> dict[str, Any]:
+def _ticket_response(
+    ticket: RFPTicket,
+    response_sections: list[RFPResponseSection] | None = None,
+) -> dict[str, Any]:
     age = (datetime.now(timezone.utc) - ticket.updated_at.replace(tzinfo=timezone.utc)).total_seconds()
     failed = ticket.status == "analyzing" and age > FAILED_AFTER_SECONDS
     return {
@@ -74,8 +77,8 @@ def _ticket_response(ticket: RFPTicket) -> dict[str, Any]:
         "updated_at": ticket.updated_at.isoformat(),
         "metrics": ticket.metrics,
         "raw_metadata": ticket.raw_metadata,
-        "synthesizer_payload": ticket.synthesizer_payload if ticket.status == "intake_complete" else None,
-        "response_sections": [],
+        "synthesizer_payload": ticket.synthesizer_payload if ticket.status != "discarded" else None,
+        "response_sections": [_response_section_payload(row) for row in response_sections or []],
         "error": "Processing heartbeat expired; retry or contact an administrator." if failed else ticket.raw_metadata.get("processing_error"),
     }
 
@@ -131,7 +134,15 @@ def list_tickets(
 ) -> list[dict[str, Any]]:
     with Session(engine) as session:
         tickets = session.exec(select(RFPTicket).order_by(RFPTicket.created_at.desc()).limit(100)).all()
-        return [_ticket_response(ticket) for ticket in tickets]
+        return [
+            _ticket_response(
+                ticket,
+                session.exec(
+                    select(RFPResponseSection).where(RFPResponseSection.ticket_id == ticket.ticket_id)
+                ).all(),
+            )
+            for ticket in tickets
+        ]
 
 
 @router.get("/tickets/{ticket_id}")
@@ -158,7 +169,7 @@ def get_ticket(
         return result
 
 
-@router.post("/tickets/{ticket_id}/generate-response", status_code=status.HTTP_202_ACCEPTED)
+@router.post("/tickets/{ticket_id}/generate-response")
 def generate_response(
     ticket_id: UUID,
     engine: Any = Depends(get_inventory_engine),
