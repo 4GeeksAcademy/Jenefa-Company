@@ -124,3 +124,20 @@ def test_rfp_event_stream_has_sse_headers_and_initial_frame(auth_db, tmp_path, m
     assert response.headers["cache-control"] == "no-cache"
     assert response.headers["connection"] == "keep-alive"
     assert asyncio.run(response.body_iterator.__anext__()) == ": connected\n\n"
+
+
+def test_rfp_event_stream_emits_named_json_event() -> None:
+    from app.rfp.events import RFPEventHub
+
+    async def read_event() -> str:
+        hub = RFPEventHub()
+        stream = hub.stream()
+        await stream.__anext__()
+        await hub.publish({"ticket_id": "ticket-1", "status": "analyzing"})
+        event = await stream.__anext__()
+        await stream.aclose()
+        return event
+
+    assert asyncio.run(read_event()) == (
+        'event: rfp_ticket_created\ndata: {"ticket_id":"ticket-1","status":"analyzing"}\n\n'
+    )
