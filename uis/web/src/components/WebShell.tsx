@@ -9,6 +9,7 @@ import { initTelemetry, track } from "@/lib/telemetry";
 
 const navItems = [
   { href: "/", label: "Overview" },
+  { href: "/chat", label: "Live support chat" },
   { href: "/incidents", label: "Incident analysis" },
   { href: "/backoffice/inventory", label: "Clinic supplies" },
   { href: "/login", label: "Sign in" },
@@ -19,8 +20,17 @@ export function WebShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [displayName, setDisplayName] = useState<string | null>(null);
 
+  // Sync state on path changes via an event queue frame to prevent cascading renders
   useEffect(() => {
-    setDisplayName(getAuthDisplayName());
+    let active = true;
+    queueMicrotask(() => {
+      if (active) {
+        setDisplayName(getAuthDisplayName());
+      }
+    });
+    return () => {
+      active = false;
+    };
   }, [pathname]);
 
   useEffect(() => {
