@@ -56,3 +56,39 @@ def test_local_bypass_rejects_non_loopback_requests(auth_db, tmp_path, monkeypat
         response = client.get("/rfp/tickets")
 
     assert response.status_code == 401
+
+
+def test_local_bff_credential_allows_forwarded_anonymous_polling(
+    auth_db, tmp_path, monkeypatch
+) -> None:
+    monkeypatch.setenv("DB_URL", f"sqlite:///{tmp_path / 'rfp-proxy.db'}")
+    monkeypatch.setenv("RFP_LOCAL_AUTH_BYPASS", "true")
+    monkeypatch.setenv("RFP_LOCAL_PROXY_SECRET", "test-only-proxy-secret")
+    from app.main import app
+
+    with TestClient(app, client=("203.0.113.10", 50000)) as client:
+        response = client.get(
+            "/rfp/tickets",
+            headers={"x-healthcore-local-rfp-proxy": "test-only-proxy-secret"},
+        )
+
+    assert response.status_code == 200
+
+
+def test_local_bff_credential_is_rejected_when_missing_or_incorrect(
+    auth_db, tmp_path, monkeypatch
+) -> None:
+    monkeypatch.setenv("DB_URL", f"sqlite:///{tmp_path / 'rfp-proxy-denied.db'}")
+    monkeypatch.setenv("RFP_LOCAL_AUTH_BYPASS", "true")
+    monkeypatch.setenv("RFP_LOCAL_PROXY_SECRET", "test-only-proxy-secret")
+    from app.main import app
+
+    with TestClient(app, client=("203.0.113.10", 50000)) as client:
+        missing = client.get("/rfp/tickets")
+        incorrect = client.get(
+            "/rfp/tickets",
+            headers={"x-healthcore-local-rfp-proxy": "incorrect-secret"},
+        )
+
+    assert missing.status_code == 401
+    assert incorrect.status_code == 401

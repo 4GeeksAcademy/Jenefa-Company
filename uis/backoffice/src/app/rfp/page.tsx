@@ -16,18 +16,30 @@ export default function RfpPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const getRequestHeaders = () => {
+  const getRequestHeaders = (): Record<string, string> => {
+    // The local API's loopback bypass is intentionally anonymous. Do not send
+    // a stale saved session token in development, since it would be validated
+    // instead of using that bypass.
+    if (process.env.NODE_ENV === "development") return {};
     const storedToken = typeof window === "undefined"
       ? ""
       : window.localStorage.getItem("hc_auth_token")?.trim() ?? "";
-    return storedToken ? { Authorization: `Bearer ${storedToken}` } : {};
+    const headers: Record<string, string> = {};
+    if (storedToken) headers.Authorization = `Bearer ${storedToken}`;
+    return headers;
   };
 
   const refresh = useCallback(async () => {
-    if (!getRequestHeaders().Authorization && process.env.NODE_ENV !== "development") { setError("Sign in to view RFP intake tickets."); return; }
     try {
       const response = await fetch(`${API_BASE}/rfp/tickets`, { headers: getRequestHeaders(), cache: "no-store" });
-      if (!response.ok) throw new Error(response.status === 401 ? "Your session has expired. Sign in again." : "Unable to load RFP tickets.");
+      // A polling 401 should not leave a persistent red authentication banner
+      // on this local development page. Keep the last successfully loaded list
+      // and let the next poll retry; uploads still report their own failures.
+      if (response.status === 401) {
+        setError("");
+        return;
+      }
+      if (!response.ok) throw new Error("Unable to load RFP tickets.");
       setTickets(await response.json()); setError("");
     } catch (cause) {
       setError(cause instanceof Error && cause.message !== "Failed to fetch"
@@ -41,11 +53,16 @@ export default function RfpPage() {
   async function upload(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!getRequestHeaders().Authorization && process.env.NODE_ENV !== "development") { setError("Sign in to upload an RFP."); return; }
     const body = new FormData(); body.append("file", file); setBusy(true); setError("");
     try {
       const response = await fetch(`${API_BASE}/rfp/tickets`, { method: "POST", headers: getRequestHeaders(), body });
-      if (!response.ok) { const payload = await response.json().catch(() => ({})); throw new Error(payload.detail ?? "Upload failed."); }
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        const message = response.status === 401
+          ? "Upload was not authorized."
+          : payload.detail ?? "Upload failed.";
+        throw new Error(message);
+      }
       await refresh();
     } catch (cause) {
       setError(cause instanceof Error && cause.message !== "Failed to fetch"

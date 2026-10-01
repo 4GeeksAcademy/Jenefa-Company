@@ -30,6 +30,8 @@ uvicorn app.main:app --reload --port 8000
 | `DB_URL` | No | Preferred SQLModel engine URL for relational inventory persistence. Accepts `postgres://`, `postgresql://`, or full SQLAlchemy URLs. |
 | `INVENTORY_DATABASE_URL` | No | Legacy alias for inventory SQLModel URL. Also accepts `SUPABASE_DB_URL` / `DATABASE_URL`. Default: SQLite `data/inventory.db` when no DB URL variable is set. |
 | `INVENTORY_SEED_PASSWORD` | No | Password for seeded clinic operators (`usr-hc-9901`, `usr-hc-2544`) |
+| `RFP_LOCAL_AUTH_BYPASS` | No (default `false`) | Enables anonymous RFP testing only through loopback or the explicitly configured local Next.js BFF credential. Never enable in production. |
+| `RFP_LOCAL_PROXY_SECRET` | Required when using the forwarded development BFF bypass | Shared, high-entropy, local-only secret injected into server-to-server RFP proxy requests. Configure identically for API and Next.js; never expose it as `NEXT_PUBLIC_*`. |
 | `TELEMETRY_ENVIRONMENT` | No (default `sandbox`) | Runtime environment tag stamped on stored telemetry rows (e.g. `us_clinic_prod`, `uk_clinic_prod`) |
 | `EMAIL_PROVIDER` | No | `resend`, `sendgrid`, or omit (auto / console fallback) |
 | `RESEND_API_KEY` | For Resend | Resend API key — never hardcode |
@@ -70,6 +72,13 @@ Without a provider API key, password-reset emails are logged to the API console 
 On first boot, empty catalog databases are seeded to the HealthCore spec balances (gloves `450`, sedative `35`). Stock is never stored on `MedicalSupply` rows.
 
 Incident responses never include `patient_id` or other PHI — only aggregate counts and rule labels.
+
+For local Codespaces RFP testing, set `RFP_LOCAL_AUTH_BYPASS=true` and a unique
+`RFP_LOCAL_PROXY_SECRET` in both the API and backoffice server environments,
+then restart both processes. The Next.js server forwards the secret only to
+`/rfp/*` requests sent to the local API. GitHub tunnel cookies and forwarded
+client headers are not accepted as application credentials. Do not enable this
+bypass or reuse its secret in production.
 
 Agent episodic memory is stored separately from corporate knowledge retrieval. Set
 `AGENT_MEMORY_DB_PATH` to the dedicated SQLite path when running the API; approved

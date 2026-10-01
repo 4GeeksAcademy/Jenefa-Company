@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ipaddress
+import hmac
 import logging
 import os
 from concurrent.futures import ThreadPoolExecutor
@@ -34,16 +35,23 @@ async def _authorized_user(
     request: Request,
     token: str | None = Depends(_optional_bearer),
 ) -> dict[str, Any]:
-    """Permit explicitly enabled loopback-only RFP testing without a session."""
+    """Allow authenticated use, plus explicitly opted-in local/BFF development."""
     local_bypass_enabled = os.getenv("RFP_LOCAL_AUTH_BYPASS", "").lower() in {"1", "true", "yes"}
+    configured_proxy_secret = os.getenv("RFP_LOCAL_PROXY_SECRET", "")
+    supplied_proxy_secret = request.headers.get("x-healthcore-local-rfp-proxy", "")
+    trusted_dev_proxy = bool(configured_proxy_secret) and hmac.compare_digest(
+        supplied_proxy_secret, configured_proxy_secret
+    )
     client_host = request.client.host if request.client else ""
     try:
         is_loopback = ipaddress.ip_address(client_host).is_loopback
     except ValueError:
         is_loopback = False
 
-    if local_bypass_enabled and is_loopback:
-        # Never grant an administrator identity through this development-only path.
+    if local_bypass_enabled and (is_loopback or trusted_dev_proxy):
+        # The proxy credential is server-side only; tunnel cookies/headers are
+        # deliberately not treated as application authentication. Never grant
+        # an administrator identity through this development-only path.
         return {"id": "local-rfp-guest", "role": "user"}
     if not token:
         raise HTTPException(
