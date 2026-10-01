@@ -258,10 +258,32 @@ def decide_ticket_approval(
     department: str,
     payload: ApprovalDecisionRequest,
     engine: Any = Depends(get_inventory_engine),
-    _user: dict[str, Any] = Depends(_authorized_user),
+    user: dict[str, Any] = Depends(_authorized_user),
 ) -> dict[str, Any]:
+    approver_for_department = {
+        "revenue cycle and billing": "Tom Callahan",
+        "sales & billing": "Tom Callahan",
+        "sales, revenue cycle & billing": "Tom Callahan",
+        "billing": "Tom Callahan",
+        "clinical operations": "Dr. Marcus Reid",
+        "clinical operations & delivery": "Dr. Marcus Reid",
+        "compliance and data governance": "Claire Whitfield",
+        "compliance & data governance": "Claire Whitfield",
+        "compliance": "Claire Whitfield",
+    }
+    owner = approver_for_department.get(department.casefold().strip())
+    if user.get("role") != "admin" and user.get("name") != owner:
+        raise HTTPException(status_code=403, detail="The authenticated user is not the assigned departmental approver")
     try:
-        return submit_approval(engine, str(ticket_id), department, payload.decision, payload.feedback)
+        reviewer_name = user.get("name") or user.get("email")
+        return submit_approval(
+            engine,
+            str(ticket_id),
+            department,
+            payload.decision,
+            payload.feedback,
+            reviewer=reviewer_name,
+        )
     except ValueError as exc:
         raise _approval_error(exc) from exc
 
@@ -273,6 +295,8 @@ def resolve_ticket_conflicts(
     engine: Any = Depends(get_inventory_engine),
     _user: dict[str, Any] = Depends(_authorized_user),
 ) -> dict[str, Any]:
+    if _user.get("role") != "admin" or payload.actor != "Dr. Sandra Okonkwo":
+        raise HTTPException(status_code=403, detail="Only an authenticated administrator acting as Dr. Sandra Okonkwo may arbitrate")
     try:
         return arbitrate_conflicts(engine, str(ticket_id), {"conflicts": payload.conflicts}, payload.actor)
     except ValueError as exc:
