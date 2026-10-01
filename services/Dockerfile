@@ -11,19 +11,13 @@ WORKDIR /services
 RUN pip install --no-cache-dir --quiet uv
 
 # ── Layer 1: Install project dependencies ──────────────────────────────────
-COPY api/requirements.txt ./api/requirements.txt
+COPY services/api/requirements.txt ./api/requirements.txt
 RUN uv pip install --no-cache -r api/requirements.txt
 
 # ── Layer 2: Copy application code ─────────────────────────────────────────
-COPY api/ ./api/
+COPY services/api/ ./api/
 ENV PYTHONPATH=/:/services:/services/api
 
-RUN pip install --no-cache-dir uv
-
-COPY services/api/requirements.txt ./requirements.txt
-RUN uv pip install --system --no-cache -r requirements.txt
-
-COPY services/api/ ./
 COPY services/celery_app.py /services/celery_app.py
 # The API imports the shared data pipelines and incident analysis package.
 COPY data/ /data/
