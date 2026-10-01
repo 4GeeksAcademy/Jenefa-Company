@@ -13,6 +13,7 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
+from fastapi.responses import StreamingResponse
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel, Field as PydanticField
 from sqlmodel import Session, select
@@ -20,6 +21,7 @@ from sqlmodel import Session, select
 from ..auth.deps import get_current_user
 from ..inventory.database import get_inventory_engine
 from .models import DepartmentSectionAspect, RFPTicket
+from .events import rfp_events
 from data.pipelines.rfp_response import RFPResponseSection, generate_ticket_response
 from data.pipelines.rfp_approval import (
     arbitrate_conflicts,
@@ -142,13 +144,36 @@ async def upload_rfp(
             ticket = RFPTicket(ticket_id=ticket_id, file_path=str(file_path))
             session.add(ticket)
             session.commit()
+            event_payload = {
+                "ticket_id": ticket.ticket_id,
+                "status": ticket.status,
+                "created_at": ticket.created_at.isoformat(),
+                "updated_at": ticket.updated_at.isoformat(),
+            }
     except Exception:
         file_path.unlink(missing_ok=True)
         logger.exception("Failed to create RFP ticket")
         raise HTTPException(status_code=500, detail="Could not create RFP ticket")
 
     _executor.submit(process_ticket, engine, ticket_id)
+    await rfp_events.publish(event_payload)
     return {"ticket_id": ticket_id, "status": "analyzing"}
+
+
+@router.get("/events")
+async def stream_rfp_events(
+    request: Request,
+    _user: dict[str, Any] = Depends(_authorized_user),
+) -> StreamingResponse:
+    logger.info("Authenticated RFP SSE connection established from %s", request.client.host if request.client else "unknown")
+    return StreamingResponse(
+        rfp_events.stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        },
+    )
 
 
 @router.get("/tickets")

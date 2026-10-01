@@ -11,6 +11,12 @@
 ### Executive Reporting
 - Reporting is static and lagging. The CEO receives unstandardized weekly reports from department heads that are based on data multiple days old. Critical real-time network metrics (like weekly no-show or denial rates) are completely inaccessible without manual phone polling.
 
+### RTS-SSE completed (authenticated RFP notifications)
+- Added `services/api/app/rfp/events.py` as an in-process bounded fan-out hub with `rfp_ticket_created` frames, initial connection comments, and 15-second keep-alives.
+- Added authenticated `GET /rfp/events` streaming through the existing RFP JWT/local-development auth boundary, with `text/event-stream`, no-cache, and keep-alive headers. Ticket creation publishes only after its database commit succeeds.
+- Replaced `uis/backoffice/src/app/rfp/page.tsx` five-second polling with an authenticated `fetch`/`ReadableStream` consumer, capped progressive reconnect backoff, reconnect refetch recovery, ticket ID deduplication, and a distinct live-arrival status banner.
+- Added SSE auth and framing coverage in `services/api/tests/test_rfp_local_auth.py`; focused RFP tests pass (**8 passed**) and the backoffice production build passes.
+
 ### Milestone 4 completed (monorepo AI setup)
 - Added `memory-bank/` (`projectbrief.md`, `techContext.md`, `progress.md`), root `AGENTS.md`, `.agents/rules/phi-data-residency.md`, and `.agents/skills/sync-memory-bank/`.
 - Created `uis/web` with its own shell layout; `/` imports `healthcore-testing` and renders denial, no-show, and CME outputs on screen.
