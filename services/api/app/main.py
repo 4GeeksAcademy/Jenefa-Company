@@ -25,6 +25,7 @@ from .inventory.router import router as inventory_router
 from .inventory.seed import seed_identity_cache, seed_relational_catalog
 from .reporting.router import router as reporting_router
 from .rfp.models import DepartmentSectionAspect as _DepartmentSectionAspect  # noqa: F401 — register SQLModel tables
+from data.pipelines.rfp_response import RFPResponseSection as _RFPResponseSection  # noqa: F401 — register response table
 from .rfp.router import router as rfp_router
 from .telemetry.router import router as telemetry_router
 from data.pipelines.rag import query as rag_query

@@ -19,7 +19,11 @@ def _now() -> datetime:
 class RFPTicket(SQLModel, table=True):
     __tablename__ = "rfp_tickets"
     __table_args__ = (
-        CheckConstraint("status IN ('analyzing', 'discarded', 'intake_complete')", name="ck_rfp_ticket_status"),
+        CheckConstraint(
+            "status IN ('analyzing', 'discarded', 'intake_complete', 'drafting', "
+            "'under_evaluation', 'needs_human_review')",
+            name="ck_rfp_ticket_status",
+        ),
         {"extend_existing": True},
     )
 
