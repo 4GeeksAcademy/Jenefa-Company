@@ -19,6 +19,7 @@ from sqlmodel import Session, select
 from ..auth.deps import get_current_user
 from ..inventory.database import get_inventory_engine
 from .models import DepartmentSectionAspect, RFPTicket
+from data.pipelines.rfp_response import RFPResponseSection, generate_ticket_response
 from data.pipelines.rfp_intake.graph import process_ticket
 
 logger = logging.getLogger(__name__)
@@ -63,7 +64,10 @@ async def _authorized_user(
     return await get_current_user(token)
 
 
-def _ticket_response(ticket: RFPTicket) -> dict[str, Any]:
+def _ticket_response(
+    ticket: RFPTicket,
+    response_sections: list[RFPResponseSection] | None = None,
+) -> dict[str, Any]:
     age = (datetime.now(timezone.utc) - ticket.updated_at.replace(tzinfo=timezone.utc)).total_seconds()
     failed = ticket.status == "analyzing" and age > FAILED_AFTER_SECONDS
     return {
@@ -73,8 +77,20 @@ def _ticket_response(ticket: RFPTicket) -> dict[str, Any]:
         "updated_at": ticket.updated_at.isoformat(),
         "metrics": ticket.metrics,
         "raw_metadata": ticket.raw_metadata,
-        "synthesizer_payload": ticket.synthesizer_payload if ticket.status == "intake_complete" else None,
+        "synthesizer_payload": ticket.synthesizer_payload if ticket.status != "discarded" else None,
+        "response_sections": [_response_section_payload(row) for row in response_sections or []],
         "error": "Processing heartbeat expired; retry or contact an administrator." if failed else ticket.raw_metadata.get("processing_error"),
+    }
+
+
+def _response_section_payload(row: RFPResponseSection) -> dict[str, Any]:
+    return {
+        "section_id": row.section_id,
+        "department_id": row.department_id,
+        "department": row.department_name,
+        "draft": row.draft,
+        "iteration_count": row.iteration_count,
+        "evaluation_result": row.evaluation_result,
     }
 
 
@@ -118,7 +134,15 @@ def list_tickets(
 ) -> list[dict[str, Any]]:
     with Session(engine) as session:
         tickets = session.exec(select(RFPTicket).order_by(RFPTicket.created_at.desc()).limit(100)).all()
-        return [_ticket_response(ticket) for ticket in tickets]
+        return [
+            _ticket_response(
+                ticket,
+                session.exec(
+                    select(RFPResponseSection).where(RFPResponseSection.ticket_id == ticket.ticket_id)
+                ).all(),
+            )
+            for ticket in tickets
+        ]
 
 
 @router.get("/tickets/{ticket_id}")
@@ -136,7 +160,47 @@ def get_ticket(
             {"department": row.department, "key_aspects": row.key_aspects, "contacts": row.contacts}
             for row in session.exec(select(DepartmentSectionAspect).where(DepartmentSectionAspect.ticket_id == str(ticket_id))).all()
         ]
+        result["response_sections"] = [
+            _response_section_payload(row)
+            for row in session.exec(
+                select(RFPResponseSection).where(RFPResponseSection.ticket_id == str(ticket_id))
+            ).all()
+        ]
         return result
+
+
+@router.post("/tickets/{ticket_id}/generate-response")
+def generate_response(
+    ticket_id: UUID,
+    engine: Any = Depends(get_inventory_engine),
+    _user: dict[str, Any] = Depends(_authorized_user),
+) -> dict[str, Any]:
+    """Start the structured Part 1 handoff's response-drafting stage."""
+    try:
+        return generate_ticket_response(engine, str(ticket_id))
+    except ValueError as exc:
+        message = str(exc)
+        raise HTTPException(status_code=404 if message == "RFP ticket not found" else 409, detail=message) from exc
+
+
+@router.get("/tickets/{ticket_id}/response")
+def get_ticket_response(
+    ticket_id: UUID,
+    engine: Any = Depends(get_inventory_engine),
+    _user: dict[str, Any] = Depends(_authorized_user),
+) -> dict[str, Any]:
+    with Session(engine) as session:
+        ticket = session.get(RFPTicket, str(ticket_id))
+        if ticket is None:
+            raise HTTPException(status_code=404, detail="RFP ticket not found")
+        sections = session.exec(
+            select(RFPResponseSection).where(RFPResponseSection.ticket_id == str(ticket_id))
+        ).all()
+        return {
+            "ticket_id": str(ticket_id),
+            "status": ticket.status,
+            "sections": [_response_section_payload(row) for row in sections],
+        }
 
 
 @router.post("/tickets/{ticket_id}/reprocess", status_code=status.HTTP_202_ACCEPTED)
