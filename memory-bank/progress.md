@@ -79,6 +79,13 @@
 - Verified live MCP/tool payload isolation in `services/langgraph_agent/tools.py` and deterministic coverage in `tests/pipelines/test_guardrails.py` for all three mandated jailbreak variants, personal tasks, malicious retrieval content, and summary metrics.
 - Validation: `python -m compileall -q services/langgraph_agent tests/pipelines/test_guardrails.py` passed and editor diagnostics are clean. Pytest could not run because the container does not have the `pytest` module installed.
 
+### MEM-092 completed — governed episodic agent memory
+- Added the isolated SQLite `AgentMemoryStore` in `services/langgraph_agent/memory.py`; it writes only to the dedicated agent-memory tables and never to `*_knowledge` retrieval stores.
+- Added strict proposal lifecycle handling: one pending proposal, complete-response intent classification for `APPROVE`, `REJECT`, `EDIT`, and discard-by-default ambiguity, plus immutable audit entries with SHA-256 originating-message hashes and role metadata.
+- Enforced the 90-day episodic-memory TTL and loaded approved memory facts into new LangGraph invocations through `graph.py`, `guardrails.py`, and `router.py`.
+- Exposed `/agent/memory/proposals`, `/agent/memory/pending`, `/agent/memory/resolve`, and `/agent/memory/audit`; documented `AGENT_MEMORY_DB_PATH` and the governance contract in `services/api/README.md`.
+- Added `tests/pipelines/test_agent_memory.py` covering approved cross-session retrieval, rejected/ambiguous discard, edited facts, single-flight enforcement, TTL expiry, and audit persistence. Focused tests pass: **8 passed** with the existing LangGraph suite.
+
 ## Planned Next Steps
 - LangGraph external live-data integration completed: `services/langgraph_agent/tools.py` provides separate, read-only incident and inventory HTTP clients with runtime token resolution and a hard 4-second timeout. The graph now routes live operational questions separately from compliance RAG, supports combined live-then-RAG flows, records contacted sources, and emits a deterministic no-hallucination fallback on service errors/404s/timeouts. Added `tests/test_langgraph_external.py` covering live ticket routing, RAG isolation, and outage recovery; focused tests pass.
 - Sales forecasting feasibility prototype completed: added a reproducible Random Forest pipeline at `data/pipelines/sales_forecast.py` using the protected production extract, schema/null validation, robust scaling, first-eight/final-two temporal partitioning, MSE/PSI/Gini/K2 metrics, and an actual-vs-predicted error-band plot. Added split/leakage and artifact tests at `tests/pipelines/test_sales_forecast.py`; focused suite passes (`3 passed`).

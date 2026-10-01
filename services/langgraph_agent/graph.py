@@ -17,6 +17,7 @@ from .tools import (
     lookup_incident,
     lookup_inventory,
 )
+from .memory import AgentMemoryStore
 
 HONEST_REFUSAL = "I don't have information about that."
 
@@ -29,6 +30,8 @@ class AgentState(TypedDict):
     route: str
     live_context: list[str]
     contacted_sources: list[str]
+    memory_context: list[str]
+    memory_proposal: dict[str, Any] | None
 
 
 TraceCallback = Callable[[dict[str, Any]], None]
@@ -52,6 +55,7 @@ def receive_input_node(
     update: dict[str, Any] = {
         "question": question, "retrieved_context": [], "live_context": [],
         "contacted_sources": [], "answer": None, "error": None,
+        "memory_context": state.get("memory_context", []), "memory_proposal": state.get("memory_proposal"),
         "route": _route_question(question),
     }
     if not question:
@@ -128,7 +132,11 @@ def generation_node(
     generator: Callable[[str, list[dict[str, Any]]], str] = generate_answer,
     trace_callback: TraceCallback | None = None,
 ) -> dict[str, Any]:
-    chunks = [{"text": text} for text in [*state.get("retrieved_context", []), *state.get("live_context", [])]]
+    chunks = [{"text": text} for text in [
+        *state.get("retrieved_context", []),
+        *state.get("live_context", []),
+        *state.get("memory_context", []),
+    ]]
     update = {"answer": generator(state["question"], chunks), "error": None}
     _trace({**state, **update}, "generate_answer", trace_callback)
     return update
@@ -147,7 +155,7 @@ def _after_input(state: AgentState) -> str:
 
 
 def _after_retrieve(state: AgentState) -> str:
-    return "generate_answer" if state.get("retrieved_context") else "honest_refusal"
+    return "generate_answer" if state.get("retrieved_context") or state.get("memory_context") else "honest_refusal"
 
 
 def build_graph(
@@ -190,6 +198,7 @@ def invoke_agent(
     retriever: Callable[..., list[dict[str, Any]]] = retrieve,
     generator: Callable[[str, list[dict[str, Any]]], str] = generate_answer,
     trace_callback: TraceCallback | None = None,
+    memory_store: AgentMemoryStore | None = None,
 ) -> AgentState:
     """Invoke a compiled graph with a stable thread id for checkpointing."""
     graph = agent_graph if retriever is retrieve and generator is generate_answer and trace_callback is None else build_graph(
@@ -202,9 +211,13 @@ def invoke_agent(
             "retrieved_context": [],
             "live_context": [],
             "contacted_sources": [],
+            "memory_context": [],
+            "memory_proposal": None,
             "route": "rag",
             "answer": None,
             "error": None,
+            "memory_context": memory_store.search(question) if memory_store else [],
+            "memory_proposal": None,
         },
         config=run_config,
     )

@@ -10,6 +10,7 @@ from threading import Lock
 from typing import Any, Callable
 
 from .graph import HONEST_REFUSAL, AgentState, generate_answer, invoke_agent, retrieve
+from .memory import AgentMemoryStore
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +80,8 @@ def _guardrail_state(question: str, answer: str, error: str | None = None) -> Ag
         "route": "guardrail",
         "live_context": [],
         "contacted_sources": [],
+        "memory_context": [],
+        "memory_proposal": None,
     }
 
 
@@ -112,6 +115,7 @@ def guarded_invoke_agent(
     config: dict[str, Any] | None = None,
     retriever: Callable[..., list[dict[str, Any]]] | None = None,
     generator: Callable[[str, list[dict[str, Any]]], str] | None = None,
+    memory_store: AgentMemoryStore | None = None,
 ) -> AgentState:
     """Apply input, retrieval, and output controls around the existing graph."""
     normalized = (question or "").strip()
@@ -145,6 +149,7 @@ def guarded_invoke_agent(
         config=config,
         retriever=isolated_retriever,
         generator=generator or generate_answer,
+        memory_store=memory_store,
     )
     state["answer"] = validate_output(state.get("answer"))
     return state
