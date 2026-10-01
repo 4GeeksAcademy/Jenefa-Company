@@ -6,11 +6,12 @@ import logging
 import os
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from .guardrails import guardrail_summary, guarded_invoke_agent
 from .memory import AgentMemoryStore
+from app.auth.deps import get_current_user
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/agent", tags=["agent"])
@@ -50,7 +51,10 @@ def query_agent(payload: AgentQuery) -> dict[str, Any]:
 
 
 @router.post("/memory/proposals")
-def create_memory_proposal(payload: MemoryProposalRequest) -> dict[str, Any]:
+def create_memory_proposal(
+    payload: MemoryProposalRequest,
+    current_user: dict[str, Any] = Depends(get_current_user),
+) -> dict[str, Any]:
     try:
         proposal = memory_store.propose(
             payload.fact_to_remember, payload.justification, payload.originating_message
@@ -61,17 +65,26 @@ def create_memory_proposal(payload: MemoryProposalRequest) -> dict[str, Any]:
 
 
 @router.get("/memory/pending")
-def get_pending_memory_proposal() -> dict[str, Any]:
+def get_pending_memory_proposal(
+    current_user: dict[str, Any] = Depends(get_current_user),
+) -> dict[str, Any]:
     proposal = memory_store.pending()
     return {"proposal": proposal.__dict__ if proposal else None}
 
 
 @router.post("/memory/resolve")
-def resolve_memory_proposal(payload: MemoryResolutionRequest) -> dict[str, Any]:
+def resolve_memory_proposal(
+    payload: MemoryResolutionRequest,
+    current_user: dict[str, Any] = Depends(get_current_user),
+) -> dict[str, Any]:
     try:
         resolution = memory_store.resolve(
             payload.response,
-            authorizing_user_metadata=payload.authorizing_user_metadata,
+            authorizing_user_metadata={
+                "user_id": current_user["id"],
+                "role": current_user.get("role"),
+                "email": current_user.get("email"),
+            },
         )
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
@@ -79,7 +92,9 @@ def resolve_memory_proposal(payload: MemoryResolutionRequest) -> dict[str, Any]:
 
 
 @router.get("/memory/audit")
-def get_memory_audit() -> dict[str, Any]:
+def get_memory_audit(
+    current_user: dict[str, Any] = Depends(get_current_user),
+) -> dict[str, Any]:
     return {"entries": memory_store.audit_entries()}
 
 
