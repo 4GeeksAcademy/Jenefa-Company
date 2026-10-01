@@ -4,7 +4,11 @@ import Link from "next/link";
 import { ChangeEvent, useCallback, useEffect, useState } from "react";
 
 const colors = { background: "#f4f7f8", foreground: "#1a2b32", surface: "#ffffff", sidebar: "#0f3d3e", sidebarMuted: "#9ebdbd", sidebarHover: "#165153", accent: "#1f7a7a", border: "#d5e0e2", muted: "#5c7278" };
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+// Use the same-origin Next.js proxy during local development to avoid browser
+// CORS failures (especially when the dev server runs on a forwarded port).
+const API_BASE = process.env.NODE_ENV === "development"
+  ? "/api/backend"
+  : (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000");
 // Local development convenience only. The local API must use
 // SECRET_KEY=local-rfp-development-only-secret-not-for-production.
 // Never use this token or secret in production.
@@ -26,7 +30,11 @@ export default function RfpPage() {
       const response = await fetch(`${API_BASE}/rfp/tickets`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
       if (!response.ok) throw new Error(response.status === 401 ? "Your session has expired. Sign in again." : "Unable to load RFP tickets.");
       setTickets(await response.json()); setError("");
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Unable to load RFP tickets."); }
+    } catch (cause) {
+      setError(cause instanceof Error && cause.message !== "Failed to fetch"
+        ? cause.message
+        : "Could not reach the HealthCore API. Ensure it is running on port 8000, then refresh this page.");
+    }
   }, [token]);
 
   useEffect(() => { void refresh(); const timer = window.setInterval(() => void refresh(), 5000); return () => window.clearInterval(timer); }, [refresh]);
@@ -40,7 +48,11 @@ export default function RfpPage() {
       const response = await fetch(`${API_BASE}/rfp/tickets`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body });
       if (!response.ok) { const payload = await response.json().catch(() => ({})); throw new Error(payload.detail ?? "Upload failed."); }
       await refresh();
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Upload failed."); }
+    } catch (cause) {
+      setError(cause instanceof Error && cause.message !== "Failed to fetch"
+        ? cause.message
+        : "Could not reach the HealthCore API. Ensure it is running on port 8000, then try the upload again.");
+    }
     finally { setBusy(false); event.target.value = ""; }
   }
 
