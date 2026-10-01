@@ -9,6 +9,7 @@ import { initTelemetry, track } from "@/lib/telemetry";
 
 const navItems = [
   { href: "/", label: "Overview" },
+  { href: "/chat", label: "Live support chat" },
   { href: "/incidents", label: "Incident analysis" },
   { href: "/backoffice/inventory", label: "Clinic supplies" },
   { href: "/login", label: "Sign in" },
