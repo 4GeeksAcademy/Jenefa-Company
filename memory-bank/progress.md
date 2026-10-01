@@ -1,5 +1,10 @@
 # Progress - HealthCore
 
+### Bidirectional agent WebSocket streaming foundation completed
+- Added authenticated `GET /agent/ws` with query-token verification, required `session_id`/`thread_id` binding, structured `token_chunk`, `interrupt`, `generation_interrupted`, and `generation_completed` frames, progressive client reconnects, and non-destructive interrupted-turn rendering at `uis/web` `/chat`.
+- Added focused handshake, frame serialization, and interruption coverage in `services/api/tests/test_agent_websocket.py`; editor diagnostics are clean, the focused WebSocket tests pass (**3 passed**), the full API suite passes with test-only MCP settings (**60 passed**), and the web production build passes.
+- The transport task is cancellable and preserves the interrupted turn, but the current synchronous graph invocation runs in a worker thread; native cancellation inside the model/provider remains a follow-up when the generation adapter exposes an async cancellation handle.
+
 ## Current State of Development
 - The organization is currently operating in a highly manual, reactive, and fragmented state. The infrastructure has failed to keep pace with business growth, resulting in zero unified automation across the 12 locations.
 ### Infrastructure Status
