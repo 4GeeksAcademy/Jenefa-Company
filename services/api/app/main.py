@@ -24,6 +24,8 @@ from .inventory.database import create_inventory_engine, init_inventory_schema
 from .inventory.router import router as inventory_router
 from .inventory.seed import seed_identity_cache, seed_relational_catalog
 from .reporting.router import router as reporting_router
+from .rfp.models import DepartmentSectionAspect as _DepartmentSectionAspect  # noqa: F401 — register SQLModel tables
+from .rfp.router import router as rfp_router
 from .telemetry.router import router as telemetry_router
 from data.pipelines.rag import query as rag_query
 from services.job_runner import JobRunRecord as _JobRunRecord  # noqa: F401 — register unified metadata
@@ -73,6 +75,7 @@ app.include_router(telemetry_router)
 app.include_router(reporting_router)
 app.include_router(async_tasks_router)
 app.include_router(agent_router)
+app.include_router(rfp_router)
 
 
 @app.post("/knowledge/query")

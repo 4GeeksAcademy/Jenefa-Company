@@ -17,6 +17,7 @@ const navItems = [
   { href: "/", label: "Overview", active: true },
   { href: "/reporting", label: "Executive reporting" },
   { href: "/inventory", label: "Clinic supplies" },
+  { href: "/rfp", label: "RFP intake" },
 ];
 
 const metrics = [

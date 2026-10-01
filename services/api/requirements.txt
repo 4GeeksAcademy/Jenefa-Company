@@ -15,3 +15,4 @@ prefect>=3
 # RAG & Distributed Queue Dependencies
 celery>=5.3.0
 qdrant-client>=1.9.0
+markitdown[pdf]>=0.1.2
