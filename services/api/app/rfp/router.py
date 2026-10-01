@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+import ipaddress
 import logging
+import os
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
+from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import Session, select
 
 from ..auth.deps import get_current_user
@@ -24,10 +27,32 @@ _executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="rfp-intake")
 UPLOAD_DIR = Path(__file__).resolve().parents[2] / "data" / "rfp_raw"
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 FAILED_AFTER_SECONDS = 30 * 60
+_optional_bearer = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
 
-def _authorized_user(user: dict[str, Any] = Depends(get_current_user)) -> dict[str, Any]:
-    return user
+async def _authorized_user(
+    request: Request,
+    token: str | None = Depends(_optional_bearer),
+) -> dict[str, Any]:
+    """Permit explicitly enabled loopback-only RFP testing without a session."""
+    local_bypass_enabled = os.getenv("RFP_LOCAL_AUTH_BYPASS", "").lower() in {"1", "true", "yes"}
+    client_host = request.client.host if request.client else ""
+    try:
+        is_loopback = ipaddress.ip_address(client_host).is_loopback
+    except ValueError:
+        is_loopback = False
+
+    if local_bypass_enabled and is_loopback:
+        # Never grant an administrator identity through this development-only path.
+        return {"id": "local-rfp-guest", "role": "user"}
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    # Keep the existing auth dependency's decode, activity and user lookup behavior.
+    return await get_current_user(token)
 
 
 def _ticket_response(ticket: RFPTicket) -> dict[str, Any]:

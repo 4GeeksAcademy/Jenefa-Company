@@ -9,12 +9,6 @@ const colors = { background: "#f4f7f8", foreground: "#1a2b32", surface: "#ffffff
 const API_BASE = process.env.NODE_ENV === "development"
   ? "/api/backend"
   : (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000");
-// Local development convenience only. The local API must use
-// SECRET_KEY=local-rfp-development-only-secret-not-for-production.
-// Never use this token or secret in production.
-const LOCAL_TEST_TOKEN = process.env.NODE_ENV === "development"
-  ? "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3ItaGMtOTkwMSIsImV4cCI6NDEwMjQ0NDgwMH0.JQ7xIxAV96gYuNh1-tpbAAlD2qKPu7FkyaKAgIpDLDw"
-  : null;
 type Workstream = { department: string; key_aspects: string; contacts: string[]; warnings?: string[] };
 type Ticket = { ticket_id: string; status: string; created_at: string; metrics: Record<string, number>; synthesizer_payload?: { sales_summary?: string; workstream_structure?: Workstream[] } | null; error?: string | null };
 
@@ -22,12 +16,17 @@ export default function RfpPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const token = typeof window === "undefined" ? null : (window.localStorage.getItem("hc_auth_token") || LOCAL_TEST_TOKEN);
+  const getRequestHeaders = () => {
+    const storedToken = typeof window === "undefined"
+      ? ""
+      : window.localStorage.getItem("hc_auth_token")?.trim() ?? "";
+    return storedToken ? { Authorization: `Bearer ${storedToken}` } : {};
+  };
 
   const refresh = useCallback(async () => {
-    if (!token) { setError("Sign in to view RFP intake tickets."); return; }
+    if (!getRequestHeaders().Authorization && process.env.NODE_ENV !== "development") { setError("Sign in to view RFP intake tickets."); return; }
     try {
-      const response = await fetch(`${API_BASE}/rfp/tickets`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+      const response = await fetch(`${API_BASE}/rfp/tickets`, { headers: getRequestHeaders(), cache: "no-store" });
       if (!response.ok) throw new Error(response.status === 401 ? "Your session has expired. Sign in again." : "Unable to load RFP tickets.");
       setTickets(await response.json()); setError("");
     } catch (cause) {
@@ -35,17 +34,17 @@ export default function RfpPage() {
         ? cause.message
         : "Could not reach the HealthCore API. Ensure it is running on port 8000, then refresh this page.");
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => { void refresh(); const timer = window.setInterval(() => void refresh(), 5000); return () => window.clearInterval(timer); }, [refresh]);
 
   async function upload(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!token) { setError("Sign in to upload an RFP."); return; }
+    if (!getRequestHeaders().Authorization && process.env.NODE_ENV !== "development") { setError("Sign in to upload an RFP."); return; }
     const body = new FormData(); body.append("file", file); setBusy(true); setError("");
     try {
-      const response = await fetch(`${API_BASE}/rfp/tickets`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body });
+      const response = await fetch(`${API_BASE}/rfp/tickets`, { method: "POST", headers: getRequestHeaders(), body });
       if (!response.ok) { const payload = await response.json().catch(() => ({})); throw new Error(payload.detail ?? "Upload failed."); }
       await refresh();
     } catch (cause) {
