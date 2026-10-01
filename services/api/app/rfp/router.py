@@ -15,7 +15,7 @@ from sqlmodel import Session, select
 from ..auth.deps import get_current_user
 from ..inventory.database import get_inventory_engine
 from .models import DepartmentSectionAspect, RFPTicket
-from .pipeline import process_ticket
+from data.pipelines.rfp_intake.graph import process_ticket
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/rfp", tags=["RFP intake"])

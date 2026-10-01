@@ -17,7 +17,7 @@ from typing import Any
 from markitdown import MarkItDown
 from sqlmodel import Session, select
 
-from .models import DepartmentSectionAspect, RFPTicket
+from services.api.app.rfp.models import DepartmentSectionAspect, RFPTicket
 
 # In this repository no CONTEXT-company.md exists yet. Keep the supported map in
 # one place and make that fact explicit rather than silently consulting unrelated context.
@@ -183,7 +183,6 @@ def process_ticket(engine: Any, ticket_id: str, *, force: bool = False, markdown
                 session.commit()
                 return
             tasks = orchestrate(markdown)
-            session.exec(select(DepartmentSectionAspect).where(DepartmentSectionAspect.ticket_id == ticket_id)).all()
             existing = session.exec(select(DepartmentSectionAspect).where(DepartmentSectionAspect.ticket_id == ticket_id)).all()
             for row in existing:
                 session.delete(row)
