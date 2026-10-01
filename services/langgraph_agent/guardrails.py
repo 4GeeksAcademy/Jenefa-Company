@@ -79,6 +79,8 @@ def _guardrail_state(question: str, answer: str, error: str | None = None) -> Ag
         "route": "guardrail",
         "live_context": [],
         "contacted_sources": [],
+        "memory_context": [],
+        "memory_proposal": None,
     }
 
 

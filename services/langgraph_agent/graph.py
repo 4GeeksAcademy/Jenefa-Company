@@ -29,6 +29,8 @@ class AgentState(TypedDict):
     route: str
     live_context: list[str]
     contacted_sources: list[str]
+    memory_context: list[str]
+    memory_proposal: dict[str, Any] | None
 
 
 TraceCallback = Callable[[dict[str, Any]], None]
@@ -52,6 +54,7 @@ def receive_input_node(
     update: dict[str, Any] = {
         "question": question, "retrieved_context": [], "live_context": [],
         "contacted_sources": [], "answer": None, "error": None,
+        "memory_context": state.get("memory_context", []), "memory_proposal": state.get("memory_proposal"),
         "route": _route_question(question),
     }
     if not question:
@@ -128,7 +131,11 @@ def generation_node(
     generator: Callable[[str, list[dict[str, Any]]], str] = generate_answer,
     trace_callback: TraceCallback | None = None,
 ) -> dict[str, Any]:
-    chunks = [{"text": text} for text in [*state.get("retrieved_context", []), *state.get("live_context", [])]]
+    chunks = [{"text": text} for text in [
+        *state.get("retrieved_context", []),
+        *state.get("live_context", []),
+        *state.get("memory_context", []),
+    ]]
     update = {"answer": generator(state["question"], chunks), "error": None}
     _trace({**state, **update}, "generate_answer", trace_callback)
     return update
@@ -202,6 +209,8 @@ def invoke_agent(
             "retrieved_context": [],
             "live_context": [],
             "contacted_sources": [],
+            "memory_context": [],
+            "memory_proposal": None,
             "route": "rag",
             "answer": None,
             "error": None,
