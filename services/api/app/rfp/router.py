@@ -14,12 +14,19 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from fastapi.security import OAuth2PasswordBearer
+from pydantic import BaseModel, Field as PydanticField
 from sqlmodel import Session, select
 
 from ..auth.deps import get_current_user
 from ..inventory.database import get_inventory_engine
 from .models import DepartmentSectionAspect, RFPTicket
 from data.pipelines.rfp_response import RFPResponseSection, generate_ticket_response
+from data.pipelines.rfp_approval import (
+    arbitrate_conflicts,
+    begin_approval,
+    get_approval_state,
+    submit_approval,
+)
 from data.pipelines.rfp_intake.graph import process_ticket
 
 logger = logging.getLogger(__name__)
@@ -30,6 +37,21 @@ UPLOAD_DIR = Path(__file__).resolve().parents[2] / "data" / "rfp_raw"
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 FAILED_AFTER_SECONDS = 30 * 60
 _optional_bearer = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
+
+
+class ApprovalDecisionRequest(BaseModel):
+    decision: str
+    feedback: str = ""
+
+
+class ArbitrationRequest(BaseModel):
+    actor: str
+    conflicts: list[dict[str, Any]] = PydanticField(min_length=1)
+
+
+def _approval_error(exc: ValueError) -> HTTPException:
+    message = str(exc)
+    return HTTPException(status_code=404 if message in {"RFP ticket not found", "Approval branch not found; begin approval first"} else 409, detail=message)
 
 
 async def _authorized_user(
@@ -67,6 +89,7 @@ async def _authorized_user(
 def _ticket_response(
     ticket: RFPTicket,
     response_sections: list[RFPResponseSection] | None = None,
+    approval_state: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     age = (datetime.now(timezone.utc) - ticket.updated_at.replace(tzinfo=timezone.utc)).total_seconds()
     failed = ticket.status == "analyzing" and age > FAILED_AFTER_SECONDS
@@ -79,6 +102,7 @@ def _ticket_response(
         "raw_metadata": ticket.raw_metadata,
         "synthesizer_payload": ticket.synthesizer_payload if ticket.status != "discarded" else None,
         "response_sections": [_response_section_payload(row) for row in response_sections or []],
+        "approval": approval_state,
         "error": "Processing heartbeat expired; retry or contact an administrator." if failed else ticket.raw_metadata.get("processing_error"),
     }
 
@@ -140,6 +164,7 @@ def list_tickets(
                 session.exec(
                     select(RFPResponseSection).where(RFPResponseSection.ticket_id == ticket.ticket_id)
                 ).all(),
+                get_approval_state(engine, ticket.ticket_id),
             )
             for ticket in tickets
         ]
@@ -201,6 +226,57 @@ def get_ticket_response(
             "status": ticket.status,
             "sections": [_response_section_payload(row) for row in sections],
         }
+
+
+@router.post("/tickets/{ticket_id}/begin-approval")
+def begin_ticket_approval(
+    ticket_id: UUID,
+    engine: Any = Depends(get_inventory_engine),
+    _user: dict[str, Any] = Depends(_authorized_user),
+) -> dict[str, Any]:
+    try:
+        return begin_approval(engine, str(ticket_id))
+    except ValueError as exc:
+        raise _approval_error(exc) from exc
+
+
+@router.get("/tickets/{ticket_id}/approvals")
+def ticket_approvals(
+    ticket_id: UUID,
+    engine: Any = Depends(get_inventory_engine),
+    _user: dict[str, Any] = Depends(_authorized_user),
+) -> dict[str, Any]:
+    try:
+        return get_approval_state(engine, str(ticket_id))
+    except ValueError as exc:
+        raise _approval_error(exc) from exc
+
+
+@router.post("/tickets/{ticket_id}/approvals/{department}/decision")
+def decide_ticket_approval(
+    ticket_id: UUID,
+    department: str,
+    payload: ApprovalDecisionRequest,
+    engine: Any = Depends(get_inventory_engine),
+    _user: dict[str, Any] = Depends(_authorized_user),
+) -> dict[str, Any]:
+    try:
+        return submit_approval(engine, str(ticket_id), department, payload.decision, payload.feedback)
+    except ValueError as exc:
+        raise _approval_error(exc) from exc
+
+
+@router.post("/tickets/{ticket_id}/arbitrate")
+def resolve_ticket_conflicts(
+    ticket_id: UUID,
+    payload: ArbitrationRequest,
+    engine: Any = Depends(get_inventory_engine),
+    _user: dict[str, Any] = Depends(_authorized_user),
+) -> dict[str, Any]:
+    try:
+        return arbitrate_conflicts(engine, str(ticket_id), {"conflicts": payload.conflicts}, payload.actor)
+    except ValueError as exc:
+        raise _approval_error(exc) from exc
 
 
 @router.post("/tickets/{ticket_id}/reprocess", status_code=status.HTTP_202_ACCEPTED)
