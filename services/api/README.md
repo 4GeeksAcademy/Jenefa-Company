@@ -2,7 +2,8 @@
 
 FastAPI service for incident CSV analysis, staff JWT authentication (TinyDB),
 clinic supply inventory (SQLModel ledger on SQLite or Supabase PostgreSQL),
-and telemetry event ingestion (`telemetry_events`, same SQLModel engine).
+telemetry event ingestion (`telemetry_events`, same SQLModel engine), and the
+SecureAI governance registry.
 
 Async reporting is dispatched to the independent Celery worker through Redis.
 
@@ -62,6 +63,9 @@ Without a provider API key, password-reset emails are logged to the API console 
 | `GET` | `/inventory/orders` | Bearer | Unified inbound/outbound log with preloaded supplies |
 | `POST` | `/telemetry/events` | Public | Ingest a telemetry batch; per-event partial validation + bulk insert into `telemetry_events`, returns `{received, stored, rejected}` |
 | `GET` | `/telemetry/report` | Public | Pandas-driven operational report (`events_per_day`, `error_rate_by_type`, `average_latency_by_day`) over an optional `start_date`/`end_date` ISO 8601 window (defaults to the last 7 days, UTC); results cached in-memory per window for 60s |
+| `GET` | `/governance/ai-systems` | Bearer | List the non-PHI AI system registry, including owner, risk tier, jurisdiction, and lifecycle status |
+| `POST` | `/governance/ai-systems` | Admin bearer | Register an AI system or tool; duplicate keys are rejected and new systems default to `sandbox` |
+| `POST` | `/governance/ai-systems/{system_key}/suspend` | Admin bearer | Suspend a registered system during governance or incident response |
 | `POST` | `/rfp/tickets/{ticket_id}/generate-response` | RFP auth | Generate bounded department response drafts only from an `intake_complete` ticket's structured handoff; persists each draft and evaluation result |
 | `GET` | `/rfp/tickets/{ticket_id}/response` | RFP auth | Retrieve saved response sections, evaluator results, and ticket lifecycle state |
 | `POST` | `/reports/generate` | Public | Queue executive report generation; accepts only a database reference and returns `202` with a Celery `task_id` |
@@ -72,6 +76,11 @@ Without a provider API key, password-reset emails are logged to the API console 
 | `GET` | `/agent/memory/audit` | Public | Read the immutable memory lifecycle audit ledger |
 
 On first boot, empty catalog databases are seeded to the HealthCore spec balances (gloves `450`, sedative `35`). Stock is never stored on `MedicalSupply` rows.
+
+The governance registry is seeded with the five SecureAI baseline assets from
+the NIST/MIST context. It stores metadata only, never prompts, patient data,
+credentials, or model responses. New systems require an assigned owner and
+explicit risk and jurisdiction values before registration.
 
 Incident responses never include `patient_id` or other PHI — only aggregate counts and rule labels.
 

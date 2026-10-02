@@ -32,6 +32,9 @@ from .rfp.models import (  # noqa: F401 — register SQLModel tables
 )
 from data.pipelines.rfp_response import RFPResponseSection as _RFPResponseSection  # noqa: F401 — register response table
 from .rfp.router import router as rfp_router
+from .secure_ai.models import AISystem as _AISystem  # noqa: F401 — register AI governance table
+from .secure_ai.router import router as secure_ai_router
+from .secure_ai.seed import seed_baseline_systems
 from .telemetry.router import router as telemetry_router
 from data.pipelines.rag import query as rag_query
 from services.job_runner import JobRunRecord as _JobRunRecord  # noqa: F401 — register unified metadata
@@ -51,6 +54,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     init_inventory_schema(engine)
     with Session(engine) as session:
         seed_relational_catalog(session)
+    seed_baseline_systems(engine)
     seed_identity_cache()
     app.state.inventory_engine = engine
     try:
@@ -84,6 +88,7 @@ app.include_router(async_tasks_router)
 app.include_router(agent_router)
 app.include_router(agent_websocket_router)
 app.include_router(rfp_router)
+app.include_router(secure_ai_router)
 
 
 @app.post("/knowledge/query")
