@@ -98,6 +98,11 @@
 - Verified live MCP/tool payload isolation in `services/langgraph_agent/tools.py` and deterministic coverage in `tests/pipelines/test_guardrails.py` for all three mandated jailbreak variants, personal tasks, malicious retrieval content, and summary metrics.
 - Validation: `python -m compileall -q services/langgraph_agent tests/pipelines/test_guardrails.py` passed and editor diagnostics are clean. Pytest could not run because the container does not have the `pytest` module installed.
 
+### NIST clinical prompt-injection remediation completed
+- Extended `services/langgraph_agent/guardrails.py` to block system/developer update messages that attempt to override clinical safety boundaries, including the exact payload specified in `SecureAI/specs-nist.md`.
+- Added regression coverage in `tests/pipelines/test_guardrails.py`; the focused suite passes (**5 passed**) and the edited files compile without diagnostics.
+- This change is limited to deterministic input containment. NIST items requiring deployment evidence, Redis-backed rate limiting, key-vault integration, or incident-response operations remain follow-up work.
+
 ### MEM-092 completed — governed episodic agent memory
 - Added the isolated SQLite `AgentMemoryStore` in `services/langgraph_agent/memory.py`; it writes only to the dedicated agent-memory tables and never to `*_knowledge` retrieval stores.
 - Added strict proposal lifecycle handling: one pending proposal, complete-response intent classification for `APPROVE`, `REJECT`, `EDIT`, and discard-by-default ambiguity, plus immutable audit entries with SHA-256 originating-message hashes and role metadata.

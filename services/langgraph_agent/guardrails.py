@@ -23,6 +23,8 @@ _INJECTION_PATTERNS = (
     re.compile(r"you\s+are\s+now\s+an\s+assistant\s+with\s+no\s+rules", re.I),
     re.compile(r"forget\s+that\s+you\s+work\s+for\s+the\s+company", re.I),
     re.compile(r"(?:system|developer)\s+override|jailbreak|bypass\s+(?:your\s+)?rules", re.I),
+    re.compile(r"(?:system|developer)\s+(?:update|message|instruction).*?override", re.I),
+    re.compile(r"override\s+(?:clinical\s+)?safety\s+boundaries", re.I),
 )
 _PERSONAL_PATTERNS = (
     re.compile(r"\b(?:love|romantic)\s+poem\b", re.I),
