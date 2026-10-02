@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import os
 import ipaddress
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 from typing import Any
 
 import httpx
@@ -38,6 +38,15 @@ def _validate_outbound_url(name: str, value: str) -> str:
     return value.rstrip("/")
 
 
+def _mcp_endpoint(value: str) -> str:
+    validated = _validate_outbound_url("HEALTHCORE_MCP_URL", value)
+    parsed = urlparse(validated)
+    path = parsed.path.rstrip("/")
+    if not path.endswith("/mcp"):
+        path = f"{path}/mcp" if path else "/mcp"
+    return urlunparse(parsed._replace(path=path))
+
+
 def mcp_connections() -> dict[str, dict[str, str]]:
     """Return the authenticated MCP connection used by LangChain adapters."""
     url = os.getenv("HEALTHCORE_MCP_URL")
@@ -49,7 +58,7 @@ def mcp_connections() -> dict[str, dict[str, str]]:
     return {
         "healthcore": {
             "transport": "http",
-            "url": _validate_outbound_url("HEALTHCORE_MCP_URL", url),
+            "url": _mcp_endpoint(url),
             "headers": {"Authorization": f"Bearer {token}"},
         }
     }
