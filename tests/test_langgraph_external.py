@@ -3,7 +3,40 @@ from __future__ import annotations
 from typing import Any
 
 from services.langgraph_agent.graph import build_graph
-from services.langgraph_agent.tools import ExternalToolError
+from services.langgraph_agent.tools import ExternalToolError, _base_url, mcp_connections
+
+
+def test_external_service_urls_reject_loopback_and_private_hosts(monkeypatch: Any) -> None:
+    monkeypatch.setenv("HEALTHCORE_SERVICE_TOKEN", "unit-test-token")
+    monkeypatch.setenv("HEALTHCORE_INCIDENTS_BASE_URL", "http://127.0.0.1:8000")
+    monkeypatch.setenv("HEALTHCORE_INVENTORY_BASE_URL", "http://10.0.0.5")
+    monkeypatch.setenv("HEALTHCORE_MCP_URL", "http://localhost:8080")
+
+    for name in (
+        "HEALTHCORE_INCIDENTS_BASE_URL",
+        "HEALTHCORE_INVENTORY_BASE_URL",
+        "HEALTHCORE_MCP_URL",
+    ):
+        try:
+            if name == "HEALTHCORE_MCP_URL":
+                mcp_connections()
+            else:
+                _base_url(name)
+        except ExternalToolError as error:
+            assert "private" in error.reason or "local" in error.reason
+        else:
+            raise AssertionError(f"{name} accepted an unsafe target")
+
+
+def test_external_service_urls_reject_non_http_components(monkeypatch: Any) -> None:
+    monkeypatch.setenv("HEALTHCORE_INCIDENTS_BASE_URL", "file:///etc/passwd")
+
+    try:
+        _base_url("HEALTHCORE_INCIDENTS_BASE_URL")
+    except ExternalToolError as error:
+        assert "HTTP(S)" in error.reason
+    else:
+        raise AssertionError("non-HTTP service URL was accepted")
 
 
 def test_live_ticket_query_uses_incident_tool_without_rag() -> None:

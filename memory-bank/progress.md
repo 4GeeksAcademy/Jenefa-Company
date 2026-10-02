@@ -1,5 +1,11 @@
 # Progress - HealthCore
 
+### OWASP security audit and SSRF hardening completed
+- Added `SecureAI/OWASP-AUDIT.md` with an explicit A01-A10 finding matrix across the frontend, central API, and agentic system, plus reproducible critical-remediation and deployment sign-off gates.
+- Hardened `services/langgraph_agent/tools.py` so MCP, incident, and inventory endpoints reject non-HTTP(S), credential-bearing, query-bearing, loopback, private, link-local, and reserved targets before outbound requests; regression coverage in `tests/test_langgraph_external.py` passes (**5 passed**).
+- Hardened `services/Dockerfile` with a dedicated non-root `hc-runtime` user and corrected stale build paths; `.dockerignore` permits only required `data` package sources while retaining raw/generated data exclusions. The image builds successfully and defaults to `hc-runtime`.
+- Host SSH, firewall, TLS/at-rest encryption, SBOM, signed-release, and central log-export evidence remain deployment-owner gates and are documented rather than claimed as application-test results.
+
 ### Bidirectional agent WebSocket streaming foundation completed
 - Added authenticated `GET /agent/ws` with query-token verification, required `session_id`/`thread_id` binding, structured `token_chunk`, `interrupt`, `generation_interrupted`, and `generation_completed` frames, progressive client reconnects, and non-destructive interrupted-turn rendering at `uis/web` `/chat`.
 - Added focused handshake, frame serialization, and interruption coverage in `services/api/tests/test_agent_websocket.py`; editor diagnostics are clean, the focused WebSocket tests pass (**3 passed**), the full API suite passes with test-only MCP settings (**60 passed**), and the web production build passes.

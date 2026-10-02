@@ -53,6 +53,10 @@ htmlcov/
 .coverage
 .pytest_cache/
 data/
+!data/
+!data/__init__.py
+!data/pipelines/
+!data/pipelines/**
 
 # ── Dockerfiles (already referenced explicitly) ──────────────────────────
 uis/Dockerfile
