@@ -1,5 +1,12 @@
 # Progress - HealthCore
 
+### SecureAI NIST/MIST governance registry completed
+- Added `services/api/app/secure_ai/` with a SQLModel, non-PHI AI-system registry covering owner, architecture, data traversal surface, provider, risk tier, jurisdiction, and lifecycle status.
+- Seeded the five product-context baseline assets: Classification Agent, Response Agent, Escalation Workflow Engine, Semantic Memory Module, and MCP Tool Gateway.
+- Added authenticated `GET /governance/ai-systems`, admin-only registration, duplicate-key protection, schema validation, and admin suspension for incident/governance response.
+- Documented the registry contract in `services/api/README.md` and added `services/api/tests/test_secure_ai.py` coverage for auth, admin writes, duplicate prevention, suspension, and invalid risk tiers.
+- Validation: focused SecureAI tests pass (**4 passed**), complete API suite passes (**66 passed**), and editor diagnostics are clean. Rate limiting, kill-switch orchestration, and incident playbook automation remain separate follow-up controls from the broader NIST action report.
+
 ### OWASP security audit and SSRF hardening completed
 - Added `SecureAI/OWASP-AUDIT.md` with an explicit A01-A10 finding matrix across the frontend, central API, and agentic system, plus reproducible critical-remediation and deployment sign-off gates.
 - Hardened `services/langgraph_agent/tools.py` so MCP, incident, and inventory endpoints reject non-HTTP(S), credential-bearing, query-bearing, loopback, private, link-local, and reserved targets before outbound requests; regression coverage in `tests/test_langgraph_external.py` passes (**5 passed**).
