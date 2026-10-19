@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { fetchExecutiveKpis, ExecutiveKpi } from "../../services/reporting";
 
-const colors = { background: "#f4f7f8", foreground: "#1a2b32", surface: "#ffffff", sidebar: "#0f3d3e", sidebarMuted: "#9ebdbd", sidebarHover: "#165153", accent: "#1f7a7a", border: "#d5e0e2", muted: "#5c7278" };
+const colors = { background: "#f8fafc", foreground: "#172554", surface: "#ffffff", sidebar: "#0284c7", sidebarMuted: "#bfdbfe", sidebarHover: "#0369a1", accent: "#0284c7", border: "#e2e8f0", muted: "#475569" };
 
 function percent(value: number | null): string { return value === null ? "—" : `${(value * 100).toFixed(1)}%`; }
 export const dynamic = "force-dynamic";

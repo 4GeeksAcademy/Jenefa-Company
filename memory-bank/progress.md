@@ -1,5 +1,9 @@
 # Progress - HealthCore
 
+### Backoffice blue palette alignment completed
+- Updated `uis/backoffice/src/app/page.tsx`, `uis/backoffice/src/app/reporting/page.tsx`, and `uis/backoffice/src/app/rfp/page.tsx` from green/teal shell and highlight colors to the public website's blue/slate palette, including visible RFP success and live-status states.
+- Validation: backoffice production build passes and no old green palette values remain under `uis/backoffice`.
+
 ### SecureAI NIST/MIST governance registry completed
 - Added `services/api/app/secure_ai/` with a SQLModel, non-PHI AI-system registry covering owner, architecture, data traversal surface, provider, risk tier, jurisdiction, and lifecycle status.
 - Seeded the five product-context baseline assets: Classification Agent, Response Agent, Escalation Workflow Engine, Semantic Memory Module, and MCP Tool Gateway.

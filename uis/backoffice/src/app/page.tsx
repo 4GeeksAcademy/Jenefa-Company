@@ -1,16 +1,22 @@
 import Link from "next/link";
 
 const colors = {
-  background: "#f4f7f8",
-  foreground: "#1a2b32",
+  background: "#f8fafc",
+  foreground: "#172554",
   surface: "#ffffff",
-  sidebar: "#0f3d3e",
-  sidebarMuted: "#9ebdbd",
-  sidebarHover: "#165153",
-  accent: "#1f7a7a",
-  accentSoft: "#d7ecec",
-  border: "#d5e0e2",
-  muted: "#5c7278",
+  
+  sidebarHover: "#0369a1",
+  sidebar: "#0284c7",        
+  sidebarMuted: "#bfdbfe",   
+  
+  // BUTTON COLORS: Cleanly mapped to your public website classes
+  buttonBase: "#0ea5e9",     // Matches bg-accent-500
+  buttonHover: "#0284c7",    // Matches hover:bg-accent-600
+  
+  accent: "#0284c7",
+  accentSoft: "#e0f2fe",
+  border: "#e2e8f0",
+  muted: "#475569",
 };
 
 const navItems = [
