@@ -6,9 +6,11 @@ import { apiFetch, readJson } from "@/lib/api";
 const POLL_INTERVAL_MS = 2000;
 const MAX_POLLS = 60;
 
-type RefreshState = { phase: "idle" | "running" | "done" | "error"; message: string };
+type RefreshState = {
+  phase: "idle" | "running" | "done" | "error";
+  message: string;
+};
 
-// 1. Data Type mapping precisely with your project's verified database table schema
 type ExecutiveKPIData = {
   id: number;
   reporting_window_timestamp: string;
@@ -22,7 +24,7 @@ type ExecutiveKPIData = {
   patient_satisfaction_score: number | null;
 };
 
-export function ReportingRefresh({ onCompleted }: { onCompleted?: () => void | Promise<void> }) {
+export default function BusinessReportingPage({ onCompleted }: { onCompleted?: () => void | Promise<void> }) {
   const [state, setState] = useState<RefreshState>({ phase: "idle", message: "" });
   const [reportData, setReportData] = useState<ExecutiveKPIData[]>([]);
   const [currentMonth, setCurrentMonth] = useState<string>("No completed run");
@@ -31,16 +33,15 @@ export function ReportingRefresh({ onCompleted }: { onCompleted?: () => void | P
   
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 2. Fetcher module pulling rows from your active backend router endpoint
   async function fetchReportingData() {
     try {
       setIsLoadingData(true);
-      const response = await apiFetch("/services/reporting/kpis"); 
+      const response = await apiFetch("/services/reporting/kpis");
       const data = await readJson<ExecutiveKPIData[]>(response);
       
       if (Array.isArray(data)) {
         setReportData(data);
-        if (data.length > 0 && data[0].reporting_window_timestamp) {
+        if (data.length > 0 && data[0]?.reporting_window_timestamp) {
           setCurrentMonth(data[0].reporting_window_timestamp.slice(0, 10));
         }
       }
@@ -56,32 +57,39 @@ export function ReportingRefresh({ onCompleted }: { onCompleted?: () => void | P
   const clinicOptions = Array.from(new Set(activeRows.map((row) => row.clinic_location_id))).sort();
   const selectedRow = activeRows.find((row) => row.clinic_location_id === selectedClinic) ?? activeRows[0];
   const totalAppointments = activeRows.reduce((sum, row) => sum + (row.network_appointment_volume ?? 0), 0);
+  
   const average = (values: Array<number | null>) => {
     const present = values.filter((value): value is number => value !== null);
     return present.length ? present.reduce((sum, value) => sum + value, 0) / present.length : null;
   };
+  
   const overallNoShow = average(activeRows.map((row) => row.global_no_show_rate));
   const overallDenial = average(activeRows.map((row) => row.claims_denial_rate));
+  
   const claimsByCurrency = activeRows.reduce<Record<string, number>>((totals, row) => {
     if (row.revenue_net_settled === null) return totals;
     const currency = row.revenue_currency ?? "Unknown currency";
     totals[currency] = (totals[currency] ?? 0) + row.revenue_net_settled;
     return totals;
   }, {});
+  
   const totalClaims = Object.entries(claimsByCurrency)
     .map(([currency, amount]) => `${currency} ${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`)
     .join(" · ") || "-";
+    
   const percent = (value: number | null) => value === null ? "-" : `${(value * 100).toFixed(1)}%`;
 
   useEffect(() => {
-    fetchReportingData();
+    const initialLoadTimer = setTimeout(() => {
+      void fetchReportingData();
+    }, 0);
 
     return () => {
+      clearTimeout(initialLoadTimer);
       if (timer.current) clearTimeout(timer.current);
     };
   }, []);
 
-  // 3. Celery / Redis tracking state monitor loop
   async function pollRun(taskId: string, attempt: number) {
     try {
       const response = await apiFetch(`/services/reporting/trigger/${taskId}`);
@@ -111,7 +119,6 @@ export function ReportingRefresh({ onCompleted }: { onCompleted?: () => void | P
     }
   }
 
-  // 4. Ingestion runner pipeline background queue trigger
   async function startRun() {
     setState({ phase: "running", message: "Queuing background task run…" });
     try {
@@ -127,41 +134,41 @@ export function ReportingRefresh({ onCompleted }: { onCompleted?: () => void | P
   }
 
   return (
-    <div className="space-y-6 w-full">
-      {/* Control Action Bar Area */}
-      <div className="flex flex-col items-start gap-2 sm:items-end justify-between sm:flex-row">
+    <div className="space-y-6 w-full text-slate-700">
+      
+      <div className="flex flex-col items-start gap-4 sm:items-center justify-between sm:flex-row pt-2 pb-1">
         <div>
-          <h3 className="text-sm text-muted font-medium">
-            Active Cycle Period: <span className="font-mono text-foreground font-semibold">{currentMonth}</span>
+          <h3 className="text-sm text-slate-700 font-medium">
+            Active Cycle Period: <span className="font-bold text-slate-900 ml-1">{currentMonth}</span>
           </h3>
         </div>
-        <div className="flex flex-wrap items-end justify-end gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-3">
           {clinicOptions.length ? (
-            <label className="text-right text-xs font-semibold uppercase tracking-wide text-muted">
+            <label className="text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
               Clinic location
               <select
                 value={selectedClinic || clinicOptions[0]}
                 onChange={(event) => setSelectedClinic(event.target.value)}
-                className="mt-1 block border border-border bg-surface px-3 py-2 text-sm font-normal normal-case tracking-normal text-foreground"
+                className="mt-1 block border border-slate-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-slate-800 rounded shadow-sm focus:border-sky-500 focus:outline-none"
               >
                 {clinicOptions.map((clinic) => <option key={clinic} value={clinic}>{clinic}</option>)}
               </select>
             </label>
           ) : null}
           <div className="flex flex-col items-end gap-1">
-          <button
-            type="button"
-            onClick={() => void startRun()}
-            disabled={state.phase === "running"}
-            className="border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground hover:bg-panel-line/40 disabled:opacity-60 rounded shadow-sm transition-colors"
-          >
-            {state.phase === "running" ? "Running Core Pipeline…" : "Refresh Reporting Data"}
-          </button>
-          {state.message ? (
-            <p role="status" className={state.phase === "error" ? "text-sm text-red-600 font-medium" : "text-sm text-muted"}>
-              {state.message}
-            </p>
-          ) : null}
+            <button
+              type="button"
+              onClick={() => void startRun()}
+              disabled={state.phase === "running"}
+              className="border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 hover:bg-slate-50 disabled:opacity-60 rounded shadow-sm transition-colors"
+            >
+              {state.phase === "running" ? "Running Core Pipeline…" : "Refresh Reporting Data"}
+            </button>
+            {state.message ? (
+              <p role="status" className={state.phase === "error" ? "text-sm text-rose-600 font-medium" : "text-sm text-slate-500"}>
+                {state.message}
+              </p>
+            ) : null}
           </div>
         </div>
       </div>
@@ -173,70 +180,82 @@ export function ReportingRefresh({ onCompleted }: { onCompleted?: () => void | P
           ["Overall denial rate", percent(overallDenial)],
           ["Total net settled", totalClaims],
         ].map(([label, value]) => (
-          <article key={label} className="border border-border bg-surface p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">{label}</p>
-            <p className="mt-3 font-display text-3xl text-foreground">{value}</p>
+          <article key={label} className="border border-slate-200 bg-white p-5 rounded shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">{label}</p>
+            <p className="mt-3 font-display text-4xl font-normal text-slate-900">{value}</p>
           </article>
         ))}
       </section>
 
       {selectedRow ? (
-        <section aria-label="Selected clinic reporting" className="border border-border bg-surface p-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Selected clinic</p>
-          <h2 className="mt-2 font-display text-2xl text-foreground">{selectedRow.clinic_location_id}</h2>
+        <section aria-label="Selected clinic reporting" className="border border-slate-200 bg-white p-5 rounded shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Selected clinic</p>
+          <h2 className="mt-2 font-display text-2xl text-slate-900">{selectedRow.clinic_location_id}</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-4">
-            <div><p className="text-xs text-muted">Reporting period</p><p className="mt-1 font-medium">{selectedRow.reporting_window_timestamp.slice(0, 10)}</p></div>
-            <div><p className="text-xs text-muted">No-show rate</p><p className="mt-1 font-medium">{percent(selectedRow.global_no_show_rate)}</p></div>
-            <div><p className="text-xs text-muted">Denial rate</p><p className="mt-1 font-medium">{percent(selectedRow.claims_denial_rate)}</p></div>
-            <div><p className="text-xs text-muted">Net settled</p><p className="mt-1 font-medium">{selectedRow.revenue_net_settled === null ? "-" : `${selectedRow.revenue_currency ?? ""} ${selectedRow.revenue_net_settled.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}</p></div>
+            <div>
+              <p className="text-xs text-slate-400">Reporting period</p>
+              <p className="mt-1 font-medium text-slate-800">{selectedRow.reporting_window_timestamp.slice(0, 10)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-400">No-show rate</p>
+              <p className="mt-1 font-medium text-slate-800">{percent(selectedRow.global_no_show_rate)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-400">Denial rate</p>
+              <p className="mt-1 font-medium text-slate-800">{percent(selectedRow.claims_denial_rate)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-400">Net settled</p>
+              <p className="mt-1 font-medium text-slate-800">
+                {selectedRow.revenue_net_settled === null ? "—" : `${selectedRow.revenue_currency ?? "$"} ${selectedRow.revenue_net_settled.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+              </p>
+            </div>
           </div>
         </section>
       ) : null}
 
-      {/* Main Metric Table Output Display */}
-      <div className="border border-border bg-surface p-6 rounded-md shadow-sm">
-        <h2 className="text-md font-semibold text-foreground mb-4">Executive Network Performance Summary</h2>
-        
+      <div className="border border-slate-200 bg-white p-6 rounded shadow-sm">
+        <h2 className="text-md font-semibold text-slate-800 mb-2">Executive Network Performance Summary</h2>
         {isLoadingData ? (
-          <p className="text-sm text-muted">Retrieving metrics from Supabase database tables...</p>
+          <p className="text-sm text-slate-400">Retrieving metrics from Supabase database tables...</p>
         ) : reportData.length === 0 ? (
-          <p className="text-sm text-muted">No telemetry records processed for this cycle yet. Trigger a sync run above.</p>
+          <p className="text-sm text-slate-400 mt-2">No telemetry records processed for this cycle yet. Trigger a sync run above.</p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto mt-4">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-border text-muted font-medium">
-                  <th className="pb-2">Clinic ID</th>
-                  <th className="pb-2">Region</th>
-                  <th className="pb-2 text-right">Appointments</th>
-                  <th className="pb-2 text-right">No-Show Rate</th>
-                  <th className="pb-2 text-right">Claims Denial Rate</th>
-                  <th className="pb-2 text-right">Net Settled</th>
+                <tr className="border-b border-slate-100 text-slate-400 font-medium text-xs uppercase tracking-wider">
+                  <th className="pb-3">Clinic ID</th>
+                  <th className="pb-3">Region</th>
+                  <th className="pb-3 text-right">Appointments</th>
+                  <th className="pb-3 text-right">No-Show Rate</th>
+                  <th className="pb-3 text-right">Claims Denial Rate</th>
+                  <th className="pb-3 text-right">Net Settled</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border text-foreground">
+              <tbody className="divide-y divide-slate-100 text-slate-700">
                 {reportData.map((row, idx) => (
-                  <tr key={`${row.reporting_window_timestamp}-${row.clinic_location_id}-${row.id || idx}`} className="hover:bg-panel-line/10 transition-colors">
-                    <td className="py-3 font-medium text-foreground">
+                  <tr key={`${row.reporting_window_timestamp}-${row.clinic_location_id}-${row.id || idx}`} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3.5 font-medium text-slate-900">
                       {row.clinic_location_id}
                     </td>
-                    <td className="py-3 text-xs uppercase tracking-wider text-muted font-semibold">
+                    <td className="py-3.5 text-xs uppercase tracking-wider text-slate-400 font-semibold">
                       {row.market_region || "GLOBAL"}
                     </td>
-                    <td className="py-3 text-right font-mono font-medium text-foreground">
+                    <td className="py-3.5 text-right font-mono font-medium text-slate-800">
                       {row.network_appointment_volume !== null ? `${row.network_appointment_volume} visits` : "—"}
                     </td>
-                    <td className="py-3 text-right">
-                      <span className={`px-2 py-0.5 text-xs rounded font-medium ${row.global_no_show_rate !== null && row.global_no_show_rate > 0.2 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                    <td className="py-3.5 text-right">
+                      <span className={`px-2 py-0.5 text-xs rounded font-medium ${row.global_no_show_rate !== null && row.global_no_show_rate > 0.2 ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'}`}>
                         {percent(row.global_no_show_rate)}
                       </span>
                     </td>
-                    <td className="py-3 text-right">
-                      <span className={`px-2 py-0.5 text-xs rounded font-medium ${row.claims_denial_rate !== null && row.claims_denial_rate > 0.08 ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-700'}`}>
+                    <td className="py-3.5 text-right">
+                      <span className={`px-2 py-0.5 text-xs rounded font-medium ${row.claims_denial_rate !== null && row.claims_denial_rate > 0.08 ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
                         {row.claims_denial_rate !== null ? `${(Number(row.claims_denial_rate) * 100).toFixed(1)}%` : "—"}
                       </span>
                     </td>
-                    <td className="py-3 text-right font-mono font-medium text-muted">
+                    <td className="py-3.5 text-right font-mono font-medium text-slate-500">
                       {row.revenue_net_settled !== null ? `${row.revenue_currency || "$"}${Number(row.revenue_net_settled).toLocaleString()}` : "—"}
                     </td>
                   </tr>

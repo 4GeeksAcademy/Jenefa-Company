@@ -65,9 +65,9 @@ export function CandidateListPage() {
   return (
     <div className="space-y-6">
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h1 className="text-lg font-bold uppercase tracking-widest text-slate-500">
           Active Recruitment Pipeline
-        </h2>
+        </h1>
         <p className="mt-1 text-sm text-slate-600">
           Review all clinical applicants across HealthCore&apos;s 12-clinic network.
           Filter by hiring status or pipeline stage.

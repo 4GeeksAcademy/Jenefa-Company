@@ -25,6 +25,13 @@ def test_personal_task_is_declined_without_calling_retriever():
     assert calls == []
 
 
+def test_casual_weather_question_uses_standard_healthcore_redirect():
+    state = guarded_invoke_agent("What's the weather today?")
+
+    assert state["route"] == "guardrail"
+    assert state["answer"] == "Please ask about our clinics, operations, or compliance."
+
+
 def test_retrieval_payload_is_isolated_before_generation():
     state = guarded_invoke_agent(
         "What framework protects US records?",

@@ -161,7 +161,7 @@ export function OperationsLedger() {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-md font-bold uppercase tracking-widest text-slate-500">Knowledge base</p>
+          <p className="text-lg font-bold uppercase tracking-widest text-slate-500">Knowledge base</p>
           <h1 className="mt-2 text-lg font-normal">Operations Overview</h1>
         </div>
         <p className="text-sm text-slate-500">

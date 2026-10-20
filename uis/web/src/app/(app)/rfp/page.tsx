@@ -258,13 +258,13 @@ export default function RfpPage() {
   return (
     <div style={{ minHeight: "100%", background: colors.background, color: colors.foreground, fontFamily: "Arial, sans-serif" }}>
       <header style={{ borderBottom: `1px solid ${colors.border}`, background: colors.surface, padding: "20px 36px" }}>
-        <div style={{ color: colors.muted, fontSize: 11, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase" }}>Operations workspace</div>
-        <h1 style={{ margin: "5px 0 0", fontFamily: "Georgia, serif", fontSize: 24, fontWeight: 400 }}>RFP intake & routing</h1>
+        <div ><p className="text-lg font-bold uppercase tracking-widest text-slate-500">Operations workspace</p></div>
+        <h1 className="mt-2 text-lg font-normal">RFP intake and routing</h1>
       </header>
       <main style={{ maxWidth: 1180, margin: "0 auto", padding: "40px 36px" }}>
         <section style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, marginBottom: 28 }}>
           <div>
-            <p style={{ maxWidth: 680, margin: 0, color: colors.muted, lineHeight: 1.7 }}>
+            <p className="mt-2 text-md font-normal text-muted">
               Upload a proposal request to extract its requirements, route sections to the responsible teams, and prepare a sales handoff. Processing continues asynchronously.
             </p>
           </div>

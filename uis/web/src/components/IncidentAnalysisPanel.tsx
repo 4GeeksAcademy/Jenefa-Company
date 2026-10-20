@@ -57,9 +57,9 @@ export function IncidentAnalysisPanel() {
     <div className="flex flex-col gap-8">
       <section className="grid gap-6 border border-border bg-surface px-6 py-8 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
         <div>
-          <p className="text-md font-bold uppercase tracking-[0.16em] text-accent">Business Logic</p>
-          <h2 className="mt-2 font-display text-lg tracking-tight text-foreground">Incident analysis</h2>
-          <p className="mt-3 max-w-xl text-base leading-7 text-muted">
+          <p className="text-lg font-bold uppercase tracking-widest text-slate-500">Business Logic</p>
+          <h1 className="mt-2 text-lg font-normal">Incident analysis</h1>
+          <p className="mt-3 max-w-lg text-sm leading-7 text-muted">
             Upload a clinic incident CSV for aggregate validation. Outputs never include patient identifiers — HIPAA / UK GDPR safe summaries only.
           </p>
         </div>

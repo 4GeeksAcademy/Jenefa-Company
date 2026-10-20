@@ -126,8 +126,8 @@ export function AgentChatPanel() {
     <section className="mx-auto w-full max-w-4xl">
       <div className="mb-6 flex items-end justify-between border-b border-border pb-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Operations assistant</p>
-          <h2 className="font-display text-3xl text-foreground">Live support chat</h2>
+          <p className="text-lg font-semibold uppercase tracking-[0.14em] text-muted">Operations assistant</p>
+          <h2 className="font-display text-lg text-foreground">Live support chat</h2>
         </div>
         <p className="text-sm text-muted">{connected ? "Connected" : "Reconnecting"}</p>
       </div>

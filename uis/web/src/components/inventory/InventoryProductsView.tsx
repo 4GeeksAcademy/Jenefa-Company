@@ -35,12 +35,12 @@ export function InventoryProductsView() {
   return (
     <section className="space-y-6">
       <header className="space-y-3 rounded-lg border border-border bg-surface px-6 py-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">
-          Backoffice inventory
+        <p className="text-lg font-bold uppercase tracking-widest text-slate-500">
+          Technical Data
         </p>
-        <h2 className="font-display text-3xl tracking-tight text-foreground">
+        <h1 className="mt-2 text-lg font-normal">
           Products Inventory Ledger
-        </h2>
+        </h1>
         <p className="text-sm leading-7 text-muted">
           Live balances are derived from inbound and outbound movement records.
         </p>

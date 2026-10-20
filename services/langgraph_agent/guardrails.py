@@ -91,7 +91,7 @@ def _casual_answer(question: str) -> str:
         now = datetime.now(timezone.utc)
         tokyo_hour = (now.hour + 9) % 24
         return f"Tokyo uses Japan Standard Time (UTC+9); it is currently {tokyo_hour:02d}:00 there. For HealthCore help, ask about our clinics, operations, or compliance."
-    return "I can answer brief general questions. For HealthCore help, ask about our clinics, operations, or compliance."
+    return "Please ask about our clinics, operations, or compliance."
 
 
 def isolate_untrusted_text(value: Any, *, source: str) -> str:

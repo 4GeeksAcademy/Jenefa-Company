@@ -24,7 +24,7 @@ const navGroups = [
       { href: "/rfp", label: "RFP Intake", icon: "✉" },
     ],
   },
-  { label: "Agent systems", items: [{ href: "/assistant", label: "Live Support Chat", icon: "◇" }] },
+  { label: "Operating assistant", items: [{ href: "/assistant", label: "Live Support Chat", icon: "◇" }] },
 ] as const;
 
 export function WebShell({ children }: { children: React.ReactNode }) {
@@ -110,10 +110,10 @@ export function WebShell({ children }: { children: React.ReactNode }) {
         <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-10 flex shrink-0 items-start justify-between border-b border-border bg-surface px-6 py-4 leading-6">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+              <p className="text-2xl font-bold uppercase tracking-widest text-muted">
                 Backoffice
               </p>
-              <h1 className="font-display text-lg font-semibold text-foreground">Internal Use Only</h1>
+              <h1 className="font-display text-xs font-semibold text-foreground">Internal Use Only</h1>
             </div>
             <div className="flex flex-col items-end">
               {displayName ? (
