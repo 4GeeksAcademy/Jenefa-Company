@@ -65,30 +65,65 @@ def seed_identity_cache() -> None:
         )
 
 
-def seed_relational_catalog(session: Session) -> None:
-    """Load MedicalSupply / ledger rows when the catalog is empty."""
-    if session.exec(select(MedicalSupply).limit(1)).first() is not None:
-        return
+SUPPLY_SEED = (
+    {
+        "id": 10,
+        "name": "Sterile Surgical Gloves",
+        "sku": "HC-GLV-002",
+        "clinic_id": "CLINIC-TX-01",
+        "regulatory_tier": "Standard Clinical",
+    },
+    {
+        "id": 20,
+        "name": "Controlled Sedative Vial",
+        "sku": "HC-SED-882",
+        "clinic_id": "CLINIC-UK-02",
+        "regulatory_tier": "High-Regulated (GDPR/HIPAA)",
+    },
+    {
+        "id": 30,
+        "name": "Disposable Syringes 10 ml",
+        "sku": "HC-SYR-010",
+        "clinic_id": "CLINIC-TX-03",
+        "regulatory_tier": "Standard Clinical",
+    },
+    {
+        "id": 40,
+        "name": "Surgical Face Masks (box of 50)",
+        "sku": "HC-PPE-050",
+        "clinic_id": "CLINIC-UK-04",
+        "regulatory_tier": "Standard Clinical",
+    },
+    {
+        "id": 50,
+        "name": "Insulin Pen Cartridge",
+        "sku": "HC-INS-300",
+        "clinic_id": "CLINIC-UK-04",
+        "regulatory_tier": "High-Regulated (GDPR/HIPAA)",
+    },
+)
 
-    session.add(
-        MedicalSupply(
-            id=10,
-            name="Sterile Surgical Gloves",
-            sku="HC-GLV-002",
-            clinic_id="CLINIC-TX-01",
-            regulatory_tier="Standard Clinical",
-        )
-    )
-    session.add(
-        MedicalSupply(
-            id=20,
-            name="Controlled Sedative Vial",
-            sku="HC-SED-882",
-            clinic_id="CLINIC-UK-02",
-            regulatory_tier="High-Regulated (GDPR/HIPAA)",
-        )
-    )
-    session.flush()
+
+def _add_missing_supplies(session: Session) -> None:
+    """Insert catalog items whose SKU is not yet stored, so existing databases also receive new SKUs."""
+    existing_skus = set(session.exec(select(MedicalSupply.sku)).all())
+    added = False
+    for row in SUPPLY_SEED:
+        if row["sku"] in existing_skus:
+            continue
+        session.add(MedicalSupply(**row))
+        added = True
+    if added:
+        session.commit()
+        _sync_postgres_sequences(session)
+
+
+def seed_relational_catalog(session: Session) -> None:
+    """Load catalog items every start; load ledger rows only when the catalog was empty."""
+    catalog_existed = session.exec(select(MedicalSupply).limit(1)).first() is not None
+    _add_missing_supplies(session)
+    if catalog_existed:
+        return
 
     session.add(
         InboundEntry(

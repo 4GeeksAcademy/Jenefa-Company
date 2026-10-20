@@ -16,6 +16,15 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      { source: "/analysis", destination: "/incidents", permanent: false },
+      { source: "/backoffice", destination: "/", permanent: false },
+      { source: "/operations", destination: "/", permanent: false },
+      { source: "/backoffice/inventory/:path*", destination: "/inventory/:path*", permanent: false },
+      { source: "/backoffice/:path*", destination: "/:path*", permanent: false },
+    ];
+  },
   turbopack: {
     // Keep resolution at the npm workspaces root so `healthcore-testing` stays linked.
     root: monorepoRoot,

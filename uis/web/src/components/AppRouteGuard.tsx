@@ -24,13 +24,13 @@ export default function AppRouteGuard({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     if (!token) {
-      router.replace("/login");
+      router.replace("/sign-in");
     }
   }, [token, router]);
 
   if (!token) {
     return (
-      <div className="loading-state flex min-h-full flex-1 items-center justify-center bg-background px-6 text-sm text-muted">
+      <div className="loading-state flex min-h-screen flex-1 items-center justify-center bg-background px-6 text-sm text-muted">
         Verifying session token safety layer...
       </div>
     );

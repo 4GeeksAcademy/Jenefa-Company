@@ -1,5 +1,44 @@
 # Progress - HealthCore
 
+### Business reporting KPI type-safety fix completed
+- Updated `services/api/app/reporting/kpi_contract.py` to preserve and aggregate native SQLAlchemy `datetime` and JSON/dict telemetry values, prefer the caller-provided database engine, and emit `CRITICAL ERROR` diagnostics for extraction, timestamp, and tag parsing failures.
+- Added `services/tests/test_reporting_kpi.py` covering native datetime/dict input and the serialized KPI dictionary consumed by the frontend.
+- Validation: focused KPI test passes (1 passed), the API on port 8000 returns valid KPI JSON, and the dashboard on port 3001 responds. Full browser automation was unavailable because Playwright is not installed; the reporting page is client-rendered.
+- Renamed the Prefect extraction, transformation, and load subflows to `fetch_network_telemetry_flow`, `compute_executive_kpi_matrix_flow`, and `load_central_reporting_db_flow`; added explicit no-show, US denial, and clinical documentation delta taxonomy functions with `market_us`/`market_uk` segmentation.
+- Added exact 22% no-show and 14% US denial benchmark coverage; the Prefect pipeline suite passes (5 tests).
+
+### Spec phase 3: Overview ledger, shared incident result, inventory clinic dropdowns, Flower link (pending build and browser checks)
+- Overview: `(app)/page.tsx` renders `OperationsLedger` (`src/components/OperationsLedger.tsx`), which replaces the earlier KPI overview. `OverviewDashboard.tsx` and `(app)/operations/page.tsx` were deleted. The sidebar "Operations Ledger" item was removed. `/operations` and `/backoffice` redirect to `/`.
+- Incident analysis: the latest result is kept in memory on the API (`state.py`) and served by `GET /api/incidents/latest` (404 when none exists). The upload panel and the Overview ledger both load it and render through `IncidentResults.tsx`. The result stays until the next successful upload. It is not persisted and holds aggregates only. The upload filename is no longer displayed.
+- Inventory: `SUPPLY_SEED` adds 3 SKUs (`HC-SYR-010` at CLINIC-TX-03, `HC-PPE-050` and `HC-INS-300` at CLINIC-UK-04). `_add_missing_supplies` adds them by SKU on every start, so existing databases get them. Ledger rows still seed only on a fresh catalog, so new SKUs start at zero stock. Inbound and outbound clinic IDs are now dropdowns built from the product list. These SKU and clinic values were chosen by the assistant and need confirming.
+- Reporting: `reporting/page.tsx` has an "Open Flower monitor" link, using `NEXT_PUBLIC_FLOWER_URL` (default `http://localhost:5555`).
+- Corrected: the earlier note that Overview is a live KPI page was wrong. The spec asks for the Operations Ledger on Overview.
+- Validation: `tsc --noEmit` passes for source files. The only errors come from stale `.next/types` entries for the removed `analysis` and `operations` pages, which clear on the next build. `tests/test_inventory.py` and `tests/test_agent_websocket.py` pass (13/13). The `/api/incidents/latest` route returns 404, then 200 after a save. `npm run build:web` and browser checks were not run in this sandbox.
+
+### Spec fixes: sign-in link, redirects, incident privacy, Operations ledger, chat cleanup (pending build and browser checks)
+- Inventory moved from `src/app/backoffice/inventory/` to `src/app/(app)/inventory/`, so it renders inside `WebShell` and the auth guard. Internal links now point to `/inventory/...`.
+- Redirects in `uis/web/next.config.ts`: `/backoffice` → `/operations`, `/backoffice/inventory/*` → `/inventory/*`, `/backoffice/*` → `/*`, and `/analysis` → `/incidents`. The empty `/analysis` route was removed and the nav points to `/incidents`.
+- Sign-in: the public "Staff Sign-in" link in `uis/website/src/components/SiteHeader.tsx` uses `NEXT_PUBLIC_STAFF_APP_URL` (default `http://localhost:3001`). The staff app must be running on that port.
+- Assistant chat: added a "Try asking" row of four sample questions. Clicking one fills the input and does not send.
+- Incident history: new `services/api/app/history/` with an `incident_analysis_runs` table, storing metadata only (timestamp and record counts). `POST /api/incidents/analyze` records each successful run. `GET /history/incidents` (auth required) lists runs. Retention is 10 days, purged on write and read.
+- Incident privacy: uploaded filenames are no longer read or stored (`main.py` uses the generic label `incident-upload.csv`). The "Previous analyses" section was removed from the incident panel. Rows saved before this change may still hold real filenames until they expire.
+- Chat: the "Previous sessions" section and chat-thread history were removed. The `chat_thread_records` table and the `/history/chat` endpoint were removed from code. `services/langgraph_agent/websocket.py` no longer records messages.
+- Operations: `/operations` uses live data. Inventory SKUs and units come from `/inventory/products`, the inventory ledger from `/inventory/orders`, incident history from `/history/incidents`, and RFP tickets from `/rfp/tickets`. The communications log was removed. Duplicate React keys in `DataTable` were fixed. The incident table no longer has a source-file column. Each table shows its own error or empty state. The support terminal's canned "Simulation queued" replies are still demo text.
+- Validation: `tests/test_agent_websocket.py` passes (5/5). Python files compile. `npm run build:web` could not finish in this sandbox (killed, memory). ESLint is blocked by organization content policy here.
+- Reporting (Celery): `POST /services/reporting/trigger` now requires auth, queues `generate_reporting_task` on the Celery worker (Redis broker), and returns 202 `{task_id, status: "queued"}`. `GET /services/reporting/trigger/{task_id}` (auth required) returns the task state only. Both return 503 when Redis or the worker is unavailable. Celery imports are lazy to avoid a circular import through `app.reporting`. The `reporting/page.tsx` header has a `ReportingRefresh` control that polls until the run finishes, then refreshes the page.
+- Overview (superseded by phase 3 above): an earlier version rendered `OverviewDashboard` (live KPI cards from the reporting endpoint, plus shortcuts to Operations, Reporting, Incidents, Inventory, and Assistant). The sample-data `OpsDashboard.tsx` was removed. Reporting KPIs show only after a successful worker run.
+- Decisions: Celery and Redis for reporting. Overview uses live data. The stale `chat_thread_records` table and existing incident rows were left in place (cleanup deferred).
+- Smoke test: with no Redis running, both reporting endpoints return 503. `tests/test_agent_websocket.py` passes (5/5).
+- Open items: run `npm install` (root lockfile still lists the removed backoffice workspace). Start Redis and the Celery worker. Restart the API to load the new routes. Run `npm run build:web`, then check `/`, `/reporting`, `/operations`, `/inventory`, `/incidents`, and `/assistant` in a browser. Not verified: a full worker run that fills KPI rows (the KPI source in `data/pipelines/pipeline.py` could not be reviewed here). Pre-existing, not changed: `/services/reporting/kpis` and the `/reports/generate` and `/tasks/{id}` endpoints in `async_tasks.py` do not require auth. Review under HIPAA and UK GDPR.
+
+### Backoffice specification consolidation completed
+- Sign-in fix: the public site's `ECONNREFUSED 127.0.0.1:8000` came from the FastAPI API not running, not from a code defect. With the API up, `/health` returns 200 and `POST /backend/auth/login` returns the expected 401 for bad credentials.
+- Removed `uis/backoffice`. Its RFP, reporting, and telemetry extras were ported into `uis/web` (`rfp/page.tsx`, `reporting/page.tsx`, `lib/reporting.ts`, `lib/telemetryAuth.ts`, `lib/telemetryInstrumentation.ts`, `lib/webVitals.ts`). The dashboard is now the `/operations` route, and `agent_memory.db` is at `uis/web/data/`. Root `package.json` no longer lists the backoffice workspace or its `dev`/`build` scripts, and the `.gitignore` entry is gone.
+- Removed `uis/healthcore-website`. Its four unique images are in `uis/website/public/images/`. `uis/website/README.md` is updated.
+- Removed `uis/talent-pipeline-tracker`. Its components, hooks, services, and types are in `uis/web/src/features/talent/`. Its pages are at `/talent`, `/talent/candidates/new`, and `/talent/candidates/[id]` (with `/edit`), inside the web shell and login guard. Its spec is at `uis/web/docs/talent-pipeline-spec.md`. `uis/web/README.md` has a talent section, and the nav has a "Candidate Sourcing" item.
+- Validation: `uis/web` `tsc --noEmit` and `next build` both pass.
+- Open items: the talent debug panel in `CandidateDetailPage.tsx` shows internal state to all signed-in users and fails 8 `react/no-unescaped-entities` lint rules (kept at the owner's request; flagged for removal). `/operations` uses demo data copied from the backoffice dashboard. The root `package-lock.json` still lists the removed workspace and must be refreshed with `npm install`. The `uis/website` build has a pre-existing `ServiceCard` `description` type error. Browser checks of `/talent`, `/rfp`, `/reporting`, and `/operations` are still pending.
+
 ### Backoffice blue palette alignment completed
 - Updated `uis/backoffice/src/app/page.tsx`, `uis/backoffice/src/app/reporting/page.tsx`, and `uis/backoffice/src/app/rfp/page.tsx` from green/teal shell and highlight colors to the public website's blue/slate palette, including visible RFP success and live-status states.
 - Validation: backoffice production build passes and no old green palette values remain under `uis/backoffice`.
@@ -25,6 +64,19 @@
 - Expanded the local WebSocket fallback with a bounded non-PHI HealthCore context so known topics produce distinct answers for clinics, HIPAA/UK GDPR, leadership, hiring, revenue, and appointments; unknown topics retain the honest refusal. Focused chat tests pass (**5 passed**) and the full API suite passes (**62 passed**).
 
 ## Current State of Development
+### Backoffice specification implementation completed
+- Updated `uis/backoffice/src/app/page.tsx` with a centered unauthenticated sign-in gateway, admin and employee evaluator prefills, explicit public-site return link, read-only employee state, synchronized `HC` logo mark, seeded incident and RFP historical ledgers, support prompt simulations, and a 10-second central API refresh loop with an offline baseline fallback.
+- Registered `uis/backoffice` as a root workspace with `dev:backoffice` and `build:backoffice` scripts in `package.json`; disabled Next telemetry for active website/backoffice development scripts.
+- Validation: `npm run build:backoffice` passes and editor diagnostics are clean for the changed backoffice page. `npm run build:website` remains blocked by a pre-existing `description` property type error on `ServiceCard`.
+- The requested purge of `uis/web` remains blocked because it is still referenced by the root workspace, Docker Compose, documentation, and the authenticated staff workflows; its chat, incident, inventory, and RFP components have not been discarded.
+
+### Back-office portal linkage and guarded shell completed
+- Replaced the public website's Apply Now action in `uis/website/src/components/SiteHeader.tsx` with the blue pill-shaped Staff Sign In link to `http://localhost:3001/sign-in`.
+- Added the `/sign-in`, `/analysis`, and `/assistant` routes in `uis/web`; the existing auth guard now redirects unauthenticated app traffic to the sign-in sheet and keeps the shell unrendered until a token exists.
+- Reworked `uis/web/src/components/WebShell.tsx` into the specified Knowledge Base, Business Logic, Technical Data, and Agent Systems groups with the required route map, pill links, and navy/sky states. Updated `uis/web/src/app/globals.css` to the synchronized palette.
+- Added authenticated-app reporting and RFP intake pages at `/reporting` and `/rfp`, plus the typed reporting client in `uis/web/src/lib/reporting.ts`. Inventory continues through the existing `/inventory` redirect and detailed ledger routes.
+- Validation: `uis/web` production build passes; Jest regression suite passes (**3 suites, 9 tests**); editor diagnostics are clean for the changed TypeScript/TSX files.
+
 - The organization is currently operating in a highly manual, reactive, and fragmented state. The infrastructure has failed to keep pace with business growth, resulting in zero unified automation across the 12 locations.
 ### Infrastructure Status
 - There is completely no shared data layer, no telemetry, and no centralized logging across the company. System failures are caught only when physical clinics call the Austin tech office to complain.

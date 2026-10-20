@@ -29,6 +29,14 @@ export function SiteHeader({ variant = "home" }: SiteHeaderProps) {
             <ul className="flex items-center gap-6 text-sm text-foreground md:text-base">
               <li>
                 <a
+                  href="/apply"
+                  className="hover:text-accent-600 focus:outline-none focus:ring-2 focus:ring-brand-600 rounded"
+                >
+                  Apply Now
+                </a>
+              </li>
+              <li>
+                <a
                   href="#services"
                   className="hover:text-accent-600 focus:outline-none focus:ring-2 focus:ring-brand-600 rounded"
                 >
@@ -52,12 +60,12 @@ export function SiteHeader({ variant = "home" }: SiteHeaderProps) {
                 </a>
               </li>
               <li>
-                <Link
-                  href="/apply"
+                <a
+                  href={`${process.env.NEXT_PUBLIC_STAFF_APP_URL ?? "http://localhost:3001"}/sign-in`}
                   className="inline-flex items-center rounded-full bg-accent-500 px-4 py-2 font-medium text-white hover:bg-accent-600 focus:outline-none focus:ring-2 focus:ring-brand-600"
                 >
-                  Apply Now
-                </Link>
+                  Staff Sign In
+                </a>
               </li>
             </ul>
           ) : (

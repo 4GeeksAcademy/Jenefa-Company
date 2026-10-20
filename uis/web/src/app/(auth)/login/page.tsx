@@ -35,6 +35,7 @@ export default function LoginPage() {
 
   return (
     <AuthShell
+      showWebsiteLink
       title="Sign in"
       subtitle="Staff credentials for the HealthCore operations workspace."
     >

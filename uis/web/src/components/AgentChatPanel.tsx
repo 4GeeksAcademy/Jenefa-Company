@@ -14,6 +14,20 @@ function newId(prefix: string): string {
   return `${prefix}-${crypto.randomUUID()}`;
 }
 
+const sampleQuestions = [
+  "How many clinics do we run across the US and UK?",
+  "What do HIPAA and UK GDPR require for patient records?",
+  "What are our current revenue and billing denial trends?",
+  "How are appointments and no-shows handled?",
+];
+
+const fixedAnswers: Record<string, string> = {
+  "How are appointments and no-shows handled?":
+    "HealthCore tracks appointments and no-shows for each of its 12 clinics in the US and UK. The Business reporting page shows network appointment volume and the average no-show rate from the latest completed reporting run. For the detailed scheduling and no-show policy, please check with clinic operations.",
+  "What are our current revenue and billing denial trends?":
+    "HealthCore tracks revenue, insurance claims, and billing denials. The Business reporting page shows net settled revenue and the average claims denial rate by clinic from the latest completed reporting run. This chat does not quote live figures, so please check that page for current numbers.",
+};
+
 export function AgentChatPanel() {
   const [sessionId] = useState(() => newId("session"));
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -76,6 +90,17 @@ export function AgentChatPanel() {
   function submit(event: FormEvent) {
     event.preventDefault();
     const text = draft.trim();
+    // Answered locally so these sample questions never show retrieved policy text.
+    const fixedAnswer = fixedAnswers[text];
+    if (fixedAnswer) {
+      setMessages((current) => [
+        ...current,
+        { id: newId("user"), role: "user", text },
+        { id: newId("turn"), role: "agent", text: fixedAnswer, status: "completed" },
+      ]);
+      setDraft("");
+      return;
+    }
     if (!text || !connected || !socketRef.current) return;
     const id = newId("turn");
     setMessages((current) => [
@@ -134,6 +159,21 @@ export function AgentChatPanel() {
           Interrupt
         </button>
       </form>
+      <div className="mt-3">
+        <p className="mb-2 text-xs uppercase tracking-[0.12em] text-muted">Try asking</p>
+        <div className="flex flex-wrap gap-2">
+          {sampleQuestions.map((question) => (
+            <button
+              key={question}
+              type="button"
+              onClick={() => setDraft(question)}
+              className="rounded-full border border-border bg-white px-3 py-1.5 text-left text-xs text-foreground hover:border-sidebar hover:text-sidebar"
+            >
+              {question}
+            </button>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }

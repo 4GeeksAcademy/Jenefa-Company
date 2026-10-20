@@ -15,10 +15,11 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from data.pipelines.pipeline import (
-    fetch_executive_metrics as _fetch_executive_metrics,
     get_latest_manifest_status as _get_latest_manifest_status,
     healthcore_business_performance_pipeline_flow,
 )
+
+from .kpi_contract import compute_executive_kpis, load_telemetry_events
 
 
 def get_latest_manifest_status(engine: Engine | None) -> dict[str, Any] | None:
@@ -26,7 +27,9 @@ def get_latest_manifest_status(engine: Engine | None) -> dict[str, Any] | None:
 
 
 def fetch_executive_metrics(engine: Engine | None) -> list[dict[str, Any]]:
-    return _fetch_executive_metrics(engine)
+    """KPI rows owned by the API layer; the pipeline only supplies raw data."""
+    rows = compute_executive_kpis(load_telemetry_events(engine))
+    return [row.model_dump(mode="json") for row in rows]
 
 
 def trigger_batch_execution(engine: Engine | None) -> dict[str, Any]:

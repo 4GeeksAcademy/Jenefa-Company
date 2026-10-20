@@ -6,6 +6,7 @@ import {
   fetchProduct,
   fetchProducts,
   recordOutbound,
+  type MedicalSupplyDetail,
   type MedicalSupplyRead,
 } from "@/lib/inventory";
 import { toUserFacingMessage } from "@/lib/userFacingError";
@@ -23,7 +24,7 @@ export function InventoryOutboundView() {
   const [submitting, setSubmitting] = useState(false);
   const [stockLoading, setStockLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState("");
-  const [availableStock, setAvailableStock] = useState<number | null>(null);
+  const [detail, setDetail] = useState<MedicalSupplyDetail | null>(null);
   const [quantity, setQuantity] = useState("");
   const [clinicId, setClinicId] = useState("");
   const [status, setStatus] = useState<string | null>(null);
@@ -54,9 +55,9 @@ export function InventoryOutboundView() {
 
     let cancelled = false;
     void fetchProduct(Number(selectedItem))
-      .then((detail) => {
+      .then((loaded) => {
         if (!cancelled) {
-          setAvailableStock(detail.current_stock);
+          setDetail(loaded);
         }
       })
       .catch((err: unknown) => {
@@ -75,6 +76,12 @@ export function InventoryOutboundView() {
     };
   }, [selectedItem]);
 
+  // Stock is checked per clinic partition, matching the backend overdraft rule.
+  const availableStock =
+    detail && clinicId
+      ? (detail.partitions.find((partition) => partition.clinic_id === clinicId)?.current_stock ?? 0)
+      : null;
+
   const quantityWarning =
     quantity &&
     availableStock !== null &&
@@ -82,6 +89,8 @@ export function InventoryOutboundView() {
     Number(quantity) > availableStock
       ? "Dispersal amount exceeds current available inventory."
       : null;
+
+  const clinicIds = Array.from(new Set(products.map((item) => item.clinic_id))).sort();
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -97,16 +106,20 @@ export function InventoryOutboundView() {
     }
 
     try {
+      const itemId = Number(selectedItem);
       await recordOutbound({
-        medical_supply_id: Number(selectedItem),
+        medical_supply_id: itemId,
         quantity: parsedQuantity,
         clinic_id: clinicId.trim(),
       });
-      setSelectedItem("");
       setQuantity("");
       setClinicId("");
-      setAvailableStock(null);
       setStatus("Outbound dispersal was successfully logged.");
+      setStockLoading(true);
+      await fetchProduct(itemId)
+        .then((loaded) => setDetail(loaded))
+        .catch((err: unknown) => setError(toUserFacingMessage(err)))
+        .finally(() => setStockLoading(false));
     } catch (err: unknown) {
       if (err instanceof ApiRequestError && err.status === 400) {
         setQuantityApiError(err.message);
@@ -159,7 +172,7 @@ export function InventoryOutboundView() {
               const nextValue = event.target.value;
               setSelectedItem(nextValue);
               setStockLoading(Boolean(nextValue));
-              setAvailableStock(null);
+              setDetail(null);
               setQuantityApiError(null);
             }}
             required
@@ -179,9 +192,11 @@ export function InventoryOutboundView() {
           <p className="mt-1 font-semibold text-foreground">
             {stockLoading
               ? "Loading current balance…"
-              : availableStock === null
-                ? "Select an item"
-                : availableStock}
+              : availableStock !== null
+                ? availableStock
+                : selectedItem
+                  ? "Select a clinic"
+                  : "Select an item"}
           </p>
         </div>
 
@@ -202,14 +217,20 @@ export function InventoryOutboundView() {
 
         <label className={`${labelClass} mt-4`}>
           Clinic ID
-          <input
+          <select
             className={inputClass}
             required
             value={clinicId}
             onChange={(event) => setClinicId(event.target.value)}
-            placeholder="CLINIC-TX-01"
-            disabled={submitting}
-          />
+            disabled={loading || submitting}
+          >
+            <option value="">Choose a clinic</option>
+            {clinicIds.map((id) => (
+              <option key={id} value={id}>
+                {id}
+              </option>
+            ))}
+          </select>
         </label>
 
         <button

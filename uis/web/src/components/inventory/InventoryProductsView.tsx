@@ -104,13 +104,13 @@ export function InventoryProductsView() {
                     <td className="px-4 py-4">
                       <div className="flex flex-wrap gap-2 text-xs">
                         <Link
-                          href={`/backoffice/inventory/orders/inbound?item=${item.id}`}
+                          href={`/inventory/orders/inbound?item=${item.id}`}
                           className="rounded border border-border px-2 py-1 hover:border-accent"
                         >
                           Log inbound
                         </Link>
                         <Link
-                          href={`/backoffice/inventory/orders/outbound?item=${item.id}`}
+                          href={`/inventory/orders/outbound?item=${item.id}`}
                           className="rounded border border-border px-2 py-1 hover:border-accent"
                         >
                           Log outbound

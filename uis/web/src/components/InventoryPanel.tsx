@@ -14,7 +14,7 @@ export function InventoryPanel() {
         inbound intake, outbound dispersal, and audit history.
       </p>
       <Link
-        href="/backoffice/inventory/products"
+        href="/inventory/products"
         className="mt-6 inline-flex bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-sidebar-hover"
       >
         Open inventory module

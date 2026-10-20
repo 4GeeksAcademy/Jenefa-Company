@@ -29,4 +29,3 @@ services/api/data/auth.json
 .DS_Store
 *.log
 node_modules
-uis/backoffice/tsconfig.tsbuildinfo

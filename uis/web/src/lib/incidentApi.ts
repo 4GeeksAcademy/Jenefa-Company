@@ -31,6 +31,31 @@ export async function analyzeIncidentFile(file: File): Promise<IncidentAnalysis>
   return readJson<IncidentAnalysis>(response);
 }
 
+export async function fetchLatestIncidentAnalysis(): Promise<IncidentAnalysis | null> {
+  const response = await apiFetch("/api/incidents/latest", { cache: "no-store" });
+  if (response.status === 404) return null;
+  return readJson<IncidentAnalysis>(response);
+}
+
+export type IncidentRun = {
+  id: string;
+  source_file: string;
+  total_records: number;
+  valid_records: number;
+  invalid_records: number;
+  created_at: string;
+};
+
+export type IncidentHistory = {
+  retention_days: number;
+  items: IncidentRun[];
+};
+
+export async function fetchIncidentHistory(): Promise<IncidentHistory> {
+  const response = await apiFetch("/history/incidents");
+  return readJson<IncidentHistory>(response);
+}
+
 export function exportResultsUrl(): string {
   return `${API_BASE}/api/incidents/results/export`;
 }

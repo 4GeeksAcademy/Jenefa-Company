@@ -1,9 +1,5 @@
-import { OpsDashboard } from "@/components/OpsDashboard";
+import { OperationsLedger } from "@/components/OperationsLedger";
 
 export default function Home() {
-  return (
-    <div className="mx-auto w-full max-w-5xl">
-      <OpsDashboard />
-    </div>
-  );
+  return <OperationsLedger />;
 }

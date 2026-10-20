@@ -166,6 +166,37 @@ def patient_satisfaction_scores(rows: list[RawTelemetryRow]) -> list[dict[str, A
     return []
 
 
+
+def _market_segment(region: str) -> str:
+    return "market_us" if region == "US" else "market_uk" if region == "UK" else "market_unknown"
+
+
+def network_appointment_no_show_rate(rows: list[RawTelemetryRow]) -> list[dict[str, Any]]:
+    """Expose the business taxonomy for the network no-show KPI."""
+    return [{**entry, "network_appointment_no_show_rate": entry["global_no_show_rate"], "market_segment": _market_segment(entry.get("market_region", ""))} for entry in global_no_show_rate(rows)]
+
+
+def us_commercial_claims_denial_rate(rows: list[RawTelemetryRow]) -> list[dict[str, Any]]:
+    """Expose US commercial denial risk under its explicit business name."""
+    return [{**entry, "us_commercial_claims_denial_rate": entry["claims_denial_rate"], "market_segment": "market_us"} for entry in claims_denial_rate(rows) if entry.get("market_region") == "US"]
+
+
+def provider_clinical_documentation_time_delta(rows: list[RawTelemetryRow]) -> list[dict[str, Any]]:
+    """Report minutes spent against the 35-minute documentation baseline."""
+    deltas: list[dict[str, Any]] = []
+    for row in rows:
+        if _event_type(row) != "clinical_documentation_abandoned":
+            continue
+        tags = _tags(row)
+        try:
+            time_spent_minutes = float(tags["time_spent_seconds"]) / 60
+        except (KeyError, TypeError, ValueError):
+            continue
+        region = str(tags.get("region", ""))
+        deltas.append({"clinic_location_id": tags.get("location_id", region), "market_region": region, "market_segment": _market_segment(region), "provider_clinical_documentation_time_delta": round(time_spent_minutes - 35, 4)})
+    return deltas
+
+
 def compute_executive_kpis(rows: list[RawTelemetryRow]) -> list[dict[str, Any]]:
     """Merge all per-metric KPI slices into one row per `clinic_location_id`."""
     merged: dict[str, dict[str, Any]] = {}

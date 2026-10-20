@@ -6,6 +6,8 @@ from data.process.kpis import (
     claims_denial_rate,
     global_no_show_rate,
     network_appointment_volume,
+    network_appointment_no_show_rate,
+    us_commercial_claims_denial_rate,
 )
 
 
@@ -44,3 +46,20 @@ def test_malformed_records_are_skipped_defensively():
     assert network_appointment_volume(malformed) == []
     assert global_no_show_rate(malformed) == []
     assert claims_denial_rate(malformed) == []
+
+
+def test_domain_taxonomy_matches_business_benchmarks():
+    rows = [
+        *[
+            {"event_type": "appointment_booked", "tags": {"location_id": "US-01", "region": "US"}}
+            for _ in range(100)
+        ],
+        *[
+            {"event_type": "appointment_noshow_predicted", "tags": {"location_id": "US-01", "region": "US"}}
+            for _ in range(22)
+        ],
+        {"event_type": "billing_claim_compiled", "tags": {"region": "US", "pre_check_denial_risk": 0.14}},
+    ]
+
+    assert network_appointment_no_show_rate(rows)[0]["network_appointment_no_show_rate"] == 0.22
+    assert us_commercial_claims_denial_rate(rows)[0]["us_commercial_claims_denial_rate"] == 0.14

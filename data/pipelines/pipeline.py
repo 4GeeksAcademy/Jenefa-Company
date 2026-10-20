@@ -363,28 +363,28 @@ def fetch_executive_metrics(engine: Engine | None = None) -> list[dict[str, Any]
 def _week_window(reference: datetime | None = None) -> tuple[datetime, datetime]:
     reference = reference or datetime.now(timezone.utc)
     window_end = reference.replace(hour=0, minute=0, second=0, microsecond=0)
-    window_start = window_end - timedelta(days=7)
+    window_start = window_end - timedelta(days=60)
     return window_start, window_end
 
 
-@flow(name="patient_access_and_billing_extraction_subflow")
-def patient_access_and_billing_extraction_subflow(
+@flow(name="fetch_network_telemetry_flow")
+def fetch_network_telemetry_flow(
     engine: Engine, window_start: datetime, window_end: datetime
 ) -> list[dict[str, Any]]:
     """Extract the bounded, read-only telemetry source for all KPI domains."""
     return extract_telemetry_source_task(engine, window_start, window_end)
 
 
-@flow(name="executive_kpi_transformation_subflow")
-def executive_kpi_transformation_subflow(
+@flow(name="compute_executive_kpi_matrix_flow")
+def compute_executive_kpi_matrix_flow(
     rows: list[dict[str, Any]], window_start: datetime
 ) -> list[dict[str, Any]]:
     """Calculate Patient Experience, Revenue Cycle, and Operations KPIs."""
     return transform_business_kpis_task(rows, window_start)
 
 
-@flow(name="executive_reporting_destination_load_subflow")
-def executive_reporting_destination_load_subflow(
+@flow(name="load_central_reporting_db_flow")
+def load_central_reporting_db_flow(
     engine: Engine, kpi_rows: list[dict[str, Any]]
 ) -> int:
     """Persist idempotent rows into the executive reporting destination."""
@@ -417,11 +417,11 @@ def healthcore_business_performance_pipeline_flow(
     audit_id = _record_audit_start(engine, start_time)
 
     try:
-        extracted_rows = patient_access_and_billing_extraction_subflow(
+        extracted_rows = fetch_network_telemetry_flow(
             engine, window_start, window_end
         )
-        kpi_rows = executive_kpi_transformation_subflow(extracted_rows, window_start)
-        records_loaded = executive_reporting_destination_load_subflow(engine, kpi_rows)
+        kpi_rows = compute_executive_kpi_matrix_flow(extracted_rows, window_start)
+        records_loaded = load_central_reporting_db_flow(engine, kpi_rows)
 
         # Non-critical evaluation step: state-checked so a failure here never
         # blocks the core extract -> transform -> load path from completing.

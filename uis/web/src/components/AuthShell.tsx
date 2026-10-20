@@ -1,19 +1,37 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { forwardedPortUrl } from "@/lib/forwardedPort";
 
 export function AuthShell({
   title,
   subtitle,
+  showWebsiteLink = false,
   children,
 }: {
   title: string;
   subtitle: string;
+  showWebsiteLink?: boolean;
   children: React.ReactNode;
 }) {
+  const [websiteUrl, setWebsiteUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (showWebsiteLink) setWebsiteUrl(forwardedPortUrl(3000));
+  }, [showWebsiteLink]);
+
   return (
     <div className="flex min-h-full flex-1 items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md">
+        {websiteUrl ? (
+          <a
+            href={websiteUrl}
+            className="mb-6 block text-center text-sm text-accent underline-offset-2 hover:underline"
+          >
+            ← Back to HealthCore website
+          </a>
+        ) : null}
         <p className="text-center font-display text-2xl text-sidebar">HealthCore</p>
         <p className="mt-1 text-center text-xs uppercase tracking-[0.16em] text-muted">
           Internal staff access

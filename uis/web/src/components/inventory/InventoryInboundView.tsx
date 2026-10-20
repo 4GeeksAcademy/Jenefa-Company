@@ -42,6 +42,8 @@ export function InventoryInboundView() {
       .finally(() => setLoading(false));
   }, [isAuthorized]);
 
+  const clinicIds = Array.from(new Set(products.map((item) => item.clinic_id))).sort();
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
@@ -130,14 +132,20 @@ export function InventoryInboundView() {
 
         <label className={`${labelClass} mt-4`}>
           Clinic ID
-          <input
+          <select
             className={inputClass}
             required
             value={clinicId}
             onChange={(event) => setClinicId(event.target.value)}
-            placeholder="CLINIC-TX-01"
-            disabled={submitting}
-          />
+            disabled={loading || submitting}
+          >
+            <option value="">Choose a clinic</option>
+            {clinicIds.map((id) => (
+              <option key={id} value={id}>
+                {id}
+              </option>
+            ))}
+          </select>
         </label>
 
         <button

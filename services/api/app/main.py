@@ -7,7 +7,7 @@ import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 from sqlmodel import Session
@@ -20,7 +20,10 @@ from .auth.routers.protected import router as protected_router
 from .auth.routers.users import router as users_router
 from .async_tasks import router as async_tasks_router
 from .errors import GENERIC_INTERNAL, json_error, register_exception_handlers
-from .inventory.database import create_inventory_engine, init_inventory_schema
+from .history.router import record_incident_run
+from .history.router import router as history_router
+from .history import models as _history_models  # noqa: F401 — register history table
+from .inventory.database import create_inventory_engine, get_inventory_engine, init_inventory_schema
 from .inventory.router import router as inventory_router
 from .inventory.seed import seed_identity_cache, seed_relational_catalog
 from .reporting.router import router as reporting_router
@@ -89,6 +92,7 @@ app.include_router(agent_router)
 app.include_router(agent_websocket_router)
 app.include_router(rfp_router)
 app.include_router(secure_ai_router)
+app.include_router(history_router)
 
 
 @app.post("/knowledge/query")
@@ -107,6 +111,7 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://127.0.0.1:3001",
     ],
+    allow_origin_regex=r"https://[\w-]+-\d+\.[\w.-]*app\.github\.dev",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -119,9 +124,7 @@ def health() -> dict[str, str]:
 
 
 @app.post("/api/incidents/analyze")
-async def analyze_incidents(file: UploadFile = File(...)) -> JSONResponse:
-    filename = file.filename or "upload.csv"
-
+async def analyze_incidents(request: Request, file: UploadFile = File(...)) -> JSONResponse:
     try:
         data = await file.read()
     except OSError:
@@ -132,7 +135,8 @@ async def analyze_incidents(file: UploadFile = File(...)) -> JSONResponse:
         return json_error(400, "Uploaded file is empty (zero-byte upload).")
 
     try:
-        result = analyze_csv_bytes(data, source_file=filename)
+        # Uploaded filenames can contain patient names, so a generic label is stored instead.
+        result = analyze_csv_bytes(data, source_file="incident-upload.csv")
     except UnicodeDecodeError:
         return json_error(400, "Unreadable data: file is not valid UTF-8.")
     except csv.Error:
@@ -163,6 +167,11 @@ async def analyze_incidents(file: UploadFile = File(...)) -> JSONResponse:
         logger.exception("Failed to store incident analysis")
         return json_error(500, GENERIC_INTERNAL)
 
+    try:
+        record_incident_run(get_inventory_engine(request), payload)
+    except Exception:
+        logger.exception("Failed to record incident analysis history")
+
     return JSONResponse(content=payload)
 
 
@@ -180,6 +189,15 @@ def export_results() -> Response:
         media_type="text/csv",
         headers={"Content-Disposition": 'attachment; filename="results.csv"'},
     )
+@app.get("/api/incidents/latest")
+def get_latest_analysis() -> Response:
+    """Return the most recent upload's aggregate results (no record-level data)."""
+    result = state.get_latest_result()
+    if result is None:
+        return json_error(404, "No incident analysis has been uploaded yet.")
+    return JSONResponse(content=result)
+
+
 @app.get("/api/incidents/{ticket_id}")
 def get_mock_ticket(ticket_id: str):
     return {
