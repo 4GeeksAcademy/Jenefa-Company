@@ -8,7 +8,7 @@ import { logoutAndRedirect } from "@/lib/authStorage";
 import { initTelemetry, track } from "@/lib/telemetry";
 
 const navGroups = [
-  { label: "Knowledge base", items: [{ href: "/", label: "Overview", icon: "◉" }] },
+  { label: "Knowledge base", items: [{ href: "/", label: "Overview", icon: "⌂" }] },
   {
     label: "Business logic",
     items: [
@@ -20,11 +20,11 @@ const navGroups = [
   {
     label: "Technical data",
     items: [
-      { href: "/inventory", label: "Inventory Ledger", icon: "▣" },
+      { href: "/inventory", label: "Inventory Ledger", icon: "✎" },
       { href: "/rfp", label: "RFP Intake", icon: "✉" },
     ],
   },
-  { label: "Operating assistant", items: [{ href: "/assistant", label: "Live Support Chat", icon: "◇" }] },
+  { label: "Operating assistant", items: [{ href: "/assistant", label: "Live Support Chat", icon: "♙" }] },
 ] as const;
 
 export function WebShell({ children }: { children: React.ReactNode }) {
