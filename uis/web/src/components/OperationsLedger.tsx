@@ -164,9 +164,12 @@ export function OperationsLedger() {
           <p className="text-lg font-bold uppercase tracking-widest text-slate-500">Knowledge base</p>
           <h1 className="mt-2 text-lg font-normal">Operations Overview</h1>
         </div>
-        <p className="text-sm text-slate-500">
-          {apiStatus}
-          {lastRefresh ? ` · ${lastRefresh}` : ""}
+        <p className="flex items-center gap-2 text-sm text-slate-500">
+          <span aria-hidden="true" className="h-2 w-2 rounded-full bg-emerald-500" />
+          <span>
+            {apiStatus}
+            {lastRefresh ? ` · ${lastRefresh}` : ""}
+          </span>
         </p>
       </header>
 
