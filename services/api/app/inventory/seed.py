@@ -28,6 +28,12 @@ SEED_OPERATORS = (
         "name": "Austin Clinic Floor Nurse",
         "role": "user",
     },
+    {
+        "user_uuid": "usr-hc-4107",
+        "email": "claire.whitfield@healthcore.example",
+        "name": "Claire Whitfield",
+        "role": "manager",
+    },
 )
 
 _seed_password_hash: str | None = None

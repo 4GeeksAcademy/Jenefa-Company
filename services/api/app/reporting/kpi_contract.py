@@ -12,73 +12,28 @@ Telemetry rows carry no user_id or session_id, so no PHI reaches this layer.
 from __future__ import annotations
 
 import ast
-import os
 import json
 from collections import defaultdict
 from datetime import datetime
 from typing import Any
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 
 from .schemas import ExecutiveKPIResponse
 
 NETWORK_LOCATION = "NETWORK"
 GLOBAL_REGION = "GLOBAL"
 
-# Mock telemetry sample (no PHI). Used as a safe fallback mechanism.
-MOCK_TELEMETRY_EVENTS: list[dict[str, Any]] = [
-    {
-        "event_type": "appointment_booked",
-        "timestamp": "2026-09-12T12:00:00+00:00",
-        "tags": {"region": "US", "location_id": "CLINIC-01"},
-    },
-    {
-        "event_type": "appointment_noshow_predicted",
-        "timestamp": "2026-09-12T12:00:00+00:00",
-        "tags": {"region": "US", "location_id": "CLINIC-01"},
-    },
-    {
-        "event_type": "billing_claim_compiled",
-        "timestamp": "2026-09-12T12:00:00+00:00",
-        "tags": {"region": "US", "pre_check_denial_risk": 0.15},
-    },
-    {
-        "event_type": "revenue_stream_reconciled",
-        "timestamp": "2026-09-12T12:00:00+00:00",
-        "tags": {"currency": "USD", "net_settled_amount": 12500.0},
-    },
-]
-
-
 def load_telemetry_events(engine: Any | None) -> list[dict[str, Any]]:
-    """Return telemetry events for aggregation by querying the live Supabase Database."""
-    db_url = os.getenv("TELEMETRY_DATABASE_URL")
-    
-    # If no Supabase connection string is defined, fail safe back to mock events
-    if engine is None and not db_url:
-        return [dict(event) for event in MOCK_TELEMETRY_EVENTS]
-        
-    try:
-        telemetry_engine = engine or create_engine(db_url)
-        
-        # Explicit SQL query mapping to read directly from your live Supabase table columns
-        query = text("""
+    """Return raw telemetry events from the live reporting database."""
+    if engine is None:
+        raise RuntimeError("Reporting database is not initialized")
+    query = text("""
             SELECT id, event_type, timestamp, service, tags 
             FROM telemetry_events 
             ORDER BY timestamp DESC
         """)
-        
-        with telemetry_engine.connect() as connection:
-            result = connection.execute(query)
-            events = []
-            for row in result:
-                row_dict = dict(row._mapping)
-                
-                events.append(row_dict)
-            return events
-            
-    except Exception as e:
-        print(f"CRITICAL ERROR: {e}")
-        return [dict(event) for event in MOCK_TELEMETRY_EVENTS]
+    with engine.connect() as connection:
+        return [dict(row._mapping) for row in connection.execute(query)]
 
 
 def _tags(event: dict[str, Any]) -> dict[str, Any]:

@@ -25,6 +25,7 @@ services:
       NEXT_PUBLIC_API_URL: /backend
       NEXT_PUBLIC_INCIDENT_API_URL: /backend
       NEXT_PUBLIC_INVENTORY_API_URL: /backend
+      NEXT_PUBLIC_FLOWER_URL: http://localhost:5555
     ports:
       - "3000:3000"   # Public-facing patient portal (website)
       - "3001:3001"   # Internal clinical / admin panel (web / backoffice)
@@ -49,6 +50,8 @@ services:
       dockerfile: services/Dockerfile
     env_file:
       - .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
     ports:
       - "8000:8000"   # FastAPI / Uvicorn
     volumes:
@@ -97,8 +100,7 @@ services:
     env_file:
       - .env
     environment:
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      REDIS_URL: redis://redis:6379/0
     ports:
       - "5555:5555"
     depends_on:

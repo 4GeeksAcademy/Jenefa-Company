@@ -98,7 +98,25 @@ export function InventoryInboundView() {
         </div>
       ) : null}
 
-      <form onSubmit={(event) => void onSubmit(event)} className="rounded-lg border border-border bg-surface px-6 py-6">
+      <form onSubmit={(event) => void onSubmit(event)} className="space-y-4 rounded-lg border border-border bg-surface px-6 py-6">
+        <label className={labelClass}>
+          Clinic ID
+          <select
+            className={inputClass}
+            required
+            value={clinicId}
+            onChange={(event) => setClinicId(event.target.value)}
+            disabled={loading || submitting}
+          >
+            <option value="">Choose a clinic</option>
+            {clinicIds.map((id) => (
+              <option key={id} value={id}>
+                {id}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <label className={labelClass}>
           Select Target Item
           <select
@@ -128,24 +146,6 @@ export function InventoryInboundView() {
             onChange={(event) => setQuantity(event.target.value)}
             disabled={submitting}
           />
-        </label>
-
-        <label className={`${labelClass} mt-4`}>
-          Clinic ID
-          <select
-            className={inputClass}
-            required
-            value={clinicId}
-            onChange={(event) => setClinicId(event.target.value)}
-            disabled={loading || submitting}
-          >
-            <option value="">Choose a clinic</option>
-            {clinicIds.map((id) => (
-              <option key={id} value={id}>
-                {id}
-              </option>
-            ))}
-          </select>
         </label>
 
         <button

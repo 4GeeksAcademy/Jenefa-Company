@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field as PydanticField
 from sqlmodel import Session, select
 
 from ..auth.deps import get_current_user
+from ..auth import database as auth_db
 from ..inventory.database import get_inventory_engine
 from .models import DepartmentSectionAspect, RFPTicket
 from .events import rfp_events
@@ -118,6 +119,11 @@ def _response_section_payload(row: RFPResponseSection) -> dict[str, Any]:
         "iteration_count": row.iteration_count,
         "evaluation_result": row.evaluation_result,
     }
+
+
+def _display_name(user: dict[str, Any]) -> str:
+    profile = auth_db.get_profile_by_user_id(str(user.get("id", "")))
+    return str((profile or {}).get("name") or user.get("name") or user.get("email") or "")
 
 
 @router.post("/tickets", status_code=status.HTTP_202_ACCEPTED)
@@ -297,10 +303,10 @@ def decide_ticket_approval(
         "compliance": "Claire Whitfield",
     }
     owner = approver_for_department.get(department.casefold().strip())
-    if user.get("role") != "admin" and user.get("name") != owner:
+    if user.get("role") != "admin" and _display_name(user) != owner:
         raise HTTPException(status_code=403, detail="The authenticated user is not the assigned departmental approver")
     try:
-        reviewer_name = user.get("name") or user.get("email")
+        reviewer_name = _display_name(user)
         return submit_approval(
             engine,
             str(ticket_id),

@@ -61,7 +61,8 @@ export async function apiFetch(path: string, init: RequestInit = {}): Promise<Re
 
   let response: Response;
   try {
-    response = await fetch(`${API_BASE}${path}`, { ...init, headers });
+    const requestUrl = /^https?:\/\//.test(path) ? path : `${API_BASE}${path}`;
+    response = await fetch(requestUrl, { ...init, headers });
   } catch {
     throw new ApiRequestError(USER_MESSAGES.connection, 0);
   }

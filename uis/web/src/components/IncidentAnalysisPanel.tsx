@@ -55,20 +55,16 @@ export function IncidentAnalysisPanel() {
 
   return (
     <div className="flex flex-col gap-8">
-      <section className="rounded-lg border border-border bg-surface px-6 py-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">
-          Patient experience
-        </p>
-        <h2 className="mt-2 font-display text-3xl tracking-tight text-foreground">
-          Incident analysis
-        </h2>
-        <p className="mt-3 max-w-2xl text-base leading-7 text-muted">
-          Upload a clinic incident CSV for aggregate validation. Outputs never
-          include patient identifiers — HIPAA / UK GDPR safe summaries only.
-        </p>
-
+      <section className="grid gap-6 border border-border bg-surface px-6 py-8 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
+        <div>
+          <p className="text-md font-bold uppercase tracking-[0.16em] text-accent">Business Logic</p>
+          <h2 className="mt-2 font-display text-lg tracking-tight text-foreground">Incident analysis</h2>
+          <p className="mt-3 max-w-xl text-base leading-7 text-muted">
+            Upload a clinic incident CSV for aggregate validation. Outputs never include patient identifiers — HIPAA / UK GDPR safe summaries only.
+          </p>
+        </div>
         <div
-          className={`mt-8 border border-dashed px-6 py-10 transition-colors ${
+          className={`border border-dashed px-4 py-5 transition-colors ${
             dragOver
               ? "border-accent bg-accent-soft"
               : "border-border bg-surface"
@@ -91,10 +87,8 @@ export function IncidentAnalysisPanel() {
             onFiles(e.dataTransfer.files);
           }}
         >
-          <div className="mx-auto flex max-w-lg flex-col items-center text-center">
-            <p className="font-display text-xl text-foreground">
-              Drop incident CSV here
-            </p>
+          <div className="mx-auto flex max-w-xs flex-col items-center text-center">
+            <p className="font-display text-lg text-foreground">Drop incident CSV here</p>
             <p className="mt-2 text-sm text-muted">
               UTF-8 comma-separated file with HealthCore incident headers
             </p>

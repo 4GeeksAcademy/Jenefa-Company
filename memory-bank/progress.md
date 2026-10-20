@@ -1,5 +1,12 @@
 # Progress - HealthCore
 
+### Back Office live reporting and layout fixes completed
+- Reporting now reads persisted `ExecutiveKPI` rows from the reporting database instead of rebuilding telemetry rows or falling back to mock data. The API route remains authenticated and the UI displays live `clinic_location_id` values and the latest row timestamp without a static date.
+- Removed the Flower monitor link from Business Reporting and consolidated the page around the dynamic `ReportingRefresh` table.
+- Reordered clinic selection before target-item selection in inbound and outbound inventory forms, and corrected the Back Office sidebar icons and header classes.
+- Touched `services/api/app/reporting/service.py`, `services/api/app/reporting/kpi_contract.py`, `uis/web/src/app/(app)/reporting/page.tsx`, `uis/web/src/components/ReportingRefresh.tsx`, `uis/web/src/lib/reporting.ts`, `uis/web/src/components/inventory/InventoryInboundView.tsx`, `uis/web/src/components/inventory/InventoryOutboundView.tsx`, and `uis/web/src/components/WebShell.tsx`.
+- Status: completed. Validation: 17 focused API tests passed, Python compilation passed, and `uis/web` production build passed.
+
 ### Business reporting KPI type-safety fix completed
 - Updated `services/api/app/reporting/kpi_contract.py` to preserve and aggregate native SQLAlchemy `datetime` and JSON/dict telemetry values, prefer the caller-provided database engine, and emit `CRITICAL ERROR` diagnostics for extraction, timestamp, and tag parsing failures.
 - Added `services/tests/test_reporting_kpi.py` covering native datetime/dict input and the serialized KPI dictionary consumed by the frontend.
@@ -7,11 +14,11 @@
 - Renamed the Prefect extraction, transformation, and load subflows to `fetch_network_telemetry_flow`, `compute_executive_kpi_matrix_flow`, and `load_central_reporting_db_flow`; added explicit no-show, US denial, and clinical documentation delta taxonomy functions with `market_us`/`market_uk` segmentation.
 - Added exact 22% no-show and 14% US denial benchmark coverage; the Prefect pipeline suite passes (5 tests).
 
-### Spec phase 3: Overview ledger, shared incident result, inventory clinic dropdowns, Flower link (pending build and browser checks)
+### Spec phase 3: Overview ledger, shared incident result, inventory clinic dropdowns (historical validation note)
 - Overview: `(app)/page.tsx` renders `OperationsLedger` (`src/components/OperationsLedger.tsx`), which replaces the earlier KPI overview. `OverviewDashboard.tsx` and `(app)/operations/page.tsx` were deleted. The sidebar "Operations Ledger" item was removed. `/operations` and `/backoffice` redirect to `/`.
 - Incident analysis: the latest result is kept in memory on the API (`state.py`) and served by `GET /api/incidents/latest` (404 when none exists). The upload panel and the Overview ledger both load it and render through `IncidentResults.tsx`. The result stays until the next successful upload. It is not persisted and holds aggregates only. The upload filename is no longer displayed.
 - Inventory: `SUPPLY_SEED` adds 3 SKUs (`HC-SYR-010` at CLINIC-TX-03, `HC-PPE-050` and `HC-INS-300` at CLINIC-UK-04). `_add_missing_supplies` adds them by SKU on every start, so existing databases get them. Ledger rows still seed only on a fresh catalog, so new SKUs start at zero stock. Inbound and outbound clinic IDs are now dropdowns built from the product list. These SKU and clinic values were chosen by the assistant and need confirming.
-- Reporting: `reporting/page.tsx` has an "Open Flower monitor" link, using `NEXT_PUBLIC_FLOWER_URL` (default `http://localhost:5555`).
+- Reporting: the former Flower monitor link was removed by the later live reporting fix documented above.
 - Corrected: the earlier note that Overview is a live KPI page was wrong. The spec asks for the Operations Ledger on Overview.
 - Validation: `tsc --noEmit` passes for source files. The only errors come from stale `.next/types` entries for the removed `analysis` and `operations` pages, which clear on the next build. `tests/test_inventory.py` and `tests/test_agent_websocket.py` pass (13/13). The `/api/incidents/latest` route returns 404, then 200 after a save. `npm run build:web` and browser checks were not run in this sandbox.
 

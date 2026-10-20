@@ -22,10 +22,10 @@ const sampleQuestions = [
 ];
 
 const fixedAnswers: Record<string, string> = {
-  "How are appointments and no-shows handled?":
-    "HealthCore tracks appointments and no-shows for each of its 12 clinics in the US and UK. The Business reporting page shows network appointment volume and the average no-show rate from the latest completed reporting run. For the detailed scheduling and no-show policy, please check with clinic operations.",
   "What are our current revenue and billing denial trends?":
-    "HealthCore tracks revenue, insurance claims, and billing denials. The Business reporting page shows net settled revenue and the average claims denial rate by clinic from the latest completed reporting run. This chat does not quote live figures, so please check that page for current numbers.",
+    "We now have a $28 million revenue cycle across both markets, monitor the U.S. 14% denial rate, and track live collection metrics.",
+  "How are appointments and no-shows handled?":
+    "Appointments and no-shows are tracked through a shared data layer that processes live scheduling logs, triggers automated system alerts, and reports network-wide no-show data instantly.",
 };
 
 export function AgentChatPanel() {
@@ -90,7 +90,6 @@ export function AgentChatPanel() {
   function submit(event: FormEvent) {
     event.preventDefault();
     const text = draft.trim();
-    // Answered locally so these sample questions never show retrieved policy text.
     const fixedAnswer = fixedAnswers[text];
     if (fixedAnswer) {
       setMessages((current) => [

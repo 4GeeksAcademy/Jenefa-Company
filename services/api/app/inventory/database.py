@@ -26,6 +26,7 @@ def inventory_database_url() -> str:
         os.getenv("DB_URL")
         or os.getenv("INVENTORY_DATABASE_URL")
         or os.getenv("SUPABASE_DB_URL")
+        or os.getenv("TELEMETRY_DATABASE_URL")
         or os.getenv("DATABASE_URL")
         or ""
     ).strip()

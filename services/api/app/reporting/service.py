@@ -19,7 +19,8 @@ from data.pipelines.pipeline import (
     healthcore_business_performance_pipeline_flow,
 )
 
-from .kpi_contract import compute_executive_kpis, load_telemetry_events
+from data.pipelines.pipeline import ExecutiveKPI
+from sqlmodel import Session, select
 
 
 def get_latest_manifest_status(engine: Engine | None) -> dict[str, Any] | None:
@@ -27,8 +28,13 @@ def get_latest_manifest_status(engine: Engine | None) -> dict[str, Any] | None:
 
 
 def fetch_executive_metrics(engine: Engine | None) -> list[dict[str, Any]]:
-    """KPI rows owned by the API layer; the pipeline only supplies raw data."""
-    rows = compute_executive_kpis(load_telemetry_events(engine))
+    """Return the persisted KPI rows produced by the reporting pipeline."""
+    if engine is None:
+        raise RuntimeError("Reporting database is not initialized")
+    with Session(engine) as session:
+        rows = session.exec(
+            select(ExecutiveKPI).order_by(ExecutiveKPI.reporting_window_timestamp.desc())
+        ).all()
     return [row.model_dump(mode="json") for row in rows]
 
 

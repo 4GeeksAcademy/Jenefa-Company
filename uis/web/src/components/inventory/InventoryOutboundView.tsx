@@ -162,7 +162,25 @@ export function InventoryOutboundView() {
         </div>
       ) : null}
 
-      <form onSubmit={(event) => void onSubmit(event)} className="rounded-lg border border-border bg-surface px-6 py-6">
+      <form onSubmit={(event) => void onSubmit(event)} className="space-y-4 rounded-lg border border-border bg-surface px-6 py-6">
+        <label className={labelClass}>
+          Clinic ID
+          <select
+            className={inputClass}
+            required
+            value={clinicId}
+            onChange={(event) => setClinicId(event.target.value)}
+            disabled={loading || submitting}
+          >
+            <option value="">Choose a clinic</option>
+            {clinicIds.map((id) => (
+              <option key={id} value={id}>
+                {id}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <label className={labelClass}>
           Select Target Item
           <select
@@ -187,8 +205,9 @@ export function InventoryOutboundView() {
           </select>
         </label>
 
-        <div className="mt-4 rounded-md border border-panel-line bg-background px-3 py-2 text-sm">
-          <p className="text-xs uppercase tracking-[0.12em] text-muted">Available Inventory</p>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Available inventory</p>
+          <div className="mt-1 rounded-md border border-panel-line bg-background px-3 py-2 text-sm">
           <p className="mt-1 font-semibold text-foreground">
             {stockLoading
               ? "Loading current balance…"
@@ -198,6 +217,7 @@ export function InventoryOutboundView() {
                   ? "Select a clinic"
                   : "Select an item"}
           </p>
+          </div>
         </div>
 
         <label className={`${labelClass} mt-4`}>
@@ -214,24 +234,6 @@ export function InventoryOutboundView() {
         </label>
         {quantityWarning ? <p className="mt-2 text-sm text-amber-900">{quantityWarning}</p> : null}
         {quantityApiError ? <p className="mt-2 text-sm text-red-800">{quantityApiError}</p> : null}
-
-        <label className={`${labelClass} mt-4`}>
-          Clinic ID
-          <select
-            className={inputClass}
-            required
-            value={clinicId}
-            onChange={(event) => setClinicId(event.target.value)}
-            disabled={loading || submitting}
-          >
-            <option value="">Choose a clinic</option>
-            {clinicIds.map((id) => (
-              <option key={id} value={id}>
-                {id}
-              </option>
-            ))}
-          </select>
-        </label>
 
         <button
           type="submit"

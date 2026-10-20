@@ -1,3 +1,4 @@
+import { apiFetch, readJson } from "@/lib/api";
 import { forwardedPortUrl } from "@/lib/forwardedPort";
 
 export type ExecutiveKpi = {
@@ -18,16 +19,10 @@ function getReportingEndpoint(): string {
 }
 
 export async function fetchExecutiveKpis(): Promise<ExecutiveKpi[]> {
-  const response = await fetch(`${getReportingEndpoint()}/kpis`, { cache: "no-store" });
-  if (!response.ok) throw new Error(`Reporting API returned HTTP ${response.status}`);
-  return response.json() as Promise<ExecutiveKpi[]>;
+  const endpoint = getReportingEndpoint();
+  const response = await apiFetch(`${endpoint}/kpis`, { cache: "no-store" });
+  return readJson<ExecutiveKpi[]>(response);
 }
-
-
-export function flowerMonitorUrl(): string {
-  return process.env.NEXT_PUBLIC_FLOWER_URL || forwardedPortUrl(5555);
-}
-
 export function summarizeExecutiveKpis(rows: ExecutiveKpi[]) {
   const average = (values: Array<number | null>) => {
     const present = values.filter((value): value is number => value !== null);

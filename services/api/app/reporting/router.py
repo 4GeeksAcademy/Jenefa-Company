@@ -64,9 +64,10 @@ def reporting_run_status(
 
 @router.get("/kpis")
 def reporting_kpis(
-    request: Request
+    request: Request,
+    current_user: dict[str, Any] = Depends(get_current_user),
 ) -> list[dict[str, Any]]:
-    """Deliver rows to dashboards. Bypasses JWT check for local dev testing."""
+    del current_user
     return service.fetch_executive_metrics(_engine_from_request(request))
 
 

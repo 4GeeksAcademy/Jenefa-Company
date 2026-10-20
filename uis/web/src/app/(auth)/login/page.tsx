@@ -6,6 +6,11 @@ import { AuthShell } from "@/components/AuthShell";
 import { ApiRequestError } from "@/lib/api";
 import { loginAndStore } from "@/lib/authApi";
 
+const staffPresets = [
+  { label: "Dr. Marcus Reid", email: "marcus.reid@healthcore.example", password: "ClinicSeedPass1" },
+  { label: "Claire Whitfield", email: "claire.whitfield@healthcore.example", password: "ClinicSeedPass1" },
+];
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -45,6 +50,21 @@ export default function LoginPage() {
             {error}
           </div>
         ) : null}
+        <div className="flex flex-wrap gap-2" aria-label="Staff sign-in presets">
+          {staffPresets.map((preset) => (
+            <button
+              key={preset.email}
+              type="button"
+              className="border border-border px-3 py-2 text-left text-xs text-muted hover:border-accent hover:text-foreground"
+              onClick={() => {
+                setEmail(preset.email);
+                setPassword(preset.password);
+              }}
+            >
+              Use {preset.label}
+            </button>
+          ))}
+        </div>
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium text-foreground">Email</span>
           <input

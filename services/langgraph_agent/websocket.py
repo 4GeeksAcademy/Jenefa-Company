@@ -11,12 +11,17 @@ from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
 from jose import JWTError
+from sqlmodel import Session, select
 
+from app import state as incident_state
 from app.auth import database as auth_db
 from app.auth.security import decode_access_token
+from app.inventory.service import list_supplies
+from app.rfp.models import RFPTicket
 
 from .guardrails import guarded_invoke_agent
 from .memory import AgentMemoryStore
+from .tools import IncidentLookup, InventoryLookup
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["agent"])
@@ -55,11 +60,45 @@ def _authenticate(token: str | None) -> dict[str, Any] | None:
     return user
 
 
+def _local_incident_lookup(payload: IncidentLookup, engine: Any) -> Any:
+    """Read aggregate incident results and RFP ticket status from this API."""
+    with Session(engine) as session:
+        if payload.ticket_id:
+            ticket = session.get(RFPTicket, payload.ticket_id)
+            return {
+                "ticket_id": payload.ticket_id,
+                "status": ticket.status if ticket else "not found",
+                "updated_at": ticket.updated_at.isoformat() if ticket else None,
+            }
+        tickets = session.exec(select(RFPTicket).order_by(RFPTicket.updated_at.desc()).limit(10)).all()
+        return {
+            "latest_incident_analysis": incident_state.get_latest_result(),
+            "rfp_tickets": [
+                {"ticket_id": ticket.ticket_id, "status": ticket.status, "updated_at": ticket.updated_at.isoformat()}
+                for ticket in tickets
+            ],
+        }
+
+
+def _local_inventory_lookup(_payload: InventoryLookup, engine: Any) -> Any:
+    """Read the same stock catalog exposed by the authenticated inventory page."""
+    with Session(engine) as session:
+        return [item.model_dump(mode="json") for item in list_supplies(session)]
+
+
 def _frame(frame_type: str, *, session_id: str, thread_id: str, **payload: Any) -> str:
     return json.dumps(
         {"type": frame_type, "session_id": session_id, "thread_id": thread_id, **payload},
         separators=(",", ":"),
     )
+
+
+def _concise_answer(answer: Any) -> str:
+    text = " ".join(str(answer or "").split())
+    if not text:
+        return "I don't have information about that."
+    end = min((index + 1 for index, character in enumerate(text) if character in ".!?"), default=len(text))
+    return text[:end]
 
 
 async def _stream_answer(
@@ -69,12 +108,16 @@ async def _stream_answer(
     thread_id: str,
     message_id: str,
     send: Callable[[str], Awaitable[None]],
+    engine: Any | None = None,
+    concise: bool = False,
 ) -> None:
     config = {"configurable": {"thread_id": thread_id}}
     retriever = _local_retriever()
     invoke_kwargs: dict[str, Any] = {
         "config": config,
         "memory_store": memory_store,
+        "incident_tool": lambda payload: _local_incident_lookup(payload, engine),
+        "inventory_tool": lambda payload: _local_inventory_lookup(payload, engine),
     }
     if retriever is not None:
         invoke_kwargs["retriever"] = retriever
@@ -83,7 +126,7 @@ async def _stream_answer(
         question,
         **invoke_kwargs,
     )
-    answer = state.get("answer") or ""
+    answer = _concise_answer(state.get("answer")) if concise else state.get("answer") or ""
     for chunk in answer.splitlines(keepends=True) or [answer]:
         await send(
             _frame(
@@ -182,7 +225,9 @@ async def agent_websocket(websocket: WebSocket) -> None:
                     session_id=session_id,
                     thread_id=thread_id,
                     message_id=message_id,
+                    engine=getattr(websocket.app.state, "inventory_engine", None),
                     send=websocket.send_text,
+                    concise=True,
                 )
             )
             active[message_id] = task

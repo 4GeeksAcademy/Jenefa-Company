@@ -199,10 +199,23 @@ def invoke_agent(
     generator: Callable[[str, list[dict[str, Any]]], str] = generate_answer,
     trace_callback: TraceCallback | None = None,
     memory_store: AgentMemoryStore | None = None,
+    incident_tool: Callable[[IncidentLookup], Any] = lookup_incident,
+    inventory_tool: Callable[[InventoryLookup], Any] = lookup_inventory,
 ) -> AgentState:
     """Invoke a compiled graph with a stable thread id for checkpointing."""
-    graph = agent_graph if retriever is retrieve and generator is generate_answer and trace_callback is None else build_graph(
-        retriever=retriever, generator=generator, trace_callback=trace_callback
+    use_default_graph = (
+        retriever is retrieve
+        and generator is generate_answer
+        and trace_callback is None
+        and incident_tool is lookup_incident
+        and inventory_tool is lookup_inventory
+    )
+    graph = agent_graph if use_default_graph else build_graph(
+        retriever=retriever,
+        generator=generator,
+        trace_callback=trace_callback,
+        incident_tool=incident_tool,
+        inventory_tool=inventory_tool,
     )
     run_config = {"configurable": {"thread_id": "healthcore-agent"}, **(config or {})}
     return graph.invoke(

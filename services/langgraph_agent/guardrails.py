@@ -11,6 +11,7 @@ from typing import Any, Callable
 
 from .graph import HONEST_REFUSAL, AgentState, generate_answer, invoke_agent, retrieve
 from .memory import AgentMemoryStore
+from .tools import IncidentLookup, InventoryLookup, lookup_incident, lookup_inventory
 
 logger = logging.getLogger(__name__)
 
@@ -116,6 +117,8 @@ def guarded_invoke_agent(
     retriever: Callable[..., list[dict[str, Any]]] | None = None,
     generator: Callable[[str, list[dict[str, Any]]], str] | None = None,
     memory_store: AgentMemoryStore | None = None,
+    incident_tool: Callable[[IncidentLookup], Any] = lookup_incident,
+    inventory_tool: Callable[[InventoryLookup], Any] = lookup_inventory,
 ) -> AgentState:
     """Apply input, retrieval, and output controls around the existing graph."""
     normalized = (question or "").strip()
@@ -150,6 +153,8 @@ def guarded_invoke_agent(
         retriever=isolated_retriever,
         generator=generator or generate_answer,
         memory_store=memory_store,
+        incident_tool=incident_tool,
+        inventory_tool=inventory_tool,
     )
     state["answer"] = validate_output(state.get("answer"))
     return state

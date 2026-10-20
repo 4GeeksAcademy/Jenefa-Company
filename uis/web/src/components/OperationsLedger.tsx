@@ -16,6 +16,7 @@ type RfpTicket = {
   status: string;
   created_at: string;
   updated_at: string;
+  metrics?: Record<string, number>;
 };
 
 type SourceKey = "inventory" | "orders" | "incidents" | "rfp";
@@ -160,8 +161,8 @@ export function OperationsLedger() {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Operations ledger</p>
-          <h1 className="mt-2 text-3xl font-normal">Operational summary</h1>
+          <p className="text-md font-bold uppercase tracking-widest text-slate-500">Knowledge base</p>
+          <h1 className="mt-2 text-lg font-normal">Operations Overview</h1>
         </div>
         <p className="text-sm text-slate-500">
           {apiStatus}
@@ -211,8 +212,15 @@ export function OperationsLedger() {
       />
       <DataTable
         title="RFP intake history"
-        headers={["Ticket ID", "Status", "Created", "Last updated"]}
-        rows={tickets.map((ticket) => [ticket.ticket_id, ticket.status, formatTime(ticket.created_at), formatTime(ticket.updated_at)])}
+        headers={["Ticket ID", "Status", "Words", "Estimated tokens", "Created", "Last updated"]}
+        rows={tickets.map((ticket) => [
+          ticket.ticket_id,
+          ticket.status,
+          String(ticket.metrics?.word_count ?? "-"),
+          String(ticket.metrics?.estimated_tokens ?? "-"),
+          formatTime(ticket.created_at),
+          formatTime(ticket.updated_at),
+        ])}
         error={sourceErrors.rfp}
         emptyMessage="No RFP tickets yet."
       />
