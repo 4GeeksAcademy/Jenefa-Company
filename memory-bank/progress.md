@@ -182,6 +182,10 @@
 - Exposed `/agent/memory/proposals`, `/agent/memory/pending`, `/agent/memory/resolve`, and `/agent/memory/audit`; documented `AGENT_MEMORY_DB_PATH` and the governance contract in `services/api/README.md`.
 - Added `tests/pipelines/test_agent_memory.py` covering approved cross-session retrieval, rejected/ambiguous discard, edited facts, single-flight enforcement, TTL expiry, and audit persistence. Focused tests pass: **8 passed** with the existing LangGraph suite.
 
+### WebSocket replay/interrupt race fixed
+- Updated `services/langgraph_agent/websocket.py` so replay history is released only after an explicit `resume` frame; live messages and interrupts now clear stale replay frames and receive immediate lifecycle acknowledgements.
+- Status: completed. Validation: `services/api/tests/test_agent_websocket.py` passed (**5/5**).
+
 ## Planned Next Steps
 - LangGraph external live-data integration completed: `services/langgraph_agent/tools.py` provides separate, read-only incident and inventory HTTP clients with runtime token resolution and a hard 4-second timeout. The graph now routes live operational questions separately from compliance RAG, supports combined live-then-RAG flows, records contacted sources, and emits a deterministic no-hallucination fallback on service errors/404s/timeouts. Added `tests/test_langgraph_external.py` covering live ticket routing, RAG isolation, and outage recovery; focused tests pass.
 - Sales forecasting feasibility prototype completed: added a reproducible Random Forest pipeline at `data/pipelines/sales_forecast.py` using the protected production extract, schema/null validation, robust scaling, first-eight/final-two temporal partitioning, MSE/PSI/Gini/K2 metrics, and an actual-vs-predicted error-band plot. Added split/leakage and artifact tests at `tests/pipelines/test_sales_forecast.py`; focused suite passes (`3 passed`).

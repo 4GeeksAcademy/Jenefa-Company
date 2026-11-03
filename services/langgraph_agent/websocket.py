@@ -209,8 +209,10 @@ async def agent_websocket(websocket: WebSocket) -> None:
     await websocket.accept()
     channel = _channel(session_id, thread_id)
     queue = channel.subscribe()
+    replay_enabled = asyncio.Event()
 
     async def send_frames() -> None:
+        await replay_enabled.wait()
         while True:
             await websocket.send_text(await queue.get())
 
@@ -233,7 +235,11 @@ async def agent_websocket(websocket: WebSocket) -> None:
 
             message_type = message.get("type")
             message_id = message.get("message_id")
+            if message_type == "resume":
+                replay_enabled.set()
+                continue
             if message_type == "interrupt":
+                replay_enabled.set()
                 task = channel.active.pop(message_id, None)
                 if task is not None:
                     task.cancel()
@@ -254,6 +260,7 @@ async def agent_websocket(websocket: WebSocket) -> None:
                 continue
 
             if message_type not in {"message", "user_message"}:
+                replay_enabled.set()
                 await channel.publish(
                     _frame(
                         "error",
@@ -265,6 +272,7 @@ async def agent_websocket(websocket: WebSocket) -> None:
                 continue
             while not queue.empty():
                 queue.get_nowait()
+            replay_enabled.set()
             question = message.get("text")
             if not isinstance(message_id, str) or not message_id or not isinstance(question, str):
                 await channel.publish(
