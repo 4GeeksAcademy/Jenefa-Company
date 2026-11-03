@@ -6,6 +6,8 @@ import asyncio
 import json
 import logging
 import os
+import re
+from dataclasses import dataclass, field
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -26,6 +28,8 @@ from .tools import IncidentLookup, InventoryLookup
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["agent"])
 memory_store = AgentMemoryStore()
+AGENT_ID = "healthcore-agent"
+_HISTORY_LIMIT = 200
 _LOCAL_KNOWLEDGE_CONTEXT = [
     {
         "text": (
@@ -88,13 +92,55 @@ def _local_inventory_lookup(_payload: InventoryLookup, engine: Any) -> Any:
 
 def _frame(frame_type: str, *, session_id: str, thread_id: str, **payload: Any) -> str:
     return json.dumps(
-        {"type": frame_type, "session_id": session_id, "thread_id": thread_id, **payload},
+        {
+            "type": frame_type,
+            "agent_id": AGENT_ID,
+            "session_id": session_id,
+            "thread_id": thread_id,
+            **payload,
+        },
         separators=(",", ":"),
     )
 
 
+@dataclass
+class _SessionChannel:
+    session_id: str
+    thread_id: str
+    subscribers: set[asyncio.Queue[str]] = field(default_factory=set)
+    history: list[str] = field(default_factory=list)
+    active: dict[str, asyncio.Task[None]] = field(default_factory=dict)
+
+    def subscribe(self) -> asyncio.Queue[str]:
+        queue: asyncio.Queue[str] = asyncio.Queue()
+        self.subscribers.add(queue)
+        for frame in self.history:
+            queue.put_nowait(frame)
+        return queue
+
+    def unsubscribe(self, queue: asyncio.Queue[str]) -> None:
+        self.subscribers.discard(queue)
+
+    async def publish(self, frame: str) -> None:
+        self.history.append(frame)
+        del self.history[:-_HISTORY_LIMIT]
+        for queue in tuple(self.subscribers):
+            await queue.put(frame)
+
+
+_channels: dict[str, _SessionChannel] = {}
+
+
+def _channel(session_id: str, thread_id: str) -> _SessionChannel:
+    existing = _channels.get(session_id)
+    if existing is None:
+        existing = _SessionChannel(session_id=session_id, thread_id=thread_id)
+        _channels[session_id] = existing
+    return existing
+
+
 def _concise_answer(answer: Any) -> str:
-    text = " ".join(str(answer or "").split())
+    text = str(answer or "").strip()
     if not text:
         return "I don't have information about that."
     end = min((index + 1 for index, character in enumerate(text) if character in ".!?"), default=len(text))
@@ -127,7 +173,8 @@ async def _stream_answer(
         **invoke_kwargs,
     )
     answer = _concise_answer(state.get("answer")) if concise else state.get("answer") or ""
-    for chunk in answer.splitlines(keepends=True) or [answer]:
+    chunks = re.findall(r"\S+\s*", answer) or [answer]
+    for chunk in chunks:
         await send(
             _frame(
                 "token_chunk",
@@ -160,14 +207,21 @@ async def agent_websocket(websocket: WebSocket) -> None:
         return
 
     await websocket.accept()
-    active: dict[str, asyncio.Task[None]] = {}
+    channel = _channel(session_id, thread_id)
+    queue = channel.subscribe()
+
+    async def send_frames() -> None:
+        while True:
+            await websocket.send_text(await queue.get())
+
+    sender = asyncio.create_task(send_frames())
     try:
         while True:
             try:
                 raw_message = await websocket.receive_text()
                 message = json.loads(raw_message)
             except (json.JSONDecodeError, TypeError):
-                await websocket.send_text(
+                await channel.publish(
                     _frame(
                         "error",
                         session_id=session_id,
@@ -180,14 +234,16 @@ async def agent_websocket(websocket: WebSocket) -> None:
             message_type = message.get("type")
             message_id = message.get("message_id")
             if message_type == "interrupt":
-                task = active.pop(message_id, None)
+                task = channel.active.pop(message_id, None)
                 if task is not None:
                     task.cancel()
                     try:
                         await task
                     except asyncio.CancelledError:
                         pass
-                await websocket.send_text(
+                while not queue.empty():
+                    queue.get_nowait()
+                await channel.publish(
                     _frame(
                         "generation_interrupted",
                         session_id=session_id,
@@ -198,7 +254,7 @@ async def agent_websocket(websocket: WebSocket) -> None:
                 continue
 
             if message_type not in {"message", "user_message"}:
-                await websocket.send_text(
+                await channel.publish(
                     _frame(
                         "error",
                         session_id=session_id,
@@ -207,9 +263,11 @@ async def agent_websocket(websocket: WebSocket) -> None:
                     )
                 )
                 continue
+            while not queue.empty():
+                queue.get_nowait()
             question = message.get("text")
             if not isinstance(message_id, str) or not message_id or not isinstance(question, str):
-                await websocket.send_text(
+                await channel.publish(
                     _frame(
                         "error",
                         session_id=session_id,
@@ -219,6 +277,17 @@ async def agent_websocket(websocket: WebSocket) -> None:
                 )
                 continue
 
+            if message_id in channel.active:
+                await channel.publish(
+                    _frame(
+                        "error",
+                        session_id=session_id,
+                        thread_id=thread_id,
+                        message_id=message_id,
+                        error="message_id is already active",
+                    )
+                )
+                continue
             task = asyncio.create_task(
                 _stream_answer(
                     question,
@@ -226,14 +295,14 @@ async def agent_websocket(websocket: WebSocket) -> None:
                     thread_id=thread_id,
                     message_id=message_id,
                     engine=getattr(websocket.app.state, "inventory_engine", None),
-                    send=websocket.send_text,
+                    send=channel.publish,
                     concise=True,
                 )
             )
-            active[message_id] = task
+            channel.active[message_id] = task
 
             def _discard(completed: asyncio.Task[None], key: str = message_id) -> None:
-                active.pop(key, None)
+                channel.active.pop(key, None)
                 if not completed.cancelled() and completed.exception():
                     logger.error("WebSocket agent generation failed", exc_info=completed.exception())
 
@@ -241,7 +310,6 @@ async def agent_websocket(websocket: WebSocket) -> None:
     except WebSocketDisconnect:
         pass
     finally:
-        for task in active.values():
-            task.cancel()
-        if active:
-            await asyncio.gather(*active.values(), return_exceptions=True)
+        channel.unsubscribe(queue)
+        sender.cancel()
+        await asyncio.gather(sender, return_exceptions=True)
