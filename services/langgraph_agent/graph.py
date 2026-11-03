@@ -17,7 +17,7 @@ from .tools import (
     lookup_incident,
     lookup_inventory,
 )
-from .memory import AgentMemoryStore
+from .memory import AgentMemoryStore, evaluate_memory_candidate
 
 HONEST_REFUSAL = "I don't have information about that."
 
@@ -129,7 +129,8 @@ def fallback_node(state: AgentState, *, trace_callback: TraceCallback | None = N
 def generation_node(
     state: AgentState,
     *,
-    generator: Callable[[str, list[dict[str, Any]]], str] = generate_answer,
+    generator: Callable[[str, list[dict[str, Any]]], Any] = generate_answer,
+    memory_store: AgentMemoryStore | None = None,
     trace_callback: TraceCallback | None = None,
 ) -> dict[str, Any]:
     chunks = [{"text": text} for text in [
@@ -137,7 +138,44 @@ def generation_node(
         *state.get("live_context", []),
         *state.get("memory_context", []),
     ]]
-    update = {"answer": generator(state["question"], chunks), "error": None}
+    generated = generator(state["question"], chunks)
+    if isinstance(generated, dict):
+        answer = generated.get("visible_response")
+        candidate = generated.get("memory_proposal")
+    else:
+        answer = generated
+        candidate = None
+    if not isinstance(answer, str):
+        answer = str(answer or "")
+
+    proposal = None
+    if candidate is not None:
+        if isinstance(candidate, dict):
+            fact = candidate.get("fact_to_remember")
+            justification = candidate.get("justification")
+        else:
+            fact = justification = None
+        candidate = (
+            (str(fact), str(justification))
+            if isinstance(fact, str) and isinstance(justification, str)
+            else None
+        )
+    if candidate is None:
+        candidate = evaluate_memory_candidate(state["question"], answer)
+    if candidate and memory_store and memory_store.pending() is None:
+        try:
+            stored = memory_store.propose(
+                candidate[0], candidate[1], state["question"]
+            )
+        except ValueError:
+            stored = None
+        if stored:
+            proposal = stored.__dict__
+            answer = (
+                f"{answer.rstrip()} "
+                "Would you like me to remember this preference for future sessions?"
+            ).strip()
+    update = {"answer": answer, "memory_proposal": proposal, "error": None}
     _trace({**state, **update}, "generate_answer", trace_callback)
     return update
 
@@ -161,7 +199,8 @@ def _after_retrieve(state: AgentState) -> str:
 def build_graph(
     *,
     retriever: Callable[..., list[dict[str, Any]]] = retrieve,
-    generator: Callable[[str, list[dict[str, Any]]], str] = generate_answer,
+    generator: Callable[[str, list[dict[str, Any]]], Any] = generate_answer,
+    memory_store: AgentMemoryStore | None = None,
     trace_callback: TraceCallback | None = None,
     incident_tool: Callable[[IncidentLookup], Any] = lookup_incident,
     inventory_tool: Callable[[InventoryLookup], Any] = lookup_inventory,
@@ -170,7 +209,7 @@ def build_graph(
     graph = StateGraph(AgentState)
     graph.add_node("receive_input", lambda state: receive_input_node(state, trace_callback=trace_callback))
     graph.add_node("retrieve", lambda state: retrieve_node(state, retriever=retriever, trace_callback=trace_callback))
-    graph.add_node("generate_answer", lambda state: generation_node(state, generator=generator, trace_callback=trace_callback))
+    graph.add_node("generate_answer", lambda state: generation_node(state, generator=generator, memory_store=memory_store, trace_callback=trace_callback))
     graph.add_node("honest_refusal", lambda state: honest_refusal_node(state, trace_callback=trace_callback))
     graph.add_node("error", lambda state: honest_refusal_node(state, trace_callback=trace_callback))
     graph.add_node("live_lookup", lambda state: live_lookup_node(state, incident_tool=incident_tool, inventory_tool=inventory_tool, trace_callback=trace_callback))
@@ -196,7 +235,7 @@ def invoke_agent(
     *,
     config: dict[str, Any] | None = None,
     retriever: Callable[..., list[dict[str, Any]]] = retrieve,
-    generator: Callable[[str, list[dict[str, Any]]], str] = generate_answer,
+    generator: Callable[[str, list[dict[str, Any]]], Any] = generate_answer,
     trace_callback: TraceCallback | None = None,
     memory_store: AgentMemoryStore | None = None,
     incident_tool: Callable[[IncidentLookup], Any] = lookup_incident,
@@ -209,10 +248,12 @@ def invoke_agent(
         and trace_callback is None
         and incident_tool is lookup_incident
         and inventory_tool is lookup_inventory
+        and memory_store is None
     )
     graph = agent_graph if use_default_graph else build_graph(
         retriever=retriever,
         generator=generator,
+        memory_store=memory_store,
         trace_callback=trace_callback,
         incident_tool=incident_tool,
         inventory_tool=inventory_tool,

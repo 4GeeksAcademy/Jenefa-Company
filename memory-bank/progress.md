@@ -38,6 +38,13 @@
 - Smoke test: with no Redis running, both reporting endpoints return 503. `tests/test_agent_websocket.py` passes (5/5).
 - Open items: run `npm install` (root lockfile still lists the removed backoffice workspace). Start Redis and the Celery worker. Restart the API to load the new routes. Run `npm run build:web`, then check `/`, `/reporting`, `/operations`, `/inventory`, `/incidents`, and `/assistant` in a browser. Not verified: a full worker run that fills KPI rows (the KPI source in `data/pipelines/pipeline.py` could not be reviewed here). Pre-existing, not changed: `/services/reporting/kpis` and the `/reports/generate` and `/tasks/{id}` endpoints in `async_tasks.py` do not require auth. Review under HIPAA and UK GDPR.
 
+### MEM-092 episodic memory review gaps completed
+- Added conservative self-evaluation for explicit recurring operational preferences and corrections, with routine clinic-hours, static regulatory, and casual interactions returning no proposal.
+- Wired LangGraph generation to support structured `visible_response`/`memory_proposal` output, create the single pending proposal, and include the confirmation request in the agent's own reply.
+- Added PHI detection at candidate evaluation and storage boundaries so PHI-bearing memory proposals are rejected before persistence.
+- Touched `services/langgraph_agent/memory.py`, `services/langgraph_agent/graph.py`, and `memory-bank/progress.md`.
+- Status: completed. Validation: `tests/pipelines/test_agent_memory.py` passed (4/4), plus focused runtime checks for proposal creation, routine lookup suppression, and PHI rejection. Pre-existing, not changed: `/services/reporting/kpis` and the `/reports/generate` and `/tasks/{id}` endpoints in `async_tasks.py` do not require auth. Review under HIPAA and UK GDPR.
+
 ### Backoffice specification consolidation completed
 - Sign-in fix: the public site's `ECONNREFUSED 127.0.0.1:8000` came from the FastAPI API not running, not from a code defect. With the API up, `/health` returns 200 and `POST /backend/auth/login` returns the expected 401 for bad credentials.
 - Removed `uis/backoffice`. Its RFP, reporting, and telemetry extras were ported into `uis/web` (`rfp/page.tsx`, `reporting/page.tsx`, `lib/reporting.ts`, `lib/telemetryAuth.ts`, `lib/telemetryInstrumentation.ts`, `lib/webVitals.ts`). The dashboard is now the `/operations` route, and `agent_memory.db` is at `uis/web/data/`. Root `package.json` no longer lists the backoffice workspace or its `dev`/`build` scripts, and the `.gitignore` entry is gone.

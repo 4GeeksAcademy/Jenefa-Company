@@ -30,7 +30,7 @@ export function SiteHeader({ variant = "home" }: SiteHeaderProps) {
               <li>
                 <a
                   href="/apply"
-                  className="hover:text-accent-600 focus:outline-none focus:ring-2 focus:ring-brand-600 rounded"
+                  className="inline-flex items-center rounded-full bg-accent-500 px-4 py-2 font-medium text-white hover:bg-accent-600 focus:outline-none focus:ring-2 focus:ring-brand-600"
                 >
                   Apply Now
                 </a>
@@ -60,9 +60,9 @@ export function SiteHeader({ variant = "home" }: SiteHeaderProps) {
                 </a>
               </li>
               <li>
-                <a
-                  href={`${process.env.NEXT_PUBLIC_STAFF_APP_URL ?? "http://localhost:3001"}/sign-in`}
-                  className="inline-flex items-center rounded-full bg-accent-500 px-4 py-2 font-medium text-white hover:bg-accent-600 focus:outline-none focus:ring-2 focus:ring-brand-600"
+                <a href={`${process.env.NEXT_PUBLIC_STAFF_APP_URL ?? "http://localhost:3001"}/sign-in`}
+                  
+                  className="hover:text-accent-600 hover:underline focus:outline-none focus:ring-2 focus:ring-brand-600 rounded"
                 >
                   Staff Sign In
                 </a>
