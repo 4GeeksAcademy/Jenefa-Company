@@ -17,6 +17,21 @@ APPROVE = "APPROVE"
 REJECT = "REJECT"
 EDIT = "EDIT"
 DISCARD_BY_DEFAULT = "DISCARD_BY_DEFAULT"
+_PHI_PATTERNS = (
+    re.compile(r"\b(?:patient|member|medical)\s*(?:id|identifier|record|number)\b", re.I),
+    re.compile(r"\b(?:mrn|ssn|social security|date of birth|dob)\b", re.I),
+    re.compile(r"\bdiagnos(?:is|ed)|treatment|medication|clinical claim\b", re.I),
+)
+_MEMORABLE_PATTERNS = (
+    re.compile(r"\bremember\b", re.I),
+    re.compile(r"\b(?:going forward|from now on|always use|prefer|preference)\b", re.I),
+    re.compile(r"\b(?:correction|corrected|exception|workaround|override)\b", re.I),
+)
+_NON_MEMORABLE_PATTERNS = (
+    re.compile(r"\b(?:hours?|opening|closing|staffing hours?)\b", re.I),
+    re.compile(r"\b(?:hipaa|uk\s*gdpr|gdpr)\b.*\b(?:rule|retention|requirement|mean)\b", re.I),
+    re.compile(r"^(?:hi|hello|hey|thanks?|thank you|goodbye|bye)[!. ]*$", re.I),
+)
 
 
 def utc_now() -> datetime:
@@ -25,6 +40,25 @@ def utc_now() -> datetime:
 
 def message_hash(message: str) -> str:
     return hashlib.sha256(message.encode("utf-8")).hexdigest()
+
+
+def contains_phi(text: str) -> bool:
+    """Return whether text contains common direct or clinical PHI markers."""
+    return any(pattern.search(text) for pattern in _PHI_PATTERNS)
+
+
+def evaluate_memory_candidate(question: str, answer: str) -> tuple[str, str] | None:
+    """Select only explicit, operationally useful facts for human confirmation."""
+    if any(pattern.search(question) for pattern in _NON_MEMORABLE_PATTERNS):
+        return None
+    if not any(pattern.search(question) for pattern in _MEMORABLE_PATTERNS):
+        return None
+    if contains_phi(question) or contains_phi(answer):
+        return None
+    fact = " ".join(question.split()).strip()
+    if len(fact) < 12:
+        return None
+    return fact, "The user supplied an explicit recurring operational preference or correction."
 
 
 @dataclass(frozen=True)
@@ -106,6 +140,8 @@ class AgentMemoryStore:
         reason = " ".join(justification.split()).strip()
         if not fact or not reason:
             raise ValueError("fact_to_remember and justification are required")
+        if contains_phi(fact) or contains_phi(reason) or contains_phi(originating_message):
+            raise ValueError("memory proposals must not contain PHI")
         if self.pending() is not None:
             raise ValueError("a memory proposal is already pending")
         created = utc_now()
